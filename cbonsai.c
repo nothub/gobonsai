@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <ncurses.h>
+#include <unistd.h>
 
 void finish() {
 	clear();
@@ -32,30 +34,68 @@ void printHelp() {
 	printf("  -h, --help             show help	\n");
 }
 
-// attron(A_BOLD);
 // attrset(A_NORMAL); || standend()
 
-int main() {
-	int row, col, centerx, ch;
+int main(int argc, char* argv[]) {
+	int row = 0;
+	int col = 0;
+	int centerx, ch;
 
-	initscr();	// init curses mode
+	int live = 0;
+	int infinite = 0;
+
+	int termSize = 1;
+	int termColors = 0;
+	char leafStrs[] = "&";
+	int baseType = 1;
+	char message[] = "";
+
+	double multiplier = 5;
+	int lifeStart = 28;
+
+	double timeStep = 0.03;
+	double timeWait = 4;
+
+	int flag_m = 0;
+
+	int c;
+
+	// parse arguments
+	while ((c = getopt(argc, argv, "hlt:w:ig:c:Tm:b:M:L:s:vn")) != EOF) {
+		switch (c) {
+			case 'h':
+				printHelp();
+				return 0;
+				break;
+			case 'l':
+				live = 1;
+				break;
+			case 't':
+				timeStep = atof(optarg);
+				break;
+		}
+	}
+
+	initscr();	// init ncurses screen
 	savetty();
 	noecho();	// don't echo input to screen
 	cbreak();	// don't wait for new line to grab user input
 
+	// if terminal has color capabilities, use them
 	if (has_colors()) {
-		start_color();	// allow us to use color features
+		start_color();	// allow us to use color capabilities
 
 		// define color pairs
-		init_pair(COLOR_BLACK, -1, -1);
-		init_pair(COLOR_RED, COLOR_RED, -1);
-		init_pair(COLOR_GREEN, COLOR_GREEN, -1);
-		init_pair(COLOR_YELLOW, COLOR_YELLOW, -1);
-		init_pair(COLOR_BLUE, COLOR_BLUE, -1);
-		init_pair(COLOR_MAGENTA, COLOR_MAGENTA, -1);
-		init_pair(COLOR_CYAN, COLOR_CYAN, -1);
-		init_pair(COLOR_WHITE, COLOR_WHITE, -1);
+		init_pair(COLOR_BLACK, COLOR_WHITE, COLOR_BLACK);
+		init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+		init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+		init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+		init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+		init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+		init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+		init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
 	} else {
+		printf("Exiting: terminal does not support colors\n");
 		finish();
 		return 1;
 	}
@@ -63,7 +103,6 @@ int main() {
 	getmaxyx(stdscr, row, col);
 	centerx = col / 2;
 
-	attron(COLOR_PAIR(COLOR_RED));
 	printw("Hello World!"); // print to stdscr
 
 	ch = getch();
