@@ -39,7 +39,45 @@ void printHelp() {
 	printf("  -h, --help             show help	\n");
 }
 
-// attrset(A_NORMAL); || standend()
+WINDOW* drawBase(int baseType) {
+	int baseWidth, baseHeight;
+	int rows, cols;
+
+	switch(baseType) {
+		case 1:
+			baseWidth = 30;
+			baseHeight = 4;
+			break;
+	}
+
+	// calculate where base should go
+	getmaxyx(stdscr, rows, cols);
+	int baseOriginY = (rows - baseHeight);
+	int baseOriginX = (cols / 2) - (baseWidth / 2);
+
+	// create base window and draw art
+	WINDOW *baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
+	switch(baseType) {
+		case 1:
+			wattron(baseWin, A_BOLD | COLOR_PAIR(8));
+			wprintw(baseWin, "%s", ":");
+			wattron(baseWin, COLOR_PAIR(2));
+			wprintw(baseWin, "%s", "___________");
+			wattron(baseWin, COLOR_PAIR(11));
+			wprintw(baseWin, "%s", "./~~\\.");
+			wattron(baseWin, COLOR_PAIR(2));
+			wprintw(baseWin, "%s", "___________");
+			wattron(baseWin, COLOR_PAIR(8));
+			wprintw(baseWin, "%s", ":");
+
+			mvwprintw(baseWin, 1, 0, "%s", " \\                          / ");
+			mvwprintw(baseWin, 2, 0, "%s", "  \\________________________/ ");
+			mvwprintw(baseWin, 3, 0, "%s", "  (_)                    (_)");
+
+			break;
+	}
+	return baseWin;	// return pointer to newly created window
+}
 
 int main(int argc, char* argv[]) {
 	int rows = 0;
@@ -157,30 +195,53 @@ int main(int argc, char* argv[]) {
 		start_color();	// allow us to use color capabilities
 
 		// define color pairs
-		init_pair(COLOR_BLACK, COLOR_WHITE, COLOR_BLACK);
-		init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
-		init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
-		init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
-		init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
-		init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-		init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
-		init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+		init_pair(0, 0, COLOR_BLACK);
+		init_pair(1, 1, COLOR_BLACK);
+		init_pair(2, 2, COLOR_BLACK);
+		init_pair(3, 3, COLOR_BLACK);
+		init_pair(4, 4, COLOR_BLACK);
+		init_pair(5, 5, COLOR_BLACK);
+		init_pair(6, 6, COLOR_BLACK);
+		init_pair(7, 7, COLOR_BLACK);
+		init_pair(8, 8, COLOR_BLACK);
+		init_pair(9, 9, COLOR_BLACK);
+		init_pair(10, 10, COLOR_BLACK);
+		init_pair(11, 11, COLOR_BLACK);
+		init_pair(12, 12, COLOR_BLACK);
+		init_pair(13, 13, COLOR_BLACK);
+		init_pair(14, 14, COLOR_BLACK);
+		init_pair(15, 15, COLOR_BLACK);
 	} else {
 		printf("Exiting: terminal does not support colors\n");
 		finish();
 		return 1;
 	}
 
-	getmaxyx(stdscr, row, col);
-	centerx = col / 2;
+	// get max rows/cols
+	getmaxyx(stdscr, rows, cols);
 
-	printw("Hello World!"); // print to stdscr
+	/* char* brown =		"[0;33m"; */
+	/* char* brownDark =	"[1;33m"; */
+	/* char* green =		"[0;32m"; */
+	/* char* greenDark =	"[1;32m"; */
+	/* char* gray =		"[0;38m"; */
+	/* char* reset =		"[0m"; */
 
-	ch = getch();
+	// draw base
+	WINDOW* baseWin = drawBase(baseType);
 
-	mvaddch(5, centerx, ch);
-	refresh();		// update screen
+	refresh();
+	wrefresh(baseWin);
 	getch();
 
 	finish();
+	delwin(baseWin);
+	return 0;
 }
+
+/* void growTree() { */
+/* 	resetGeometry(); */
+/* 	init(); */
+/* 	grow(); */
+/* 	display(); */
+/* } */
