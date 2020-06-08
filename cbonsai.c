@@ -5,12 +5,33 @@
 #include <time.h>
 #include <string.h>
 
+// global variables
+int branches = 0;
+int shoots = 0;
+int branchesMax = 0;
+int shootsMax = 0;
+int shootCounter;
+
+int lifeStart = 28;
+int multiplier = 5;
+int live = 0;
+double timeStep = 0.03;
+
+int leavesSize = 0;
+char* leaves[100];
+
+WINDOW* treeWin;
+WINDOW* baseWin;
+
 void finish() {
 	clear();
 	refresh();
 	endwin();
 
 	curs_set(1);	// make cursor visible again
+
+	delwin(baseWin);
+	delwin(treeWin);
 }
 
 void printHelp() {
@@ -39,7 +60,7 @@ void printHelp() {
 	printf("  -h, --help             show help	\n");
 }
 
-WINDOW* drawBase(int baseType) {
+void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 	int baseWidth, baseHeight;
 	int rows, cols;
 
@@ -55,8 +76,14 @@ WINDOW* drawBase(int baseType) {
 	int baseOriginY = (rows - baseHeight);
 	int baseOriginX = (cols / 2) - (baseWidth / 2);
 
-	// create base window and draw art
-	WINDOW *baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
+	// create windows
+	*baseWinPtr = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
+	*treeWinPtr = newwin(rows - baseHeight, cols, 0, 0);
+
+	WINDOW *baseWin = *baseWinPtr;
+	WINDOW *treeWin = *treeWinPtr;
+
+	// draw art
 	switch(baseType) {
 		case 1:
 			wattron(baseWin, A_BOLD | COLOR_PAIR(8));
@@ -74,9 +101,14 @@ WINDOW* drawBase(int baseType) {
 			mvwprintw(baseWin, 2, 0, "%s", "  \\________________________/ ");
 			mvwprintw(baseWin, 3, 0, "%s", "  (_)                    (_)");
 
+			wattroff(baseWin, A_BOLD);
 			break;
 	}
-	return baseWin;	// return pointer to newly created window
+}
+
+// roll (randomize) a given die
+void roll(int *dice, int mod) {
+	*dice = rand() % mod;
 }
 
 int main(int argc, char* argv[]) {
@@ -84,7 +116,6 @@ int main(int argc, char* argv[]) {
 	int cols = 0;
 	int y,x;
 
-	int live = 0;
 	int infinite = 0;
 	int screensaver = 0;
 
@@ -92,14 +123,11 @@ int main(int argc, char* argv[]) {
 	int termSize = 1;
 	int termColors = 0;
 	int baseType = 1;
-	char *leafStrs = "&";
+	char *leavesInput = "&";
 	char *message;
 	char *geometry;
 
-	double multiplier = 5;
-	int lifeStart = 28;
 
-	double timeStep = 0.03;
 	double timeWait = 4;
 
 	int flag_m = 0;
@@ -160,7 +188,7 @@ int main(int argc, char* argv[]) {
 				baseType = atoi(optarg);
 				break;
 			case 'c':
-				leafStrs = optarg;
+				leavesInput = optarg;
 				break;
 			case 'M':
 				multiplier = atoi(optarg);
@@ -217,9 +245,6 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	// get max rows/cols
-	getmaxyx(stdscr, rows, cols);
-
 	/* char* brown =		"[0;33m"; */
 	/* char* brownDark =	"[1;33m"; */
 	/* char* green =		"[0;32m"; */
@@ -227,21 +252,31 @@ int main(int argc, char* argv[]) {
 	/* char* gray =		"[0;38m"; */
 	/* char* reset =		"[0m"; */
 
-	// draw base
-	WINDOW* baseWin = drawBase(baseType);
+	// delimit leaves on "," and add each token to the leaves[] list
+	char *token = strtok(leavesInput, ",");
+	while (token != NULL) {
+		if (leavesSize < 100) leaves[leavesSize] = token;
+		printf("%s\n", token);
+		token = strtok(NULL, ",");
+		leavesSize++;
+	}
 
-	refresh();
+	// seed tree (no pun intended)
+	srand(seed);
+
+	branchesMax = multiplier * 110;
+	shootsMax = multiplier;
+	shootCounter = rand();
+
+	// create windows and draw base
+	drawWins(baseType, &baseWin, &treeWin);
+
+	// grow trunk
+	int maxY, maxX;
+	getmaxyx(treeWin, maxY, maxX);
 	wrefresh(baseWin);
 	getch();
 
 	finish();
-	delwin(baseWin);
 	return 0;
 }
-
-/* void growTree() { */
-/* 	resetGeometry(); */
-/* 	init(); */
-/* 	grow(); */
-/* 	display(); */
-/* } */
