@@ -46,9 +46,7 @@ void printHelp() {
 	printf("  -i, --infinite         infinite mode\n");
 	printf("  -w, --wait TIME        in infinite mode, time in secs between\n");
 	printf("                           tree generation [default: 4]\n");
-	printf("  -n, --neofetch         neofetch mode\n");
 	printf("  -m, --message STR      attach message next to the tree\n");
-	printf("  -T, --termcolors       use terminal colors\n");
 	printf("  -g, --geometry X,Y     set custom geometry\n");
 	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
 	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
@@ -214,18 +212,16 @@ void branch(int y, int x, int type, int life) {
 			case 0:
 			case 1:
 			case 2: // trunk or shoot
-				if (rand() % 4 == 0) {
+				if (rand() % 4 == 0) wattron(treeWin, COLOR_PAIR(3));
+				else {
+					wattron(treeWin, A_BOLD | COLOR_PAIR(11));
 					wattroff(treeWin, A_BOLD);
-					wattron(treeWin, COLOR_PAIR(3));
 				}
-				else wattron(treeWin, A_BOLD | COLOR_PAIR(11));
 				break;
 			case 3: // dying
-				wattroff(treeWin, A_BOLD);
 				wattron(treeWin, COLOR_PAIR(10));
 				break;
 			case 4: // dead
-				wattroff(treeWin, A_BOLD);
 				wattron(treeWin, COLOR_PAIR(2));
 				break;
 		}
@@ -275,22 +271,17 @@ void branch(int y, int x, int type, int life) {
 }
 
 int main(int argc, char* argv[]) {
-	int rows = 0;
-	int cols = 0;
-	int y,x;
-
 	int infinite = 0;
 	int screensaver = 0;
 
 	int verbosity = 0;
 	int termSize = 1;
-	int termColors = 0;
 	int baseType = 1;
 	char *leavesInput = "&";
 	char *message;
 	char *geometry;
 
-
+	int seed = 0;
 	double timeWait = 4;
 
 	int flag_m = 0;
@@ -303,7 +294,6 @@ int main(int argc, char* argv[]) {
 		{"wait", required_argument, NULL, 'w'},
 		{"screensaver", no_argument, NULL, 'S'},
 		{"message", required_argument, NULL, 'm'},
-		{"termcolors", no_argument, NULL, 'T'},
 		{"geometry", required_argument, NULL, 'g'},
 		{"base", required_argument, NULL, 'b'},
 		{"leaf", required_argument, NULL, 'c'},
@@ -315,13 +305,9 @@ int main(int argc, char* argv[]) {
 		{0, 0, 0, 0}
 	};
 
-	// seed random number generator using time, and generate tree seed
-	srand(time(NULL));
-	int seed = rand();
-
 	// parse arguments
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "lt:iw:Sm:Tg:b:c:M:L:s:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "lt:iw:Sm:g:b:c:M:L:s:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 'l':
 				live = 1;
@@ -340,9 +326,6 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'm':
 				message = optarg;
-				break;
-			case 'T':
-				termColors = 1;
 				break;
 			case 'g':
 				geometry = optarg;
@@ -424,8 +407,6 @@ int main(int argc, char* argv[]) {
 		leavesSize++;
 	}
 
-	// seed tree (no pun intended)
-	srand(seed);
 
 	branchesMax = multiplier * 110;
 	shootsMax = multiplier;
@@ -433,17 +414,33 @@ int main(int argc, char* argv[]) {
 
 	// create windows and draw base
 	drawWins(baseType, &baseWin, &treeWin);
+	wrefresh(baseWin);
 
 	// grow trunk
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
-	wrefresh(baseWin);
-	branch(maxY, (maxX / 2), 0, lifeStart);
 
-	mvwprintw(treeWin, (maxY / 3), (maxX / 2) - 8, "Seed: %d", seed);
-	wrefresh(treeWin);
+	// seed random number generator
+	if (seed == 0) seed = time(NULL);
+	srand(seed);
 
-	sleep(2);
+	void growTree() {
+		branch(maxY, (maxX / 2), 0, lifeStart);
+
+		wattron(treeWin, COLOR_PAIR(7));
+		mvwprintw(treeWin, (maxY / 3), (maxX / 2) - 8, "Seed: %d", seed);
+
+		wrefresh(treeWin);
+		sleep(timeWait);
+		werase(treeWin);
+
+		seed = time(NULL);
+		srand(seed);	// re-seed tree
+	}
+
+	do {
+		growTree();
+	} while (infinite);
 
 	finish();
 	return 0;
