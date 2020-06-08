@@ -111,6 +111,169 @@ void roll(int *dice, int mod) {
 	*dice = rand() % mod;
 }
 
+void branch(int y, int x, int type, int life) {
+	branches++;
+	int dx, dy;
+	int d10;
+
+	roll(&d10, 10);
+
+	while (life > 0) {
+		life--;		// decrement remaining life counter
+		switch (type) {
+			case 0: // trunk: encourage vertical growth; little horizontal growth (-1, 1)
+				if (life < 30 && d10 > 2) dy = -1;
+				else dy = 0;
+				dx = (rand() % 3) - 1;
+				break;
+			case 1: // shootLeft: trend left and little vertical movement
+				if (d10 >= 0 && d10 <= 1) dy = -1;
+				else if (d10 >= 2 && d10 <= 7) dy = 0;
+				else if (d10 >= 8 && d10 <= 9) dy = 1;
+
+				roll(&d10, 10);
+				if (d10 >= 0 && d10 <=1) dx = -2;
+				else if (d10 >= 2 && d10 <= 5) dx = -1;
+				else if (d10 >= 6 && d10 <= 8) dx = 0;
+				else if (d10 >= 9 && d10 <= 9) dx = 1;
+				break;
+			case 2: // shootRight: trend right and little vertical movement
+				if (d10 >= 0 && d10 <= 1) dy = -1;
+				else if (d10 >= 2 && d10 <= 7) dy = 0;
+				else if (d10 >= 8 && d10 <= 9) dy = 1;
+
+				roll(&d10, 10);
+				if (d10 >= 0 && d10 <=1) dx = 2;
+				else if (d10 >= 2 && d10 <= 5) dx = 1;
+				else if (d10 >= 6 && d10 <= 8) dx = 0;
+				else if (d10 >= 9 && d10 <= 9) dx = -1;
+				break;
+			case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
+				if (d10 >= 0 && d10 <=1) dy = -1;
+				else if (d10 >= 2 && d10 <=8) dy = 0;
+				else if (d10 >= 9 && d10 <=9) dy = 1;
+				dx = (rand() % 7) - 3;
+				break;
+			case 4: // dead: fill in surrounding area
+				if (d10 >= 0 && d10 <= 2) dy = -1;
+				else if (d10 >= 3 && d10 <= 6) dy = 0;
+				else if (d10 >= 7 && d10 <= 9) dy = 1;
+				dx = (rand() % 3) - 1;
+				break;
+		}
+
+		// set dy to 0 if we're too close to the ground
+		int maxY, maxX;
+		getmaxyx(treeWin, maxY, maxX);
+		if (dy > 0 && y > (maxY - 5)) dy = 0;
+		if (type == 0 && life < 4) dy = 0;
+
+		// re-branch upon certain conditions
+		if (branches < branchesMax) {
+
+			// near-dead branch should branch into a lot of leaves
+			if (life < 3) branch(y, x, 4, life);
+
+			// dying trunk should branch into a lot of leaves
+			else if (type == 0 && life < (multiplier + 2)) branch(y, x, 3, life);
+
+			// dying shoot should branch into a lot of leaves
+			else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
+
+			// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
+			else if (type == 0 && y < (maxY - multiplier + 1) && ( \
+					(rand() % (16 - multiplier)) == 0 || \
+					(type == 0 && life > multiplier && life % multiplier == 0)
+					) ) {
+
+				// if trunk is branching and not about to die, create another trunk
+				if ((rand() % 3 == 0) && life > 7) branch(y, x, 0, life);
+
+				// otherwise create a shoot
+				else if (shoots < shootsMax) {
+					int shootLife = (life + multiplier - 2);
+					if (shootLife < 0) shootLife = 0;
+
+					// first shoot is randomly directed
+					mvwprintw(treeWin, 0, 0, "%d", shoots);
+					shoots++;
+					shootCounter++;
+
+					// create shoot
+					branch(y, x, (shootCounter % 2) + 1, shootLife);
+				}
+			}
+		}
+
+		// move in x and y directions
+		x = (x + dx);
+		y = (y + dy);
+
+		// choose color
+		switch(type) {
+			case 0:
+			case 1:
+			case 2: // trunk or shoot
+				if (rand() % 4 == 0) {
+					wattroff(treeWin, A_BOLD);
+					wattron(treeWin, COLOR_PAIR(3));
+				}
+				else wattron(treeWin, A_BOLD | COLOR_PAIR(11));
+				break;
+			case 3: // dying
+				wattroff(treeWin, A_BOLD);
+				wattron(treeWin, COLOR_PAIR(10));
+				break;
+			case 4: // dead
+				wattroff(treeWin, A_BOLD);
+				wattron(treeWin, COLOR_PAIR(2));
+				break;
+		}
+
+		// choose string to use for this branch
+		char *branchChar = malloc(100);
+		if (life < 4) strcpy(branchChar, leaves[rand() % leavesSize]);
+		else {
+			switch(type) {
+				case 0:
+					if (dy == 0) strcpy(branchChar, "/~");
+					else if (dx < 0) strcpy(branchChar, "\\");
+					else if (dx == 0) strcpy(branchChar, "/|");
+					else if (dx > 0) strcpy(branchChar, "/");
+					break;
+				case 1:
+					if (dy > 0) strcpy(branchChar, "/");
+					else if (dy == 0) strcpy(branchChar, "\\_");
+					else if (dx < 0) strcpy(branchChar, "\\|");
+					else if (dx == 0) strcpy(branchChar, "/|");
+					else if (dx > 0) strcpy(branchChar, "/");
+					break;
+				case 2:
+					if (dy > 0) strcpy(branchChar, "\\");
+					else if (dy == 0) strcpy(branchChar, "_/");
+					else if (dx < 0) strcpy(branchChar, "\\|");
+					else if (dx == 0) strcpy(branchChar, "/|");
+					else if (dx > 0) strcpy(branchChar, "/");
+					break;
+			}
+		}
+
+		mvwprintw(treeWin, y, x, "%s", branchChar);
+		free(branchChar);
+
+		// if live, show progress
+		if (live) {
+			struct timespec tm1, tm2;
+			tm1.tv_sec = 0;
+			tm1.tv_nsec = (timeStep * 100);
+			wrefresh(treeWin);
+			/* nanosleep(&tm1, &tm2); */
+			usleep(30000);
+		}
+
+	}
+}
+
 int main(int argc, char* argv[]) {
 	int rows = 0;
 	int cols = 0;
@@ -275,7 +438,12 @@ int main(int argc, char* argv[]) {
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
 	wrefresh(baseWin);
-	getch();
+	branch(maxY, (maxX / 2), 0, lifeStart);
+
+	mvwprintw(treeWin, (maxY / 3), (maxX / 2) - 8, "Seed: %d", seed);
+	wrefresh(treeWin);
+
+	sleep(2);
 
 	finish();
 	return 0;
