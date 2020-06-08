@@ -26,4 +26,4 @@ cbonsai
 
 ## Inspiration
 
-This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of  [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash`. `cbonsai` is now written in `C` with additional improvements and continuing development. [bonsai.sh] itself is a port of [this bonsai tree generator](http://andai.tv/bonsai/), written in JS.
+This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of  [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash`. `cbonsai` is now written in `C` with additional improvements and continuing development. `bonsai.sh` itself is a port of [this bonsai tree generator](http://andai.tv/bonsai/), written in JS.
