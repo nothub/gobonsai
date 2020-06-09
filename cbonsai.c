@@ -201,9 +201,9 @@ void branch(int y, int x, int type, int life) {
 			else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
 
 			// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-			else if (type == 0 && y < (maxY - multiplier + 1) && ( \
+			else if (type == 0 && y < (maxY - multiplier) && ( \
 					(rand() % (16 - multiplier)) == 0 || \
-					(type == 0 && life > multiplier && life % multiplier == 0)
+					(life > multiplier && life % multiplier == 0)
 					) ) {
 
 				// if trunk is branching and not about to die, create another trunk
@@ -290,7 +290,7 @@ void branch(int y, int x, int type, int life) {
 			tm1.tv_nsec = (timeStep * 100);
 			wrefresh(treeWin);
 			/* nanosleep(&tm1, &tm2); */
-			usleep(30000);
+			usleep(timeStep * 1000000);
 		}
 
 	}
