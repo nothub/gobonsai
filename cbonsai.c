@@ -12,10 +12,11 @@ int branchesMax = 0;
 int shootsMax = 0;
 int shootCounter;
 
-int lifeStart = 28;
+int lifeStart = 34;
 int multiplier = 5;
 int live = 0;
 double timeStep = 0.03;
+int verbosity = 0;
 
 int leavesSize = 0;
 char* leaves[100];
@@ -113,17 +114,37 @@ void branch(int y, int x, int type, int life) {
 	branches++;
 	int dx, dy;
 	int d10;
-
-	roll(&d10, 10);
+	int age;
 
 	while (life > 0) {
 		life--;		// decrement remaining life counter
+		age = lifeStart - life;
+		roll(&d10, 10);	// randomize growth
+
 		switch (type) {
-			case 0: // trunk: encourage vertical growth; little horizontal growth (-1, 1)
-				if (life < 30 && d10 > 2) dy = -1;
-				else dy = 0;
-				dx = (rand() % 3) - 1;
+			case 0: // trunk
+
+				// new or dead trunk
+				if (age <= 2 || life < 4) {
+					dy = 0;
+					dx = (rand() % 3) - 1;
+				}
+				// young trunk should grow wide
+				else if (age < (multiplier * 3)) {
+
+					// every (multiplier * 0.8) steps, raise tree to next level
+					if (age % (int) (multiplier * 0.5) == 0) dy = -1;
+					else dy = 0;
+					dx = (rand() % 5) - 2;
+				}
+				// middle-aged trunk
+				else {
+					if (d10 > 2) dy = -1;
+					else dy = 0;
+					dx = (rand() % 3) - 1;
+				}
 				break;
+
 			case 1: // shootLeft: trend left and little vertical movement
 				if (d10 >= 0 && d10 <= 1) dy = -1;
 				else if (d10 >= 2 && d10 <= 7) dy = 0;
@@ -163,11 +184,9 @@ void branch(int y, int x, int type, int life) {
 				break;
 		}
 
-		// set dy to 0 if we're too close to the ground
 		int maxY, maxX;
 		getmaxyx(treeWin, maxY, maxX);
-		if (dy > 0 && y > (maxY - 5)) dy = 0;
-		if (type == 0 && life < 4) dy = 0;
+		if (dy > 0 && y > (maxY - multiplier)) dy--; // reduce dy if too close to the ground
 
 		// re-branch upon certain conditions
 		if (branches < branchesMax) {
@@ -192,13 +211,13 @@ void branch(int y, int x, int type, int life) {
 
 				// otherwise create a shoot
 				else if (shoots < shootsMax) {
-					int shootLife = (life + multiplier - 2);
+					int shootLife = (life + multiplier - 1);
 					if (shootLife < 0) shootLife = 0;
 
 					// first shoot is randomly directed
-					mvwprintw(treeWin, 0, 0, "%d", shoots);
 					shoots++;
 					shootCounter++;
+					if (verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
 
 					// create shoot
 					branch(y, x, (shootCounter % 2) + 1, shootLife);
@@ -207,6 +226,10 @@ void branch(int y, int x, int type, int life) {
 		}
 
 		// move in x and y directions
+		if (verbosity > 0) {
+			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
+			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
+		}
 		x = (x + dx);
 		y = (y + dy);
 
@@ -216,14 +239,13 @@ void branch(int y, int x, int type, int life) {
 			case 1:
 			case 2: // trunk or shoot
 				if (rand() % 4 == 0) wattron(treeWin, COLOR_PAIR(3));
-				else {
-					wattron(treeWin, A_BOLD | COLOR_PAIR(11));
-					wattroff(treeWin, A_BOLD);
-				}
+				else wattron(treeWin, A_BOLD | COLOR_PAIR(11));
 				break;
+
 			case 3: // dying
 				wattron(treeWin, COLOR_PAIR(10));
 				break;
+
 			case 4: // dead
 				wattron(treeWin, COLOR_PAIR(2));
 				break;
@@ -259,6 +281,7 @@ void branch(int y, int x, int type, int life) {
 
 		mvwprintw(treeWin, y, x, "%s", branchChar);
 		free(branchChar);
+		wattroff(treeWin, A_BOLD);
 
 		// if live, show progress
 		if (live) {
@@ -277,7 +300,6 @@ int main(int argc, char* argv[]) {
 	int infinite = 0;
 	int screensaver = 0;
 
-	int verbosity = 0;
 	int termSize = 1;
 	int baseType = 1;
 	char *leavesInput = "&";
