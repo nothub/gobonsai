@@ -35,9 +35,9 @@ void finish() {
 }
 
 void printHelp() {
-	printf("Usage: bonsai [OPTIONS]\n");
+	printf("Usage: cbonsai [OPTIONS]\n");
 	printf("\n");
-	printf("bonsai.sh is a beautifully random bonsai tree generator.\n");
+	printf("cbonsai is a beautifully random bonsai tree generator.\n");
 	printf("\n");
 	printf("optional args:\n");
 	printf("  -l, --live             live mode\n");
@@ -64,7 +64,7 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 
 	switch(baseType) {
 		case 1:
-			baseWidth = 30;
+			baseWidth = 31;
 			baseHeight = 4;
 			break;
 	}
@@ -89,15 +89,15 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 			wattron(baseWin, COLOR_PAIR(2));
 			wprintw(baseWin, "%s", "___________");
 			wattron(baseWin, COLOR_PAIR(11));
-			wprintw(baseWin, "%s", "./~~\\.");
+			wprintw(baseWin, "%s", "./~~~\\.");
 			wattron(baseWin, COLOR_PAIR(2));
 			wprintw(baseWin, "%s", "___________");
 			wattron(baseWin, COLOR_PAIR(8));
 			wprintw(baseWin, "%s", ":");
 
-			mvwprintw(baseWin, 1, 0, "%s", " \\                          / ");
-			mvwprintw(baseWin, 2, 0, "%s", "  \\________________________/ ");
-			mvwprintw(baseWin, 3, 0, "%s", "  (_)                    (_)");
+			mvwprintw(baseWin, 1, 0, "%s", " \\                           / ");
+			mvwprintw(baseWin, 2, 0, "%s", "  \\_________________________/ ");
+			mvwprintw(baseWin, 3, 0, "%s", "  (_)                     (_)");
 
 			wattroff(baseWin, A_BOLD);
 			break;
@@ -135,6 +135,7 @@ void branch(int y, int x, int type, int life) {
 				else if (d10 >= 6 && d10 <= 8) dx = 0;
 				else if (d10 >= 9 && d10 <= 9) dx = 1;
 				break;
+
 			case 2: // shootRight: trend right and little vertical movement
 				if (d10 >= 0 && d10 <= 1) dy = -1;
 				else if (d10 >= 2 && d10 <= 7) dy = 0;
@@ -146,12 +147,14 @@ void branch(int y, int x, int type, int life) {
 				else if (d10 >= 6 && d10 <= 8) dx = 0;
 				else if (d10 >= 9 && d10 <= 9) dx = -1;
 				break;
+
 			case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
 				if (d10 >= 0 && d10 <=1) dy = -1;
 				else if (d10 >= 2 && d10 <=8) dy = 0;
 				else if (d10 >= 9 && d10 <=9) dy = 1;
 				dx = (rand() % 7) - 3;
 				break;
+
 			case 4: // dead: fill in surrounding area
 				if (d10 >= 0 && d10 <= 2) dy = -1;
 				else if (d10 >= 3 && d10 <= 6) dy = 0;
