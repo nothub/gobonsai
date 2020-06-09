@@ -450,23 +450,26 @@ int main(int argc, char* argv[]) {
 	srand(seed);
 
 	void growTree() {
-		branch(maxY, (maxX / 2), 0, lifeStart);
+		branches = 0;
+		shoots = 0;
 
-		wattron(treeWin, COLOR_PAIR(7));
-		mvwprintw(treeWin, (maxY / 3), (maxX / 2) - 8, "Seed: %d", seed);
-
-		wrefresh(treeWin);
-		sleep(timeWait);
 		werase(treeWin);
 
+		if (verbosity > 0) mvwprintw(treeWin, 3, 5, "seed: %d", seed);
+		branch(maxY - 1, (maxX / 2), 0, lifeStart);	// grow tree trunk
+
+		wrefresh(treeWin);	// show what's happened
+		if (infinite) sleep(timeWait);
+
 		seed = time(NULL);
-		srand(seed);	// re-seed tree
+		srand(time(NULL));	// re-seed tree
 	}
 
 	do {
 		growTree();
 	} while (infinite);
 
+	wgetch(treeWin);	// quit upon any character
 	finish();
 	return 0;
 }
