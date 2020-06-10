@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
+#include <panel.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <time.h>
@@ -17,12 +18,13 @@ int multiplier = 5;
 int live = 0;
 double timeStep = 0.03;
 int verbosity = 0;
+char *message = NULL;
 
 int leavesSize = 0;
 char* leaves[100];
 
-WINDOW* treeWin;
-WINDOW* baseWin;
+WINDOW *baseWin, *treeWin, *messageBorderWin, *messageWin;
+PANEL *myPanels[4];
 
 void finish() {
 	clear();
@@ -290,7 +292,11 @@ void branch(int y, int x, int type, int life) {
 			struct timespec tm1, tm2;
 			tm1.tv_sec = 0;
 			tm1.tv_nsec = (timeStep * 100);
-			wrefresh(treeWin);
+
+			// display changes
+			update_panels();
+			doupdate();
+
 			/* nanosleep(&tm1, &tm2); */
 			usleep(timeStep * 1000000);
 		}
@@ -305,7 +311,6 @@ int main(int argc, char* argv[]) {
 	int termSize = 1;
 	int baseType = 1;
 	char *leavesInput = "&";
-	char *message;
 	char *geometry;
 
 	int seed = 0;
@@ -352,7 +357,7 @@ int main(int argc, char* argv[]) {
 				screensaver = 1;
 				break;
 			case 'm':
-				message = optarg;
+				message = strdup(optarg);
 				break;
 			case 'g':
 				geometry = optarg;
@@ -434,18 +439,44 @@ int main(int argc, char* argv[]) {
 		leavesSize++;
 	}
 
-
 	branchesMax = multiplier * 110;
 	shootsMax = multiplier;
 	shootCounter = rand();
 
-	// create windows and draw base
+	// define windows and draw base
 	drawWins(baseType, &baseWin, &treeWin);
-	wrefresh(baseWin);
 
-	// grow trunk
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
+
+	// create message window
+	if (message != NULL) {
+
+		// determine dimensions of window box
+		int boxWidth = 6;
+		int boxHeight = 2;
+		int boxArea = boxWidth * boxHeight;
+		while (boxArea < strlen(message)) {
+			boxWidth += 3;
+			boxHeight += 1;
+			boxArea = boxWidth * boxHeight;
+		}
+
+		// create separate box for message border
+		messageBorderWin = newwin(boxHeight + 2, boxWidth + 2, (maxY * 0.8) - 1, (maxX * 0.75) - 1);
+		messageWin = newwin(boxHeight, boxWidth, maxY * 0.8, maxX * 0.75);
+
+		// draw boxes and message
+		wattron(messageBorderWin, COLOR_PAIR(8));
+		box(messageBorderWin, 0, 0);
+		mvwprintw(messageWin, 0, 0, "%s", message);
+	}
+
+	// create panels
+	myPanels[0] = new_panel(baseWin);
+	myPanels[1] = new_panel(treeWin);
+	myPanels[2] = new_panel(messageBorderWin);
+	myPanels[3] = new_panel(messageWin);
 
 	// seed random number generator
 	if (seed == 0) seed = time(NULL);
@@ -460,7 +491,10 @@ int main(int argc, char* argv[]) {
 		if (verbosity > 0) mvwprintw(treeWin, 3, 5, "seed: %d", seed);
 		branch(maxY - 1, (maxX / 2), 0, lifeStart);	// grow tree trunk
 
-		wrefresh(treeWin);	// show what's happened
+		// display changes
+		update_panels();
+		doupdate();
+
 		if (infinite) sleep(timeWait);
 
 		seed = time(NULL);
@@ -471,7 +505,9 @@ int main(int argc, char* argv[]) {
 		growTree();
 	} while (infinite);
 
-	wgetch(treeWin);	// quit upon any character
+	free(message);
+
+	wgetch(treeWin);	// quit upon any input
 	finish();
 	return 0;
 }
