@@ -19,7 +19,6 @@ int live = 0;
 double timeStep = 0.03;
 int verbosity = 0;
 char *message = NULL;
-
 int leavesSize = 0;
 char* leaves[100];
 
@@ -33,6 +32,7 @@ void finish() {
 
 	curs_set(1);	// make cursor visible again
 
+	free(message);
 	delwin(baseWin);
 	delwin(treeWin);
 }
@@ -316,9 +316,6 @@ int main(int argc, char* argv[]) {
 	int seed = 0;
 	double timeWait = 4;
 
-	int flag_m = 0;
-	int c;
-
 	struct option long_options[] = {
 		{"live", no_argument, NULL, 'l'},
 		{"time", required_argument, NULL, 't'},
@@ -339,6 +336,7 @@ int main(int argc, char* argv[]) {
 
 	// parse arguments
 	int option_index = 0;
+	int c;
 	while ((c = getopt_long(argc, argv, "lt:iw:Sm:g:b:c:M:L:s:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 'l':
@@ -366,7 +364,7 @@ int main(int argc, char* argv[]) {
 				baseType = atoi(optarg);
 				break;
 			case 'c':
-				leavesInput = optarg;
+				leavesInput = strdup(optarg);
 				break;
 			case 'M':
 				multiplier = atoi(optarg);
@@ -504,8 +502,6 @@ int main(int argc, char* argv[]) {
 	do {
 		growTree();
 	} while (infinite);
-
-	free(message);
 
 	wgetch(treeWin);	// quit upon any input
 	finish();
