@@ -453,68 +453,86 @@ int main(int argc, char* argv[]) {
 		// determine dimensions of window box
 		int boxWidth = 0;
 		int boxHeight = 0;
-		if (strlen(message) <= 30) {
+		if (strlen(message) <= (0.25 * maxX)) {
 			boxWidth = strlen(message);
 			boxHeight = 1;
 		} else {
 			boxWidth = 0.25 * maxX;
 			boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth * 0.9);
 		}
+		if (verbosity) mvwprintw(treeWin, 5, 5, "boxWidth: %0d", boxWidth);
 
 		// create separate box for message border
 		messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.8) - 1, (maxX * 0.7) - 2);
-		messageWin = newwin(boxHeight, boxWidth, maxY * 0.8, maxX * 0.7);
+		messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.8, maxX * 0.7);
 
-		int i = 0;
-		int linePosition = 0;
+		// draw box
+		wattron(messageBorderWin, COLOR_PAIR(8));
+		box(messageBorderWin, 0, 0);
+
+		// word wrap message as it is written
+		unsigned int i = 0;
+		int linePosition = 1;
 		int wordLength = 0;
 		char wordBuffer[500];
 		wordBuffer[0] = '\0';
-
-		// word wrap message as it is written
 		while (true) {
-			mvwprintw(treeWin, 10, 5, "index: %d", i);
-			if (message[i] != ' ' && message[i] != '\0') { // this char is not a space
-				if (i < sizeof(wordBuffer)) strncat(wordBuffer, &message[i], 1); // append value at message[i] to wordBuffer
+			if (verbosity) {
+				mvwprintw(treeWin, 9, 5, "index: %03d", i);
+				mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
+			}
+
+			// if char is not a space or null char
+			if (message[i] != ' ' && message[i] != '\0' && i < sizeof(wordBuffer)) {
+				strncat(wordBuffer, &message[i], 1); // append message[i] to wordBuffer
 				wordLength++;
 				linePosition++;
 			}
-			else if (message[i] == ' ' || message[i] == '\0') { // this char is a space
 
-				// if line can fit word
-				if (linePosition + wordLength + 1 <= boxWidth) {
-					wprintw(messageWin, "%s ", wordBuffer);	// print word
+			// if char is space or null char
+			else if (message[i] == ' ' || message[i] == '\0') {
+
+				// if current line can fit word, add word to current line
+				if (linePosition - 1 <= boxWidth) {
+					wprintw(messageWin, "%s", wordBuffer);	// print word
 					wordLength = 0;		// reset word length
 					wordBuffer[0] = '\0';	// clear word buffer
+					if (linePosition < (boxWidth - 2)) {
+						if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d, wordLength: %02d", linePosition, wordLength);
+						wprintw(messageWin, "%s", " ");
+						linePosition++;
+					}
 				}
 
-				// if word can't fit within a single line
+				// if word can't fit within a single line, just print it
 				else if (wordLength > boxWidth) {
 					wprintw(messageWin, "%s ", wordBuffer);	// print word
 					wordLength = 0;		// reset word length
 					wordBuffer[0] = '\0';	// clear word buffer
-					linePosition = 0;
+
+					// our line position on this new line is the x coordinate
+					int y;
+					getyx(messageWin, y, linePosition);
 				}
 
-				// line can't fit word
+				// if current line can't fit word, go to next line
 				else {
+					if (verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
 					wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
+					linePosition = wordLength;	// reset line position
 					wordLength = 0;		// reset word length
 					wordBuffer[0] = '\0';	// clear word buffer
-					linePosition = 0;	// reset line position
 				}
 			}
 			else {
 				printf("%s", "Error while parsing message");
 				return 1;
 			}
-			if (message[i] == '\0') break;	// quit when we reach the end of the message
+
+			if (verbosity) mvwprintw(treeWin, 11, 5, "word buffer: |% 12s|", wordBuffer);
+			if (message[i] == '\0' || i > strlen(message)) break;	// quit when we reach the end of the message
 			i++;
 		}
-
-		// draw boxes and message
-		wattron(messageBorderWin, COLOR_PAIR(8));
-		box(messageBorderWin, 0, 0);
 	}
 
 	// create panels
