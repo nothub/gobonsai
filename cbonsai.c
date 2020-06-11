@@ -62,13 +62,18 @@ void printHelp() {
 }
 
 void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
-	int baseWidth, baseHeight;
+	int baseWidth = 0;
+	int baseHeight = 0;
 	int rows, cols;
 
 	switch(baseType) {
 		case 1:
 			baseWidth = 31;
 			baseHeight = 4;
+			break;
+		case 2:
+			baseWidth = 15;
+			baseHeight = 3;
 			break;
 	}
 
@@ -103,6 +108,21 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 			mvwprintw(baseWin, 3, 0, "%s", "  (_)                     (_)");
 
 			wattroff(baseWin, A_BOLD);
+			break;
+		case 2:
+			wattron(baseWin, COLOR_PAIR(8));
+			wprintw(baseWin, "%s", "(");
+			wattron(baseWin, COLOR_PAIR(2));
+			wprintw(baseWin, "%s", "---");
+			wattron(baseWin, COLOR_PAIR(11));
+			wprintw(baseWin, "%s", "./~~~\\.");
+			wattron(baseWin, COLOR_PAIR(2));
+			wprintw(baseWin, "%s", "---");
+			wattron(baseWin, COLOR_PAIR(8));
+			wprintw(baseWin, "%s", ")");
+
+			mvwprintw(baseWin, 1, 0, "%s", " (           ) ");
+			mvwprintw(baseWin, 2, 0, "%s", "  (_________)  ");
 			break;
 	}
 }
