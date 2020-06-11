@@ -447,27 +447,74 @@ int main(int argc, char* argv[]) {
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
 
-	// create message window
+	// draw message
 	if (message != NULL) {
 
 		// determine dimensions of window box
-		int boxWidth = 6;
-		int boxHeight = 2;
-		int boxArea = boxWidth * boxHeight;
-		while (boxArea < strlen(message)) {
-			boxWidth += 3;
-			boxHeight += 1;
-			boxArea = boxWidth * boxHeight;
+		int boxWidth = 0;
+		int boxHeight = 0;
+		if (strlen(message) <= 30) {
+			boxWidth = strlen(message);
+			boxHeight = 1;
+		} else {
+			boxWidth = 0.25 * maxX;
+			boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth * 0.9);
 		}
 
 		// create separate box for message border
-		messageBorderWin = newwin(boxHeight + 2, boxWidth + 2, (maxY * 0.8) - 1, (maxX * 0.75) - 1);
-		messageWin = newwin(boxHeight, boxWidth, maxY * 0.8, maxX * 0.75);
+		messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.8) - 1, (maxX * 0.7) - 2);
+		messageWin = newwin(boxHeight, boxWidth, maxY * 0.8, maxX * 0.7);
+
+		int i = 0;
+		int linePosition = 0;
+		int wordLength = 0;
+		char wordBuffer[500];
+		wordBuffer[0] = '\0';
+
+		// word wrap message as it is written
+		while (true) {
+			mvwprintw(treeWin, 10, 5, "index: %d", i);
+			if (message[i] != ' ' && message[i] != '\0') { // this char is not a space
+				if (i < sizeof(wordBuffer)) strncat(wordBuffer, &message[i], 1); // append value at message[i] to wordBuffer
+				wordLength++;
+				linePosition++;
+			}
+			else if (message[i] == ' ' || message[i] == '\0') { // this char is a space
+
+				// if line can fit word
+				if (linePosition + wordLength + 1 <= boxWidth) {
+					wprintw(messageWin, "%s ", wordBuffer);	// print word
+					wordLength = 0;		// reset word length
+					wordBuffer[0] = '\0';	// clear word buffer
+				}
+
+				// if word can't fit within a single line
+				else if (wordLength > boxWidth) {
+					wprintw(messageWin, "%s ", wordBuffer);	// print word
+					wordLength = 0;		// reset word length
+					wordBuffer[0] = '\0';	// clear word buffer
+					linePosition = 0;
+				}
+
+				// line can't fit word
+				else {
+					wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
+					wordLength = 0;		// reset word length
+					wordBuffer[0] = '\0';	// clear word buffer
+					linePosition = 0;	// reset line position
+				}
+			}
+			else {
+				printf("%s", "Error while parsing message");
+				return 1;
+			}
+			if (message[i] == '\0') break;	// quit when we reach the end of the message
+			i++;
+		}
 
 		// draw boxes and message
 		wattron(messageBorderWin, COLOR_PAIR(8));
 		box(messageBorderWin, 0, 0);
-		mvwprintw(messageWin, 0, 0, "%s", message);
 	}
 
 	// create panels
