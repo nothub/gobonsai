@@ -133,14 +133,14 @@ void roll(int *dice, int mod) { *dice = rand() % mod; }
 
 int branch(int y, int x, int type, int life) {
 	branches++;
-	int dx, dy;
-	int d10;
-	int age;
+	int dx = 0;
+	int dy = 0;
+	int dice = 0;
+	int age = 0;
 
 	while (life > 0) {
 		life--;		// decrement remaining life counter
 		age = lifeStart - life;
-		roll(&d10, 10); // randomize growth
 
 		switch (type) {
 			case 0: // trunk
@@ -160,47 +160,60 @@ int branch(int y, int x, int type, int life) {
 				}
 				// middle-aged trunk
 				else {
-					if (d10 > 2) dy = -1;
+					roll(&dice, 10);
+					if (dice > 2) dy = -1;
 					else dy = 0;
 					dx = (rand() % 3) - 1;
 				}
 				break;
 
 			case 1: // left shoot: trend left and little vertical movement
-				if (d10 >= 0 && d10 <= 1) dy = -1;
-				else if (d10 >= 2 && d10 <= 7) dy = 0;
-				else if (d10 >= 8 && d10 <= 9) dy = 1;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <= 1) dy = -1;
+				else if (dice >= 2 && dice <= 7) dy = 0;
+				else if (dice >= 8 && dice <= 9) dy = 1;
 
-				roll(&d10, 10);
-				if (d10 >= 0 && d10 <=1) dx = -2;
-				else if (d10 >= 2 && d10 <= 5) dx = -1;
-				else if (d10 >= 6 && d10 <= 8) dx = 0;
-				else if (d10 >= 9 && d10 <= 9) dx = 1;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <=1) dx = -2;
+				else if (dice >= 2 && dice <= 5) dx = -1;
+				else if (dice >= 6 && dice <= 8) dx = 0;
+				else if (dice >= 9 && dice <= 9) dx = 1;
 				break;
 
 			case 2: // right shoot: trend right and little vertical movement
-				if (d10 >= 0 && d10 <= 1) dy = -1;
-				else if (d10 >= 2 && d10 <= 7) dy = 0;
-				else if (d10 >= 8 && d10 <= 9) dy = 1;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <= 1) dy = -1;
+				else if (dice >= 2 && dice <= 7) dy = 0;
+				else if (dice >= 8 && dice <= 9) dy = 1;
 
-				roll(&d10, 10);
-				if (d10 >= 0 && d10 <=1) dx = 2;
-				else if (d10 >= 2 && d10 <= 5) dx = 1;
-				else if (d10 >= 6 && d10 <= 8) dx = 0;
-				else if (d10 >= 9 && d10 <= 9) dx = -1;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <=1) dx = 2;
+				else if (dice >= 2 && dice <= 5) dx = 1;
+				else if (dice >= 6 && dice <= 8) dx = 0;
+				else if (dice >= 9 && dice <= 9) dx = -1;
 				break;
 
 			case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
-				if (d10 >= 0 && d10 <=1) dy = -1;
-				else if (d10 >= 2 && d10 <=8) dy = 0;
-				else if (d10 >= 9 && d10 <=9) dy = 1;
-				dx = (rand() % 7) - 3;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <=1) dy = -1;
+				else if (dice >= 2 && dice <=8) dy = 0;
+				else if (dice >= 9 && dice <=9) dy = 1;
+
+				roll(&dice, 15);
+				if (dice >= 0 && dice <=0) dx = -3;
+				else if (dice >= 1 && dice <= 2) dx = -2;
+				else if (dice >= 3 && dice <= 5) dx = -1;
+				else if (dice >= 6 && dice <= 8) dx = 0;
+				else if (dice >= 9 && dice <= 11) dx = 1;
+				else if (dice >= 12 && dice <= 13) dx = 2;
+				else if (dice >= 14 && dice <= 14) dx = 3;
 				break;
 
 			case 4: // dead: fill in surrounding area
-				if (d10 >= 0 && d10 <= 2) dy = -1;
-				else if (d10 >= 3 && d10 <= 6) dy = 0;
-				else if (d10 >= 7 && d10 <= 9) dy = 1;
+				roll(&dice, 10);
+				if (dice >= 0 && dice <= 2) dy = -1;
+				else if (dice >= 3 && dice <= 6) dy = 0;
+				else if (dice >= 7 && dice <= 9) dy = 1;
 				dx = (rand() % 3) - 1;
 				break;
 		}
