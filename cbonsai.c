@@ -14,7 +14,7 @@ int shootsMax = 0;
 int shootCounter;
 
 int baseType = 1;
-int lifeStart = 34;
+int lifeStart = 32;
 int multiplier = 5;
 int live = 0;
 double timeStep = 0.03;
@@ -35,7 +35,7 @@ void finish() {
 	clear();
 	refresh();
 	endwin();	// delete ncurses screen
-	resetty();	// restore terminal settings
+	curs_set(1);
 }
 
 void printHelp() {
@@ -565,12 +565,10 @@ int main(int argc, char* argv[]) {
 
 	void growTree() {
 		int maxY, maxX;
-		getmaxyx(stdscr, maxY, maxX);
+		getmaxyx(treeWin, maxY, maxX);
 
 		branches = 0;
 		shoots = 0;
-
-		werase(treeWin);
 
 		if (verbosity > 0) {
 			mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
@@ -589,10 +587,11 @@ int main(int argc, char* argv[]) {
 	do {
 		init();
 		growTree();
-		if (infinite) sleep(timeWait);
-		erase();
-		initscr();
-		refresh();
+		if (infinite) {
+			sleep(timeWait);
+			clear();
+			refresh();
+		}
 	} while (infinite);
 
 	wgetch(treeWin);	// quit upon any input
