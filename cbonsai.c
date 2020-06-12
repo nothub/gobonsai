@@ -276,7 +276,8 @@ int branch(int y, int x, int type, int life) {
 
 		// choose string to use for this branch
 		char *branchChar = malloc(100);
-		if (life < 4) strcpy(branchChar, leaves[rand() % leavesSize]);
+		strcpy(branchChar, "?");	// fallback character
+		if (life < 4 || type >= 3) strcpy(branchChar, leaves[rand() % leavesSize]);
 		else {
 			switch(type) {
 				case 0: // trunk
