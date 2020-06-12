@@ -156,7 +156,13 @@ int branch(int y, int x, int type, int life) {
 					// every (multiplier * 0.8) steps, raise tree to next level
 					if (age % (int) (multiplier * 0.5) == 0) dy = -1;
 					else dy = 0;
-					dx = (rand() % 5) - 2;
+
+					roll(&dice, 10);
+					if (dice >= 0 && dice <=0) dx = -2;
+					else if (dice >= 1 && dice <= 3) dx = -1;
+					else if (dice >= 4 && dice <= 5) dx = 0;
+					else if (dice >= 6 && dice <= 8) dx = 1;
+					else if (dice >= 9 && dice <= 9) dx = 2;
 				}
 				// middle-aged trunk
 				else {
