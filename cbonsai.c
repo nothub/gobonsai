@@ -222,7 +222,7 @@ int branch(int y, int x, int type, int life) {
 			else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
 
 			// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-			else if (type == 0 && y < (maxY - multiplier) && ( \
+			else if (type == 0 && y < (maxY - multiplier + 1) && ( \
 					(rand() % (16 - multiplier)) == 0 || \
 					(life > multiplier && life % multiplier == 0)
 					) ) {
@@ -261,16 +261,18 @@ int branch(int y, int x, int type, int life) {
 			case 0:
 			case 1:
 			case 2: // trunk or shoot
-				if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
+				if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
 				else wattron(treeWin, COLOR_PAIR(3));
 				break;
 
 			case 3: // dying
-				wattron(treeWin, COLOR_PAIR(10));
+				if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
+				else wattron(treeWin, COLOR_PAIR(2));
 				break;
 
 			case 4: // dead
-				wattron(treeWin, COLOR_PAIR(2));
+				if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
+				else wattron(treeWin, COLOR_PAIR(10));
 				break;
 		}
 
