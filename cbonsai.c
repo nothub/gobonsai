@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 // global variables
 int branches = 0;
@@ -89,6 +90,10 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 
 	WINDOW *baseWin = *baseWinPtr;
 	WINDOW *treeWin = *treeWinPtr;
+
+	// add windows to array of panels
+	myPanels[0] = new_panel(baseWin);
+	myPanels[1] = new_panel(treeWin);
 
 	// draw art
 	switch(baseType) {
@@ -346,95 +351,128 @@ void branch(int y, int x, int type, int life) {
 }
 
 int drawMessage() {
-	// draw message
+	if (message == NULL) return 1;
+
+	// determine dimensions of window box
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
-	if (message != NULL) {
+	int boxWidth = 0;
+	int boxHeight = 0;
+	if (strlen(message) + 3 <= (0.25 * maxX)) {
+		boxWidth = strlen(message) + 1;
+		boxHeight = 1;
+	} else {
+		boxWidth = 0.25 * maxX;
+		boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth);
+	}
+	if (verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
 
-		// determine dimensions of window box
-		int boxWidth = 0;
-		int boxHeight = 0;
-		if (strlen(message) <= (0.25 * maxX)) {
-			boxWidth = strlen(message);
-			boxHeight = 1;
-		} else {
-			boxWidth = 0.25 * maxX;
-			boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth * 0.9);
+	// create separate box for message border
+	messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
+	messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.7, maxX * 0.7);
+
+	// draw box
+	wattron(messageBorderWin, COLOR_PAIR(8));
+	box(messageBorderWin, 0, 0);
+
+	// assign new windows to array of panels
+	myPanels[2] = new_panel(messageBorderWin);
+	myPanels[3] = new_panel(messageWin);
+
+	// word wrap message as it is written
+	unsigned int i = 0;
+	int linePosition = 0;
+	int wordLength = 0;
+	char wordBuffer[500];
+	wordBuffer[0] = '\0';
+	char thisChar;
+	int messageBoxWidth = boxWidth - 1;
+	while (true) {
+		thisChar = message[i];
+		if (verbosity) {
+			mvwprintw(treeWin, 9, 5, "index: %03d", i);
+			mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
 		}
-		if (verbosity) mvwprintw(treeWin, 5, 5, "boxWidth: %0d", boxWidth);
 
-		// create separate box for message border
-		messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
-		messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.7, maxX * 0.7);
+		// if char is not a space or null char
+		if (!(isspace(thisChar) || thisChar == '\0')) {
+			strncat(wordBuffer, &thisChar, 1); // append thisChar to wordBuffer
+			wordLength++;
+			linePosition++;
+		}
 
-		// draw box
-		wattron(messageBorderWin, COLOR_PAIR(8));
-		box(messageBorderWin, 0, 0);
+		// if char is space or null char
+		else if (isspace(thisChar) || thisChar == '\0') {
 
-		// word wrap message as it is written
-		unsigned int i = 0;
-		int linePosition = 1;
-		int wordLength = 0;
-		char wordBuffer[500];
-		wordBuffer[0] = '\0';
-		while (true) {
-			if (verbosity) {
-				mvwprintw(treeWin, 9, 5, "index: %03d", i);
-				mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
-			}
+			// if current line can fit word, add word to current line
+			if (linePosition <= messageBoxWidth) {
+				wprintw(messageWin, "%s", wordBuffer);	// print word
+				wordLength = 0;		// reset word length
+				wordBuffer[0] = '\0';	// clear word buffer
 
-			// if char is not a space or null char
-			if (message[i] != ' ' && message[i] != '\0' && i < sizeof(wordBuffer)) {
-				strncat(wordBuffer, &message[i], 1); // append message[i] to wordBuffer
-				wordLength++;
-				linePosition++;
-			}
-
-			// if char is space or null char
-			else if (message[i] == ' ' || message[i] == '\0') {
-
-				// if current line can fit word, add word to current line
-				if (linePosition - 1 <= boxWidth) {
-					wprintw(messageWin, "%s", wordBuffer);	// print word
-					wordLength = 0;		// reset word length
-					wordBuffer[0] = '\0';	// clear word buffer
-					if (linePosition < (boxWidth - 2)) {
+				void addSpaces(int count) {
+					// add spaces if there's enough space
+					if (linePosition < (messageBoxWidth - count)) {
 						if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d, wordLength: %02d", linePosition, wordLength);
-						wprintw(messageWin, "%s", " ");
-						linePosition++;
+
+						// add spaces up to width
+						for (int j = 0; j < count; j++) {
+							wprintw(messageWin, "%s", " ");
+							linePosition++;
+						}
 					}
 				}
 
-				// if word can't fit within a single line, just print it
-				else if (wordLength > boxWidth) {
-					wprintw(messageWin, "%s ", wordBuffer);	// print word
-					wordLength = 0;		// reset word length
-					wordBuffer[0] = '\0';	// clear word buffer
-
-					// our line position on this new line is the x coordinate
-					int y;
-					getyx(messageWin, y, linePosition);
+				switch (thisChar) {
+					case ' ':
+						addSpaces(1);
+						break;
+					case '\t':
+						addSpaces(1);
+						break;
+					case '\n':
+						waddch(messageWin, thisChar);
+						linePosition = 0;
+						break;
 				}
 
-				// if current line can't fit word, go to next line
-				else {
-					if (verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
-					wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
-					linePosition = wordLength;	// reset line position
-					wordLength = 0;		// reset word length
-					wordBuffer[0] = '\0';	// clear word buffer
-				}
 			}
+
+			// if word can't fit within a single line, just print it
+			else if (wordLength > messageBoxWidth) {
+				wprintw(messageWin, "%s ", wordBuffer);	// print word
+				wordLength = 0;		// reset word length
+				wordBuffer[0] = '\0';	// clear word buffer
+
+				// our line position on this new line is the x coordinate
+				int y;
+				getyx(messageWin, y, linePosition);
+			}
+
+			// if current line can't fit word, go to next line
 			else {
-				printf("%s", "Error while parsing message");
-				return 1;
+				if (verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
+				wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
+				linePosition = wordLength;	// reset line position
+				wordLength = 0;		// reset word length
+				wordBuffer[0] = '\0';	// clear word buffer
 			}
-
-			if (verbosity) mvwprintw(treeWin, 11, 5, "word buffer: |% 12s|", wordBuffer);
-			if (message[i] == '\0' || i > strlen(message)) break;	// quit when we reach the end of the message
-			i++;
 		}
+		else {
+			printf("%s", "Error while parsing message");
+			return 1;
+		}
+
+		if (verbosity >= 2) {
+			update_panels();
+			doupdate();
+			usleep(100000);
+			mvwprintw(treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
+		}
+		if (thisChar == '\0') break;	// quit when we reach the end of the message
+		i++;
 	}
+	return 0;
 }
 
 void init() {
@@ -444,15 +482,54 @@ void init() {
 	curs_set(0);	// make cursor invisible
 	cbreak();	// don't wait for new line to grab user input
 
-	// define and draw windows
+	// if terminal has color capabilities, use them
+	if (has_colors()) {
+		start_color();
+
+		// define color pairs
+		init_pair(0, 0, COLOR_BLACK);
+		init_pair(1, 1, COLOR_BLACK);
+		init_pair(2, 2, COLOR_BLACK);
+		init_pair(3, 3, COLOR_BLACK);
+		init_pair(4, 4, COLOR_BLACK);
+		init_pair(5, 5, COLOR_BLACK);
+		init_pair(6, 6, COLOR_BLACK);
+		init_pair(7, 7, COLOR_BLACK);
+		init_pair(8, 8, COLOR_BLACK);
+		init_pair(9, 9, COLOR_BLACK);
+		init_pair(10, 10, COLOR_BLACK);
+		init_pair(11, 11, COLOR_BLACK);
+		init_pair(12, 12, COLOR_BLACK);
+		init_pair(13, 13, COLOR_BLACK);
+		init_pair(14, 14, COLOR_BLACK);
+		init_pair(15, 15, COLOR_BLACK);
+	} else {
+		printf("Exiting: terminal does not support colors\n");
+		finish();
+	}
+
+	// define and draw windows, then create panels
 	drawWins(baseType, &baseWin, &treeWin);
 	drawMessage();
+}
 
-	// create panels
-	myPanels[0] = new_panel(baseWin);
-	myPanels[1] = new_panel(treeWin);
-	myPanels[2] = new_panel(messageBorderWin);
-	myPanels[3] = new_panel(messageWin);
+void growTree() {
+	int maxY, maxX;
+	getmaxyx(treeWin, maxY, maxX);
+
+	branches = 0;
+	shoots = 0;
+	shootCounter = rand();
+
+	if (verbosity > 0) {
+		mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
+		mvwprintw(treeWin, 3, 5, "seed: %d", seed);
+	}
+	branch(maxY - 1, (maxX / 2), 0, lifeStart);	// grow tree trunk
+
+	// display changes
+	update_panels();
+	doupdate();
 }
 
 int main(int argc, char* argv[]) {
@@ -538,72 +615,20 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	init();
-
-	// if terminal has color capabilities, use them
-	if (has_colors()) {
-		start_color();	// allow us to use color capabilities
-
-		// define color pairs
-		init_pair(0, 0, COLOR_BLACK);
-		init_pair(1, 1, COLOR_BLACK);
-		init_pair(2, 2, COLOR_BLACK);
-		init_pair(3, 3, COLOR_BLACK);
-		init_pair(4, 4, COLOR_BLACK);
-		init_pair(5, 5, COLOR_BLACK);
-		init_pair(6, 6, COLOR_BLACK);
-		init_pair(7, 7, COLOR_BLACK);
-		init_pair(8, 8, COLOR_BLACK);
-		init_pair(9, 9, COLOR_BLACK);
-		init_pair(10, 10, COLOR_BLACK);
-		init_pair(11, 11, COLOR_BLACK);
-		init_pair(12, 12, COLOR_BLACK);
-		init_pair(13, 13, COLOR_BLACK);
-		init_pair(14, 14, COLOR_BLACK);
-		init_pair(15, 15, COLOR_BLACK);
-	} else {
-		printf("Exiting: terminal does not support colors\n");
-		finish();
-		return 1;
-	}
-
 	// delimit leaves on "," and add each token to the leaves[] list
 	char *token = strtok(leavesInput, ",");
 	while (token != NULL) {
 		if (leavesSize < 100) leaves[leavesSize] = token;
-		printf("%s\n", token);
 		token = strtok(NULL, ",");
 		leavesSize++;
 	}
 
 	branchesMax = multiplier * 110;
 	shootsMax = multiplier;
-	shootCounter = rand();
 
 	// seed random number generator
 	if (seed == 0) seed = time(NULL);
 	srand(seed);
-
-	void growTree() {
-		int maxY, maxX;
-		getmaxyx(treeWin, maxY, maxX);
-
-		branches = 0;
-		shoots = 0;
-
-		if (verbosity > 0) {
-			mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
-			mvwprintw(treeWin, 3, 5, "seed: %d", seed);
-		}
-		branch(maxY - 1, (maxX / 2), 0, lifeStart);	// grow tree trunk
-
-		// display changes
-		update_panels();
-		doupdate();
-
-		seed = time(NULL);
-		srand(time(NULL));	// re-seed tree
-	}
 
 	do {
 		init();
@@ -612,6 +637,10 @@ int main(int argc, char* argv[]) {
 			sleep(timeWait);
 			clear();
 			refresh();
+
+			// seed random number generator
+			seed = time(NULL);
+			srand(seed);
 		}
 	} while (infinite);
 
