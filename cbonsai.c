@@ -14,6 +14,7 @@ int branchesMax = 0;
 int shootsMax = 0;
 int shootCounter;
 
+int seed = 0;
 int baseType = 1;
 int lifeStart = 32;
 int multiplier = 5;
@@ -540,7 +541,6 @@ int main(int argc, char* argv[]) {
 	char *leavesInput = "&";
 	char *geometry;
 
-	int seed = 0;
 	double timeWait = 4;
 
 	struct option long_options[] = {
