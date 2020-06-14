@@ -131,7 +131,7 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 // roll (randomize) a given die
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
-int branch(int y, int x, int type, int life) {
+void branch(int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
 	int dy = 0;
@@ -303,9 +303,9 @@ int branch(int y, int x, int type, int life) {
 			switch(type) {
 				case 0: // trunk
 					if (dy == 0) strcpy(branchChar, "/~");
-					else if (dx < 0) strcpy(branchChar, "\\");
-					else if (dx == 0) strcpy(branchChar, "/|");
-					else if (dx > 0) strcpy(branchChar, "/");
+					else if (dx < 0) strcpy(branchChar, "\\|");
+					else if (dx == 0) strcpy(branchChar, "/|\\");
+					else if (dx > 0) strcpy(branchChar, "|/");
 					break;
 				case 1: // left shoot
 					if (dy > 0) strcpy(branchChar, "\\");
