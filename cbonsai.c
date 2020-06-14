@@ -10,7 +10,6 @@
 // global variables
 int branches = 0;
 int shoots = 0;
-int branchesMax = 0;
 int shootsMax = 0;
 int shootCounter;
 
@@ -234,43 +233,37 @@ void branch(int y, int x, int type, int life) {
 		getmaxyx(treeWin, maxY, maxX);
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
-		// re-branch upon certain conditions
-		if (branches < branchesMax) {
+		// near-dead branch should branch into a lot of leaves
+		if (life < 3) branch(y, x, 4, life);
 
-			// near-dead branch should branch into a lot of leaves
-			if (life < 3) branch(y, x, 4, life);
+		// dying trunk should branch into a lot of leaves
+		else if (type == 0 && life < (multiplier + 2)) branch(y, x, 3, life);
 
-			// dying trunk should branch into a lot of leaves
-			else if (type == 0 && life < (multiplier + 2)) branch(y, x, 3, life);
+		// dying shoot should branch into a lot of leaves
+		else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
 
-			// dying shoot should branch into a lot of leaves
-			else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
+		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
+		else if (type == 0 && y < (maxY - multiplier + 1) && ( \
+				(rand() % (16 - multiplier)) == 0 || \
+				(life > multiplier && life % multiplier == 0)
+				) ) {
 
-			// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-			else if (type == 0 && y < (maxY - multiplier + 1) && ( \
-					(rand() % (16 - multiplier)) == 0 || \
-					(life > multiplier && life % multiplier == 0)
-					) ) {
+			// if trunk is branching and not about to die, create another trunk
+			if ((rand() % 3 == 0) && life > 7) branch(y, x, 0, life);
 
-				// if trunk is branching and not about to die, create another trunk
-				if ((rand() % 3 == 0) && life > 7) branch(y, x, 0, life);
+			// otherwise create a shoot
+			else if (shoots < shootsMax) {
+				int shootLife = (life + multiplier);
+				if (shootLife < 0) shootLife = 0;
 
-				// otherwise create a shoot
-				else if (shoots < shootsMax) {
-					int shootLife = (life + multiplier);
-					if (shootLife < 0) shootLife = 0;
+				// first shoot is randomly directed
+				shoots++;
+				shootCounter++;
+				if (verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
 
-					// first shoot is randomly directed
-					shoots++;
-					shootCounter++;
-					if (verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
-
-					// create shoot
-					branch(y, x, (shootCounter % 2) + 1, shootLife);
-				}
+				// create shoot
+				branch(y, x, (shootCounter % 2) + 1, shootLife);
 			}
-		} else {
-			if (verbosity) mvwprintw(treeWin, 2, 5, "%s", "Max branches hit!");
 		}
 
 		// move in x and y directions
