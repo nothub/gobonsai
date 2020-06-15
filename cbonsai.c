@@ -19,6 +19,7 @@ int lifeStart = 32;
 int multiplier = 5;
 int live = 0;
 double timeStep = 0.03;
+double timeWait = 4;
 int verbosity = 0;
 char *message = NULL;
 int leavesSize = 0;
@@ -47,19 +48,19 @@ void printHelp() {
 	printf("optional args:\n");
 	printf("  -l, --live             live mode\n");
 	printf("  -t, --time TIME        in live mode, minimum time in secs between\n");
-	printf("                           steps of growth [default: 0.03]\n");
+	printf("                           steps of growth [default: %f]\n", timeStep);
 	printf("  -i, --infinite         infinite mode\n");
 	printf("  -w, --wait TIME        in infinite mode, time in secs between\n");
-	printf("                           tree generation [default: 4]\n");
+	printf("                           tree generation [default: %f]\n", timeWait);
 	printf("  -m, --message STR      attach message next to the tree\n");
 	printf("  -g, --geometry X,Y     set custom geometry\n");
 	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
 	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
 	printf("  -M, --multiplier INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: 5]\n");
-	printf("  -L, --life INT         life; higher -> more growth (0-200) [default: 28]\n");
-	printf("  -s, --seed INT         seed random number generator (0-32767)\n");
-	printf("  -v, --verbose          print information each step of generation\n");
+	printf("                           branching (0-20) [default: %i]\n", lifeStart);
+	printf("  -L, --life INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
+	printf("  -s, --seed INT         seed random number generator\n");
+	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
 }
 
@@ -533,8 +534,6 @@ int main(int argc, char* argv[]) {
 	int termSize = 1;
 	char *leavesInput = "&";
 	char *geometry;
-
-	double timeWait = 4;
 
 	struct option long_options[] = {
 		{"live", no_argument, NULL, 'l'},
