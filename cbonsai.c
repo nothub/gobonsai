@@ -21,6 +21,7 @@ int live = 0;
 double timeStep = 0.03;
 double timeWait = 4;
 int verbosity = 0;
+int printTree = 0;
 char *message = NULL;
 int leavesSize = 0;
 char* leaves[100];
@@ -29,11 +30,6 @@ WINDOW *baseWin, *treeWin, *messageBorderWin, *messageWin;
 PANEL *myPanels[4];
 
 void finish() {
-	delwin(baseWin);
-	delwin(treeWin);
-	delwin(messageBorderWin);
-	delwin(messageWin);
-
 	clear();
 	refresh();
 	endwin();	// delete ncurses screen
@@ -59,6 +55,7 @@ void printHelp() {
 	printf("  -M, --multiplier INT   branch multiplier; higher -> more\n");
 	printf("                           branching (0-20) [default: %i]\n", lifeStart);
 	printf("  -L, --life INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
+	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed INT         seed random number generator\n");
 	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
@@ -547,6 +544,7 @@ int main(int argc, char* argv[]) {
 		{"leaf", required_argument, NULL, 'c'},
 		{"multiplier", required_argument, NULL, 'M'},
 		{"life", required_argument, NULL, 'L'},
+		{"print", required_argument, NULL, 'p'},
 		{"seed", required_argument, NULL, 's'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"help", no_argument, NULL, 'h'},
@@ -556,7 +554,7 @@ int main(int argc, char* argv[]) {
 	// parse arguments
 	int option_index = 0;
 	int c;
-	while ((c = getopt_long(argc, argv, "lt:iw:Sm:g:b:c:M:L:s:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "lt:iw:Sm:g:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 'l':
 				live = 1;
@@ -590,6 +588,9 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'L':
 				lifeStart = atoi(optarg);
+				break;
+			case 'p':
+				printTree = 1;
 				break;
 			case 's':
 				seed = atoi(optarg);
@@ -636,7 +637,47 @@ int main(int argc, char* argv[]) {
 		}
 	} while (infinite);
 
-	wgetch(treeWin);	// quit upon any input
+	// quit upon any input
+	wgetch(treeWin);
 	finish();
+
+	if (printTree) {
+		// overlay all windows onto stdscr
+		overlay(baseWin, stdscr);
+		overlay(treeWin, stdscr);
+		overlay(messageBorderWin, stdscr);
+		overlay(messageWin, stdscr);
+
+		// copy contents of stdscr to the terminal window
+		int maxY, maxX, color, attribs;
+		getmaxyx(stdscr, maxY, maxX);
+		for (int y = 0; y < maxY; y++) {
+			for (int x = 0; x < maxX; x++) {
+				// get attributes of this character
+				color = mvwinch(stdscr, y, x) & A_COLOR;
+				attribs = (mvwinch(stdscr, y, x) & A_ATTRIBUTES) - color;
+				color /= 256;
+
+				// enable bold if needed
+				if ((attribs) == A_BOLD) printf("%s", "\e[1m");
+				else printf("%s", "\e[0m");
+
+				// enable correct color
+				if (color == 0) printf("%s", "\e[0m");
+				else if (color <= 7) printf("\e[3%im", color);
+				else if (color >= 8) printf("\e[9%im", color - 8);
+
+				// print character
+				printf("%c", mvwinch(stdscr, y, x));
+			}
+		}
+		printf("%s\n", "\e[0m");
+	}
+
+	delwin(baseWin);
+	delwin(treeWin);
+	delwin(messageBorderWin);
+	delwin(messageWin);
+
 	return 0;
 }
