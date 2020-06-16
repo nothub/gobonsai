@@ -479,6 +479,24 @@ void init() {
 		start_color();
 
 		// define color pairs
+		if (use_default_colors() != ERR) {
+			init_pair(0, 0, -1);
+			init_pair(1, 1, -1);
+			init_pair(2, 2, -1);
+			init_pair(3, 3, -1);
+			init_pair(4, 4, -1);
+			init_pair(5, 5, -1);
+			init_pair(6, 6, -1);
+			init_pair(7, 7, -1);
+			init_pair(8, 8, -1);
+			init_pair(9, 9, -1);
+			init_pair(10, 10, -1);
+			init_pair(11, 11, -1);
+			init_pair(12, 12, -1);
+			init_pair(13, 13, -1);
+			init_pair(14, 14, -1);
+			init_pair(15, 15, -1);
+		} else {
 		init_pair(0, 0, COLOR_BLACK);
 		init_pair(1, 1, COLOR_BLACK);
 		init_pair(2, 2, COLOR_BLACK);
@@ -495,9 +513,9 @@ void init() {
 		init_pair(13, 13, COLOR_BLACK);
 		init_pair(14, 14, COLOR_BLACK);
 		init_pair(15, 15, COLOR_BLACK);
+		}
 	} else {
-		printf("Exiting: terminal does not support colors\n");
-		finish();
+		printf("%s", "Warning: terminal does not have color support.");
 	}
 
 	// define and draw windows, then create panels
