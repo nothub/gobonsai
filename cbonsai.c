@@ -655,11 +655,9 @@ int main(int argc, char* argv[]) {
 		}
 	} while (infinite);
 
-	// quit upon any input
-	wgetch(treeWin);
-	finish();
-
 	if (printTree) {
+		finish();
+
 		// overlay all windows onto stdscr
 		overlay(baseWin, stdscr);
 		overlay(treeWin, stdscr);
@@ -690,8 +688,12 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		printf("%s\n", "\e[0m");
+	} else {
+		wgetch(treeWin);
+		finish();
 	}
 
+	// free window memory
 	delwin(baseWin);
 	delwin(treeWin);
 	delwin(messageBorderWin);
