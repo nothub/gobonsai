@@ -6,12 +6,39 @@
 
 ## Installation
 
-At this time, only manual installation is possible.
+At this time, only manual installation is possible:
+
+```bash
+git clone https://gitlab.com/jallbrit/cbonsai
+cd cbonsai
+make install
+```
 
 ## Usage
 
 ```
-cbonsai
+Usage: cbonsai [OPTIONS]
+
+cbonsai is a beautifully random bonsai tree generator.
+
+optional args:
+  -l, --live             live mode
+  -t, --time TIME        in live mode, minimum time in secs between
+                           steps of growth [default: 0.030000]
+  -i, --infinite         infinite mode
+  -w, --wait TIME        in infinite mode, time in secs between
+                           tree generation [default: 4.000000]
+  -m, --message STR      attach message next to the tree
+  -g, --geometry X,Y     set custom geometry
+  -b, --base INT         ascii-art plant base to use, 0 is none
+  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves
+  -M, --multiplier INT   branch multiplier; higher -> more
+                           branching (0-20) [default: 32]
+  -L, --life INT         life; higher -> more growth (0-200) [default: 32]
+  -p, --print            print tree to terminal when finished
+  -s, --seed INT         seed random number generator
+  -v, --verbose          increase output verbosity
+  -h, --help             show help
 ```
 
 ## Modes
@@ -34,4 +61,4 @@ The algorithm is tweaked to look best at the default size, so larger sized trees
 
 ## Inspiration
 
-This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of  [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash`. `cbonsai` is now written in `C` with additional improvements and continuing development. `bonsai.sh` itself is a port of [this bonsai tree generator](http://andai.tv/bonsai/), written in JS.
+This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of  [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash` and was itself a port of [this bonsai tree generator](http://andai.tv/bonsai/) written in `javascript`.
