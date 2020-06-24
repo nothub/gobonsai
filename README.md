@@ -4,9 +4,17 @@
 
 `cbonsai` is fairly new and is always looking for ideas for improvement. Feel free to open an issue if you've got an idea or a bug.
 
+## Dependencies
+
+You'll need to have a working `ncurses` library. If you're on a `Debian`-based system, you can install `ncurses` like so:
+
+```
+sudo apt install ncurses
+```
+
 ## Installation
 
-At this time, only manual installation is possible:
+At this time, only manual installation is possible. Ensure that all dependencies are met, then:
 
 ```bash
 git clone https://gitlab.com/jallbrit/cbonsai
