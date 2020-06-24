@@ -33,7 +33,7 @@ optional args:
   -b, --base INT         ascii-art plant base to use, 0 is none
   -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves
   -M, --multiplier INT   branch multiplier; higher -> more
-                           branching (0-20) [default: 32]
+                           branching (0-20) [default: 5]
   -L, --life INT         life; higher -> more growth (0-200) [default: 32]
   -p, --print            print tree to terminal when finished
   -s, --seed INT         seed random number generator

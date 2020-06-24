@@ -53,7 +53,7 @@ void printHelp(void) {
 	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
 	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
 	printf("  -M, --multiplier INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: %i]\n", lifeStart);
+	printf("                           branching (0-20) [default: %i]\n", multiplier);
 	printf("  -L, --life INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed INT         seed random number generator\n");
@@ -140,6 +140,7 @@ void branch(int y, int x, int type, int life) {
 	int dy = 0;
 	int dice = 0;
 	int age = 0;
+	int shootCooldown = multiplier;
 
 	while (life > 0) {
 		life--;		// decrement remaining life counter
@@ -241,16 +242,17 @@ void branch(int y, int x, int type, int life) {
 		else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-		else if (type == 0 && y < (maxY - multiplier + 1) && ( \
-				(rand() % (16 - multiplier)) == 0 || \
+		else if (type == 0 && ( \
+				(rand() % (multiplier)) == 0 || \
 				(life > multiplier && life % multiplier == 0)
 				) ) {
 
-			// if trunk is branching and not about to die, create another trunk
-			if ((rand() % 3 == 0) && life > 7) branch(y, x, 0, life);
+			// if trunk is branching and not about to die, create another trunk with random life
+			if ((rand() % 5 == 0) && life > 7) branch(y, x, 0, life + (rand() % 5 - 2));
 
 			// otherwise create a shoot
-			else if (shoots < shootsMax) {
+			else if (shootCooldown <= 0) {
+				shootCooldown = multiplier + 5;
 				int shootLife = (life + multiplier);
 				if (shootLife < 0) shootLife = 0;
 
@@ -263,11 +265,14 @@ void branch(int y, int x, int type, int life) {
 				branch(y, x, (shootCounter % 2) + 1, shootLife);
 			}
 		}
+		shootCooldown--;
 
 		// move in x and y directions
 		if (verbosity > 0) {
 			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
 			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
+			mvwprintw(treeWin, 7, 5, "type: %d", type);
+			mvwprintw(treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
 		}
 		x = (x + dx);
 		y = (y + dy);
@@ -634,14 +639,17 @@ int main(int argc, char* argv[]) {
 		leavesSize++;
 	}
 
-	branchesMax = multiplier * 110;
-	shootsMax = multiplier;
+	shootsMax = multiplier + 1;
 
 	// seed random number generator
 	if (seed == 0) seed = time(NULL);
 	srand(seed);
 
+	int keypress;
 	do {
+		if ((keypress = wgetch(stdscr)) != ERR) {
+			if (keypress == 'q') finish();
+		}
 		init();
 		growTree();
 		if (infinite) {
