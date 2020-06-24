@@ -29,14 +29,14 @@ char* leaves[100];
 WINDOW *baseWin, *treeWin, *messageBorderWin, *messageWin;
 PANEL *myPanels[4];
 
-void finish() {
+void finish(void) {
 	clear();
 	refresh();
 	endwin();	// delete ncurses screen
 	curs_set(1);
 }
 
-void printHelp() {
+void printHelp(void) {
 	printf("Usage: cbonsai [OPTIONS]\n");
 	printf("\n");
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
@@ -342,7 +342,20 @@ void branch(int y, int x, int type, int life) {
 	}
 }
 
-int drawMessage() {
+void addSpaces(int count, int *linePosition, int maxWidth) {
+	// add spaces if there's enough space
+	if (*linePosition < (maxWidth - count)) {
+		if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d", *linePosition);
+
+		// add spaces up to width
+		for (int j = 0; j < count; j++) {
+			wprintw(messageWin, "%s", " ");
+			(*linePosition)++;
+		}
+	}
+}
+
+int drawMessage(void) {
 	if (message == NULL) return 1;
 
 	// determine dimensions of window box
@@ -402,25 +415,12 @@ int drawMessage() {
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
 
-				void addSpaces(int count) {
-					// add spaces if there's enough space
-					if (linePosition < (messageBoxWidth - count)) {
-						if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d, wordLength: %02d", linePosition, wordLength);
-
-						// add spaces up to width
-						for (int j = 0; j < count; j++) {
-							wprintw(messageWin, "%s", " ");
-							linePosition++;
-						}
-					}
-				}
-
 				switch (thisChar) {
 					case ' ':
-						addSpaces(1);
+						addSpaces(1, &linePosition, messageBoxWidth);
 						break;
 					case '\t':
-						addSpaces(1);
+						addSpaces(1, &linePosition, messageBoxWidth);
 						break;
 					case '\n':
 						waddch(messageWin, thisChar);
@@ -675,19 +675,19 @@ int main(int argc, char* argv[]) {
 				color /= 256;
 
 				// enable bold if needed
-				if ((attribs) == A_BOLD) printf("%s", "\e[1m");
-				else printf("%s", "\e[0m");
+				if ((attribs) == A_BOLD) printf("%s", "\033[1m");
+				else printf("%s", "\033[0m");
 
 				// enable correct color
-				if (color == 0) printf("%s", "\e[0m");
-				else if (color <= 7) printf("\e[3%im", color);
-				else if (color >= 8) printf("\e[9%im", color - 8);
+				if (color == 0) printf("%s", "\033[0m");
+				else if (color <= 7) printf("\033[3%im", color);
+				else if (color >= 8) printf("\033[9%im", color - 8);
 
 				// print character
 				printf("%c", mvwinch(stdscr, y, x));
 			}
 		}
-		printf("%s\n", "\e[0m");
+		printf("%s\n", "\033[0m");
 	} else {
 		wgetch(treeWin);
 		finish();
