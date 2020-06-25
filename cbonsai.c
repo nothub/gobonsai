@@ -49,7 +49,6 @@ void printHelp(void) {
 	printf("  -w, --wait TIME        in infinite mode, time in secs between\n");
 	printf("                           tree generation [default: %f]\n", timeWait);
 	printf("  -m, --message STR      attach message next to the tree\n");
-	printf("  -g, --geometry X,Y     set custom geometry\n");
 	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
 	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
 	printf("  -M, --multiplier INT   branch multiplier; higher -> more\n");
@@ -551,9 +550,7 @@ int main(int argc, char* argv[]) {
 	int infinite = 0;
 	int screensaver = 0;
 
-	int termSize = 1;
 	char *leavesInput = "&";
-	char *geometry;
 
 	struct option long_options[] = {
 		{"live", no_argument, NULL, 'l'},
@@ -562,7 +559,6 @@ int main(int argc, char* argv[]) {
 		{"wait", required_argument, NULL, 'w'},
 		{"screensaver", no_argument, NULL, 'S'},
 		{"message", required_argument, NULL, 'm'},
-		{"geometry", required_argument, NULL, 'g'},
 		{"base", required_argument, NULL, 'b'},
 		{"leaf", required_argument, NULL, 'c'},
 		{"multiplier", required_argument, NULL, 'M'},
@@ -577,7 +573,7 @@ int main(int argc, char* argv[]) {
 	// parse arguments
 	int option_index = 0;
 	int c;
-	while ((c = getopt_long(argc, argv, "lt:iw:Sm:g:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 'l':
 				live = 1;
@@ -596,9 +592,6 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'm':
 				message = strdup(optarg);
-				break;
-			case 'g':
-				geometry = optarg;
 				break;
 			case 'b':
 				baseType = atoi(optarg);
