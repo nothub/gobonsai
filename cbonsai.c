@@ -228,6 +228,7 @@ void branch(int y, int x, int type, int life) {
 		}
 
 		int maxY, maxX;
+		(void) maxX;
 		getmaxyx(treeWin, maxY, maxX);
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
@@ -331,16 +332,16 @@ void branch(int y, int x, int type, int life) {
 
 		// if live, show progress
 		if (live) {
-			struct timespec tm1, tm2;
-			tm1.tv_sec = 0;
-			tm1.tv_nsec = (timeStep * 100);
+			// convert given time into seconds and nanoseconds
+			struct timespec ts;
+			ts.tv_sec = timeStep / 1;
+			ts.tv_nsec = (timeStep - ts.tv_sec) * 1000000000;
 
 			// display changes
 			update_panels();
 			doupdate();
 
-			/* nanosleep(&tm1, &tm2); */
-			usleep(timeStep * 1000000);
+			nanosleep(&ts, NULL);	// sleep for given time
 		}
 
 	}
@@ -442,6 +443,7 @@ int drawMessage(void) {
 
 				// our line position on this new line is the x coordinate
 				int y;
+				(void) y;
 				getyx(messageWin, y, linePosition);
 			}
 
@@ -462,7 +464,13 @@ int drawMessage(void) {
 		if (verbosity >= 2) {
 			update_panels();
 			doupdate();
-			usleep(100000);
+
+			// sleep for a little bit
+			struct timespec ts;
+			ts.tv_sec = 1;
+			ts.tv_nsec = 0;
+			nanosleep(&ts, NULL);
+
 			mvwprintw(treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
 		}
 		if (thisChar == '\0') break;	// quit when we reach the end of the message
