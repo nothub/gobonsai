@@ -5,4 +5,4 @@ install: uninstall cbonsai.c
 
 .PHONY: uninstall
 uninstall:
-	rm cbonsai ~/.local/bin/cbonsai
+	rm -f cbonsai ~/.local/bin/cbonsai
