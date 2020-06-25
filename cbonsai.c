@@ -18,6 +18,7 @@ int baseType = 1;
 int lifeStart = 32;
 int multiplier = 5;
 int live = 0;
+int screensaver = 0;
 double timeStep = 0.03;
 double timeWait = 4;
 int verbosity = 0;
@@ -42,12 +43,13 @@ void printHelp(void) {
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
 	printf("\n");
 	printf("optional args:\n");
-	printf("  -l, --live             live mode\n");
+	printf("  -l, --live             live mode: show each step of growth\n");
 	printf("  -t, --time TIME        in live mode, minimum time in secs between\n");
 	printf("                           steps of growth [default: %f]\n", timeStep);
-	printf("  -i, --infinite         infinite mode\n");
-	printf("  -w, --wait TIME        in infinite mode, time in secs between\n");
-	printf("                           tree generation [default: %f]\n", timeWait);
+	printf("  -i, --infinite         infinite mode: keep growing trees\n");
+	printf("  -w, --wait TIME        in infinite mode, time in secs between tree\n");
+	printf("                           generation [default: %f]\n", timeWait);
+	printf("  -S, --screensaver      screensaver mode; turn on -li and quit on any keypress\n");
 	printf("  -m, --message STR      attach message next to the tree\n");
 	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
 	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
@@ -133,6 +135,14 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 // roll (randomize) a given die
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
+// check for 'q' key press
+void checkKeyPress(void) {
+	if ((screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
+		finish();
+		exit(0);
+	}
+}
+
 void branch(int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
@@ -142,6 +152,7 @@ void branch(int y, int x, int type, int life) {
 	int shootCooldown = multiplier;
 
 	while (life > 0) {
+		checkKeyPress();
 		life--;		// decrement remaining life counter
 		age = lifeStart - life;
 
@@ -485,6 +496,7 @@ void init() {
 	noecho();	// don't echo input to screen
 	curs_set(0);	// make cursor invisible
 	cbreak();	// don't wait for new line to grab user input
+	nodelay(stdscr, TRUE);	// force getch to be a non-blocking call
 
 	// if terminal has color capabilities, use them
 	if (has_colors()) {
@@ -556,7 +568,6 @@ void growTree() {
 
 int main(int argc, char* argv[]) {
 	int infinite = 0;
-	int screensaver = 0;
 
 	char *leavesInput = "&";
 
@@ -596,6 +607,8 @@ int main(int argc, char* argv[]) {
 				timeWait = atof(optarg);
 				break;
 			case 'S':
+				live = 1;
+				infinite = 1;
 				screensaver = 1;
 				break;
 			case 'm':
@@ -646,17 +659,12 @@ int main(int argc, char* argv[]) {
 	if (seed == 0) seed = time(NULL);
 	srand(seed);
 
-	int keypress;
 	do {
-		if ((keypress = wgetch(stdscr)) != ERR) {
-			if (keypress == 'q') finish();
-		}
 		init();
 		growTree();
 		if (infinite) {
-			sleep(timeWait);
-			clear();
-			refresh();
+			timeout(timeWait * 1000);
+			checkKeyPress();
 
 			// seed random number generator
 			seed = time(NULL);
