@@ -13,22 +13,28 @@ int shoots = 0;
 int shootsMax = 0;
 int shootCounter;
 
-int seed = 0;
-int baseType = 1;
-int lifeStart = 32;
-int multiplier = 5;
-int live = 0;
-int screensaver = 0;
-double timeStep = 0.03;
-double timeWait = 4;
-int verbosity = 0;
-int printTree = 0;
-char *message = NULL;
-int leavesSize = 0;
-char* leaves[100];
-
 WINDOW *baseWin, *treeWin, *messageBorderWin, *messageWin;
 PANEL *myPanels[4];
+
+struct config {
+	int live;
+	int infinite;
+	int screensaver;
+	int printTree;
+	int verbosity;
+	int lifeStart;
+	int multiplier;
+	int baseType;
+	int seed;
+	int leavesSize;
+
+	double timeWait;
+	double timeStep;
+
+	char* message;
+	char* leavesInput;
+	char* leaves[100];
+};
 
 void finish(void) {
 	clear();
@@ -37,7 +43,7 @@ void finish(void) {
 	curs_set(1);
 }
 
-void printHelp(void) {
+void printHelp(struct config conf) {
 	printf("Usage: cbonsai [OPTION]...\n");
 	printf("\n");
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
@@ -45,10 +51,10 @@ void printHelp(void) {
 	printf("Options:\n");
 	printf("  -l, --live             live mode: show each step of growth\n");
 	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
-	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", timeStep);
+	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", conf.timeStep);
 	printf("  -i, --infinite         infinite mode: keep growing trees\n");
 	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
-	printf("                           generation [default: %.2f]\n", timeWait);
+	printf("                           generation [default: %.2f]\n", conf.timeWait);
 	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
 	printf("                           quit on any keypress\n");
 	printf("  -m, --message=STR      attach message next to the tree\n");
@@ -56,8 +62,8 @@ void printHelp(void) {
 	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
 	printf("                           for leaves\n");
 	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: %i]\n", multiplier);
-	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
+	printf("                           branching (0-20) [default: %i]\n", conf.multiplier);
+	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf.lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed=INT         seed random number generator\n");
 	printf("  -v, --verbose          increase output verbosity\n");
@@ -138,25 +144,25 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
 // check for 'q' key press
-void checkKeyPress(void) {
+void checkKeyPress(int screensaver) {
 	if ((screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
 		finish();
 		exit(0);
 	}
 }
 
-void branch(int y, int x, int type, int life) {
+void branch(struct config conf, int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
 	int dy = 0;
 	int dice = 0;
 	int age = 0;
-	int shootCooldown = multiplier;
+	int shootCooldown = conf.multiplier;
 
 	while (life > 0) {
-		checkKeyPress();
+		checkKeyPress(conf.screensaver);
 		life--;		// decrement remaining life counter
-		age = lifeStart - life;
+		age = conf.lifeStart - life;
 
 		switch (type) {
 			case 0: // trunk
@@ -167,10 +173,10 @@ void branch(int y, int x, int type, int life) {
 					dx = (rand() % 3) - 1;
 				}
 				// young trunk should grow wide
-				else if (age < (multiplier * 3)) {
+				else if (age < (conf.multiplier * 3)) {
 
 					// every (multiplier * 0.8) steps, raise tree to next level
-					if (age % (int) (multiplier * 0.5) == 0) dy = -1;
+					if (age % (int) (conf.multiplier * 0.5) == 0) dy = -1;
 					else dy = 0;
 
 					roll(&dice, 10);
@@ -246,42 +252,42 @@ void branch(int y, int x, int type, int life) {
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
 		// near-dead branch should branch into a lot of leaves
-		if (life < 3) branch(y, x, 4, life);
+		if (life < 3) branch(conf, y, x, 4, life);
 
 		// dying trunk should branch into a lot of leaves
-		else if (type == 0 && life < (multiplier + 2)) branch(y, x, 3, life);
+		else if (type == 0 && life < (conf.multiplier + 2)) branch(conf, y, x, 3, life);
 
 		// dying shoot should branch into a lot of leaves
-		else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
+		else if ((type == 1 || type == 2) && life < (conf.multiplier + 2)) branch(conf, y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
 		else if (type == 0 && ( \
-				(rand() % (multiplier)) == 0 || \
-				(life > multiplier && life % multiplier == 0)
+				(rand() % (conf.multiplier)) == 0 || \
+				(life > conf.multiplier && life % conf.multiplier == 0)
 				) ) {
 
 			// if trunk is branching and not about to die, create another trunk with random life
-			if ((rand() % 5 == 0) && life > 7) branch(y, x, 0, life + (rand() % 5 - 2));
+			if ((rand() % 5 == 0) && life > 7) branch(conf, y, x, 0, life + (rand() % 5 - 2));
 
 			// otherwise create a shoot
 			else if (shootCooldown <= 0) {
-				shootCooldown = multiplier + 5;
-				int shootLife = (life + multiplier);
+				shootCooldown = conf.multiplier + 5;
+				int shootLife = (life + conf.multiplier);
 				if (shootLife < 0) shootLife = 0;
 
 				// first shoot is randomly directed
 				shoots++;
 				shootCounter++;
-				if (verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
+				if (conf.verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
 
 				// create shoot
-				branch(y, x, (shootCounter % 2) + 1, shootLife);
+				branch(conf, y, x, (shootCounter % 2) + 1, shootLife);
 			}
 		}
 		shootCooldown--;
 
 		// move in x and y directions
-		if (verbosity > 0) {
+		if (conf.verbosity > 0) {
 			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
 			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
 			mvwprintw(treeWin, 7, 5, "type: %d", type);
@@ -313,7 +319,7 @@ void branch(int y, int x, int type, int life) {
 		// choose string to use for this branch
 		char *branchChar = malloc(100);
 		strcpy(branchChar, "?");	// fallback character
-		if (life < 4 || type >= 3) strcpy(branchChar, leaves[rand() % leavesSize]);
+		if (life < 4 || type >= 3) strcpy(branchChar, conf.leaves[rand() % conf.leavesSize]);
 		else {
 			switch(type) {
 				case 0: // trunk
@@ -344,16 +350,15 @@ void branch(int y, int x, int type, int life) {
 		wattroff(treeWin, A_BOLD);
 
 		// if live, show progress
-		if (live) {
-			// convert given time into seconds and nanoseconds
-			struct timespec ts;
-			ts.tv_sec = timeStep / 1;
-			ts.tv_nsec = (timeStep - ts.tv_sec) * 1000000000;
-
+		if (conf.live) {
 			// display changes
 			update_panels();
 			doupdate();
 
+			// convert given time into seconds and nanoseconds and sleep
+			struct timespec ts;
+			ts.tv_sec = conf.timeStep / 1;
+			ts.tv_nsec = (conf.timeStep - ts.tv_sec) * 1000000000;
 			nanosleep(&ts, NULL);	// sleep for given time
 		}
 
@@ -363,7 +368,7 @@ void branch(int y, int x, int type, int life) {
 void addSpaces(int count, int *linePosition, int maxWidth) {
 	// add spaces if there's enough space
 	if (*linePosition < (maxWidth - count)) {
-		if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d", *linePosition);
+		/* if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d", *linePosition); */
 
 		// add spaces up to width
 		for (int j = 0; j < count; j++) {
@@ -373,22 +378,22 @@ void addSpaces(int count, int *linePosition, int maxWidth) {
 	}
 }
 
-int drawMessage(void) {
-	if (message == NULL) return 1;
+int drawMessage(struct config conf) {
+	if (conf.message == NULL) return 1;
 
 	// determine dimensions of window box
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
 	int boxWidth = 0;
 	int boxHeight = 0;
-	if (strlen(message) + 3 <= (0.25 * maxX)) {
-		boxWidth = strlen(message) + 1;
+	if (strlen(conf.message) + 3 <= (0.25 * maxX)) {
+		boxWidth = strlen(conf.message) + 1;
 		boxHeight = 1;
 	} else {
 		boxWidth = 0.25 * maxX;
-		boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth);
+		boxHeight = (strlen(conf.message) / boxWidth) + (strlen(conf.message) / boxWidth);
 	}
-	if (verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
+	if (conf.verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
 
 	// create separate box for message border
 	messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
@@ -411,8 +416,8 @@ int drawMessage(void) {
 	char thisChar;
 	int messageBoxWidth = boxWidth - 1;
 	while (true) {
-		thisChar = message[i];
-		if (verbosity) {
+		thisChar = conf.message[i];
+		if (conf.verbosity) {
 			mvwprintw(treeWin, 9, 5, "index: %03d", i);
 			mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
 		}
@@ -462,7 +467,7 @@ int drawMessage(void) {
 
 			// if current line can't fit word, go to next line
 			else {
-				if (verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
+				if (conf.verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
 				wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
 				linePosition = wordLength;	// reset line position
 				wordLength = 0;		// reset word length
@@ -474,7 +479,7 @@ int drawMessage(void) {
 			return 1;
 		}
 
-		if (verbosity >= 2) {
+		if (conf.verbosity >= 2) {
 			update_panels();
 			doupdate();
 
@@ -492,7 +497,7 @@ int drawMessage(void) {
 	return 0;
 }
 
-void init() {
+void init(struct config conf) {
 	savetty();	// save terminal settings
 	initscr();	// init ncurses screen
 	noecho();	// don't echo input to screen
@@ -545,11 +550,11 @@ void init() {
 	}
 
 	// define and draw windows, then create panels
-	drawWins(baseType, &baseWin, &treeWin);
-	drawMessage();
+	drawWins(conf.baseType, &baseWin, &treeWin);
+	drawMessage(conf);
 }
 
-void growTree() {
+void growTree(struct config conf) {
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
 
@@ -557,11 +562,10 @@ void growTree() {
 	shoots = 0;
 	shootCounter = rand();
 
-	if (verbosity > 0) {
+	if (conf.verbosity > 0) {
 		mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
-		mvwprintw(treeWin, 3, 5, "seed: %d", seed);
 	}
-	branch(maxY - 1, (maxX / 2), 0, lifeStart);	// grow tree trunk
+	branch(conf, maxY - 1, (maxX / 2), 0, conf.lifeStart);	// grow tree trunk
 
 	// display changes
 	update_panels();
@@ -569,9 +573,25 @@ void growTree() {
 }
 
 int main(int argc, char* argv[]) {
-	int infinite = 0;
+	struct config conf = {
+		.live = 0,
+		.infinite = 0,
+		.screensaver = 0,
+		.printTree = 0,
+		.verbosity = 0,
+		.lifeStart = 32,
+		.multiplier = 5,
+		.baseType = 1,
+		.seed = 0,
+		.leavesSize = 0,
 
-	char *leavesInput = "&";
+		.timeWait = 4,
+		.timeStep = 0.03,
+
+		.message = NULL,
+		.leavesInput = "&",
+		.leaves = {0},
+	};
 
 	struct option long_options[] = {
 		{"live", no_argument, NULL, 'l'},
@@ -597,129 +617,128 @@ int main(int argc, char* argv[]) {
 	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 'l':
-				live = 1;
+				conf.live = 1;
 				break;
 			case 't':
-				if (strtold(optarg, NULL) != 0) timeStep = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.timeStep = strtod(optarg, NULL);
 				else {
 					printf("error: invalid step time: '%s'\n", optarg);
 					exit(1);
 				}
-				if (timeStep < 0) {
+				if (conf.timeStep < 0) {
 					printf("error: invalid step time: '%s'\n", optarg);
 					exit(1);
 				}
 				break;
 			case 'i':
-				infinite = 1;
+				conf.infinite = 1;
 				break;
 			case 'w':
-				if (strtold(optarg, NULL) != 0) timeWait = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.timeWait = strtod(optarg, NULL);
 				else {
 					printf("error: invalid wait time: '%s'\n", optarg);
 					exit(1);
 				}
-				if (timeWait < 0) {
+				if (conf.timeWait < 0) {
 					printf("error: invalid wait time: '%s'\n", optarg);
 					exit(1);
 				}
 				break;
 			case 'S':
-				live = 1;
-				infinite = 1;
-				screensaver = 1;
+				conf.live = 1;
+				conf.infinite = 1;
+				conf.screensaver = 1;
 				break;
 			case 'm':
-				message = strdup(optarg);
+				conf.message = optarg;
 				break;
 			case 'b':
-				if (strtold(optarg, NULL) != 0) baseType = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
 				else {
 					printf("error: invalid base index: '%s'\n", optarg);
 					exit(1);
 				}
-				baseType = strtod(optarg, NULL);
 				break;
 			case 'c':
-				leavesInput = strdup(optarg);
+				conf.leavesInput = optarg;
 				break;
 			case 'M':
-				if (strtold(optarg, NULL) != 0) multiplier = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
 				else {
 					printf("error: invalid multiplier: '%s'\n", optarg);
 					exit(1);
 				}
-				if (multiplier < 0) {
+				if (conf.multiplier < 0) {
 					printf("error: invalid multiplier: '%s'\n", optarg);
 					exit(1);
 				}
 				break;
 			case 'L':
-				if (strtold(optarg, NULL) != 0) lifeStart = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.lifeStart = strtod(optarg, NULL);
 				else {
 					printf("error: invalid initial life: '%s'\n", optarg);
 					exit(1);
 				}
-				if (lifeStart < 0) {
+				if (conf.lifeStart < 0) {
 					printf("error: invalid initial life: '%s'\n", optarg);
 					exit(1);
 				}
 				break;
 			case 'p':
-				printTree = 1;
+				conf.printTree = 1;
 				break;
 			case 's':
-				if (strtold(optarg, NULL) != 0) seed = strtod(optarg, NULL);
+				if (strtold(optarg, NULL) != 0) conf.seed = strtod(optarg, NULL);
 				else {
 					printf("error: invalid seed: '%s'\n", optarg);
 					exit(1);
 				}
-				if (seed < 0) {
+				if (conf.seed < 0) {
 					printf("error: invalid seed: '%s'\n", optarg);
 					exit(1);
 				}
 				break;
 			case 'v':
-				verbosity++;
+				conf.verbosity++;
 				break;
 
 			// '?' represents unknown option. Treat it like --help.
 			case '?':
 			case 'h':
-				printHelp();
+				printHelp(conf);
 				return 0;
 				break;
 		}
 	}
 
 	// delimit leaves on "," and add each token to the leaves[] list
-	char *token = strtok(leavesInput, ",");
+	char *token = strtok(conf.leavesInput, ",");
 	while (token != NULL) {
-		if (leavesSize < 100) leaves[leavesSize] = token;
+		if (conf.leavesSize < 100) conf.leaves[conf.leavesSize] = token;
 		token = strtok(NULL, ",");
-		leavesSize++;
+		conf.leavesSize++;
 	}
 
-	shootsMax = multiplier + 1;
+	shootsMax = conf.multiplier + 1;
 
 	// seed random number generator
-	if (seed == 0) seed = time(NULL);
-	srand(seed);
+	if (conf.seed == 0) conf.seed = time(NULL);
+	srand(conf.seed);
 
 	do {
-		init();
-		growTree();
-		if (infinite) {
-			timeout(timeWait * 1000);
-			checkKeyPress();
+		init(conf);
+		growTree(conf);
+		if (conf.infinite) {
+			timeout(conf.timeWait * 1000);
+			checkKeyPress(conf.screensaver);
 
 			// seed random number generator
-			seed = time(NULL);
-			srand(seed);
+			conf.seed = time(NULL);
+			srand(conf.seed);
 		}
-	} while (infinite);
+	} while (conf.infinite);
 
-	if (printTree) {
+	if (conf.printTree) {
 		finish();
 
 		// overlay all windows onto stdscr
