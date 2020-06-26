@@ -25,26 +25,28 @@ make install
 ## Usage
 
 ```
-Usage: cbonsai [OPTIONS]
+Usage: cbonsai [OPTION]...
 
 cbonsai is a beautifully random bonsai tree generator.
 
-optional args:
-  -l, --live             live mode
-  -t, --time TIME        in live mode, minimum time in secs between
-                           steps of growth [default: 0.030000]
-  -i, --infinite         infinite mode
-  -w, --wait TIME        in infinite mode, time in secs between
-                           tree generation [default: 4.000000]
-  -m, --message STR      attach message next to the tree
-  -g, --geometry X,Y     set custom geometry
-  -b, --base INT         ascii-art plant base to use, 0 is none
-  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves
-  -M, --multiplier INT   branch multiplier; higher -> more
+Options:
+  -l, --live             live mode: show each step of growth
+  -t, --time=TIME        in live mode, wait TIME secs between
+                           steps of growth (must be larger than 0) [default: 0.03]
+  -i, --infinite         infinite mode: keep growing trees
+  -w, --wait=TIME        in infinite mode, wait TIME between each tree
+                           generation [default: 4.00]
+  -S, --screensaver      screensaver mode; equivalent to -li and
+                           quit on any keypress
+  -m, --message=STR      attach message next to the tree
+  -b, --base=INT         ascii-art plant base to use, 0 is none
+  -c, --leaf=LIST        list of comma-delimited strings randomly chosen
+                           for leaves
+  -M, --multiplier=INT   branch multiplier; higher -> more
                            branching (0-20) [default: 5]
-  -L, --life INT         life; higher -> more growth (0-200) [default: 32]
+  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]
   -p, --print            print tree to terminal when finished
-  -s, --seed INT         seed random number generator
+  -s, --seed=INT         seed random number generator
   -v, --verbose          increase output verbosity
   -h, --help             show help
 ```

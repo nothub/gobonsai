@@ -38,26 +38,28 @@ void finish(void) {
 }
 
 void printHelp(void) {
-	printf("Usage: cbonsai [OPTIONS]\n");
+	printf("Usage: cbonsai [OPTION]...\n");
 	printf("\n");
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
 	printf("\n");
-	printf("optional args:\n");
+	printf("Options:\n");
 	printf("  -l, --live             live mode: show each step of growth\n");
-	printf("  -t, --time TIME        in live mode, minimum time in secs between\n");
-	printf("                           steps of growth [default: %f]\n", timeStep);
+	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
+	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", timeStep);
 	printf("  -i, --infinite         infinite mode: keep growing trees\n");
-	printf("  -w, --wait TIME        in infinite mode, time in secs between tree\n");
-	printf("                           generation [default: %f]\n", timeWait);
-	printf("  -S, --screensaver      screensaver mode; turn on -li and quit on any keypress\n");
-	printf("  -m, --message STR      attach message next to the tree\n");
-	printf("  -b, --base INT         ascii-art plant base to use, 0 is none\n");
-	printf("  -c, --leaf STR1,STR2,STR3...   list of strings randomly chosen for leaves\n");
-	printf("  -M, --multiplier INT   branch multiplier; higher -> more\n");
+	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
+	printf("                           generation [default: %.2f]\n", timeWait);
+	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
+	printf("                           quit on any keypress\n");
+	printf("  -m, --message=STR      attach message next to the tree\n");
+	printf("  -b, --base=INT         ascii-art plant base to use, 0 is none\n");
+	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
+	printf("                           for leaves\n");
+	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
 	printf("                           branching (0-20) [default: %i]\n", multiplier);
-	printf("  -L, --life INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
+	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
-	printf("  -s, --seed INT         seed random number generator\n");
+	printf("  -s, --seed=INT         seed random number generator\n");
 	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
 }
@@ -598,13 +600,29 @@ int main(int argc, char* argv[]) {
 				live = 1;
 				break;
 			case 't':
-				timeStep = atof(optarg);
+				if (strtold(optarg, NULL) != 0) timeStep = strtod(optarg, NULL);
+				else {
+					printf("error: invalid step time: '%s'\n", optarg);
+					exit(1);
+				}
+				if (timeStep < 0) {
+					printf("error: invalid step time: '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case 'i':
 				infinite = 1;
 				break;
 			case 'w':
-				timeWait = atof(optarg);
+				if (strtold(optarg, NULL) != 0) timeWait = strtod(optarg, NULL);
+				else {
+					printf("error: invalid wait time: '%s'\n", optarg);
+					exit(1);
+				}
+				if (timeWait < 0) {
+					printf("error: invalid wait time: '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case 'S':
 				live = 1;
@@ -615,22 +633,51 @@ int main(int argc, char* argv[]) {
 				message = strdup(optarg);
 				break;
 			case 'b':
-				baseType = atoi(optarg);
+				if (strtold(optarg, NULL) != 0) baseType = strtod(optarg, NULL);
+				else {
+					printf("error: invalid base index: '%s'\n", optarg);
+					exit(1);
+				}
+				baseType = strtod(optarg, NULL);
 				break;
 			case 'c':
 				leavesInput = strdup(optarg);
 				break;
 			case 'M':
-				multiplier = atoi(optarg);
+				if (strtold(optarg, NULL) != 0) multiplier = strtod(optarg, NULL);
+				else {
+					printf("error: invalid multiplier: '%s'\n", optarg);
+					exit(1);
+				}
+				if (multiplier < 0) {
+					printf("error: invalid multiplier: '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case 'L':
-				lifeStart = atoi(optarg);
+				if (strtold(optarg, NULL) != 0) lifeStart = strtod(optarg, NULL);
+				else {
+					printf("error: invalid initial life: '%s'\n", optarg);
+					exit(1);
+				}
+				if (lifeStart < 0) {
+					printf("error: invalid initial life: '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case 'p':
 				printTree = 1;
 				break;
 			case 's':
-				seed = atoi(optarg);
+				if (strtold(optarg, NULL) != 0) seed = strtod(optarg, NULL);
+				else {
+					printf("error: invalid seed: '%s'\n", optarg);
+					exit(1);
+				}
+				if (seed < 0) {
+					printf("error: invalid seed: '%s'\n", optarg);
+					exit(1);
+				}
 				break;
 			case 'v':
 				verbosity++;
