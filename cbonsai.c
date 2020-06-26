@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <panel.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <time.h>
 #include <string.h>
