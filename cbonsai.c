@@ -10,6 +10,7 @@
 // global variables
 int branches = 0;
 int shoots = 0;
+int trunks = 1;
 int shootsMax = 0;
 int shootCounter;
 
@@ -253,19 +254,24 @@ void branch(int y, int x, int type, int life) {
 		else if ((type == 1 || type == 2) && life < (multiplier + 2)) branch(y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-		else if (type == 0 && ( \
-				(rand() % (multiplier)) == 0 || \
-				(life > multiplier && life % multiplier == 0)
-				) ) {
+		/* else if (type == 0 && ( \ */
+		/* 		(rand() % (multiplier)) == 0 || \ */
+		/* 		(life > multiplier && life % multiplier == 0) */
+		/* 		) ) { */
+		else if (type == 0 && (((rand() % 3) == 0) || (life % multiplier == 0))) {
 
 			// if trunk is branching and not about to die, create another trunk with random life
-			if ((rand() % 5 == 0) && life > 7) branch(y, x, 0, life + (rand() % 5 - 2));
+			if ((rand() % 8 == 0) && life > 7) {
+				shootCooldown = multiplier * 2;	// reset shoot cooldown
+				trunks++;
+				branch(y, x, 0, life + (rand() % 5 - 2));
+			}
 
 			// otherwise create a shoot
 			else if (shootCooldown <= 0) {
-				shootCooldown = multiplier + 5;
+				shootCooldown = multiplier * 2;	// reset shoot cooldown
+
 				int shootLife = (life + multiplier);
-				if (shootLife < 0) shootLife = 0;
 
 				// first shoot is randomly directed
 				shoots++;
@@ -275,6 +281,7 @@ void branch(int y, int x, int type, int life) {
 				// create shoot
 				branch(y, x, (shootCounter % 2) + 1, shootLife);
 			}
+			if (verbosity) mvwprintw(treeWin, 10, 5, "trunks: %02i", trunks);
 		}
 		shootCooldown--;
 
@@ -664,7 +671,26 @@ int main(int argc, char* argv[]) {
 		growTree();
 		if (infinite) {
 			timeout(timeWait * 1000);
-			checkKeyPress();
+			int keypress = wgetch(stdscr);
+			if ((screensaver && keypress != ERR) || (keypress == 'q')) {
+				finish();
+				exit(0);
+			}
+			else if (keypress != ERR && keypress != 'q') wgetch(stdscr);
+			/* switch (keypress) { */
+			/* 	case 'q': */
+			/* 		finish(); */
+			/* 		exit(0); */
+			/* 		break; */
+			/* 	case ERR: */
+			/* 		break; */
+			/* 	default: */
+			/* 		wgetch(stdscr); */
+			/* 		break; */
+			/* } */
+			/* if ((screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) { */
+			/* } */
+			/* else if (wgetch(stdscr) != 'q' && wgetch(stdscr) != ERR) wgetch(stdscr); */
 
 			// seed random number generator
 			seed = time(NULL);
