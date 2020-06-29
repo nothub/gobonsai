@@ -9,6 +9,7 @@
 // global variables
 int branches = 0;
 int shoots = 0;
+int trunks = 1;
 int shootsMax = 0;
 int shootCounter;
 
@@ -260,19 +261,24 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		else if ((type == 1 || type == 2) && life < (conf.multiplier + 2)) branch(conf, y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-		else if (type == 0 && ( \
-				(rand() % (conf.multiplier)) == 0 || \
-				(life > conf.multiplier && life % conf.multiplier == 0)
-				) ) {
+		/* else if (type == 0 && ( \ */
+		/* 		(rand() % (conf.multiplier)) == 0 || \ */
+		/* 		(life > conf.multiplier && life % conf.multiplier == 0) */
+		/* 		) ) { */
+		else if (type == 0 && (((rand() % 3) == 0) || (life % conf.multiplier == 0))) {
 
 			// if trunk is branching and not about to die, create another trunk with random life
-			if ((rand() % 5 == 0) && life > 7) branch(conf, y, x, 0, life + (rand() % 5 - 2));
+			if ((rand() % 8 == 0) && life > 7) {
+				shootCooldown = conf.multiplier * 2;	// reset shoot cooldown
+				trunks++;
+				branch(conf, y, x, 0, life + (rand() % 5 - 2));
+			}
 
 			// otherwise create a shoot
 			else if (shootCooldown <= 0) {
-				shootCooldown = conf.multiplier + 5;
+				shootCooldown = conf.multiplier * 2;	// reset shoot cooldown
+
 				int shootLife = (life + conf.multiplier);
-				if (shootLife < 0) shootLife = 0;
 
 				// first shoot is randomly directed
 				shoots++;
@@ -282,6 +288,7 @@ void branch(struct config conf, int y, int x, int type, int life) {
 				// create shoot
 				branch(conf, y, x, (shootCounter % 2) + 1, shootLife);
 			}
+			if (conf.verbosity) mvwprintw(treeWin, 10, 5, "trunks: %02i", trunks);
 		}
 		shootCooldown--;
 
