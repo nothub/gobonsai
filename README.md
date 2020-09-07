@@ -1,5 +1,4 @@
-
-![cbonsai showcase gif](https://i.imgur.com/YvGutcK.gif)
+<img src="https://i.imgur.com/rnqJx3P.gif" width="400px" style="display: block; margin-left: auto; margin-right: auto;">
 
 # cbonsai
 
