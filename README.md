@@ -1,14 +1,11 @@
-<div style="overflow: auto;">
+
+![cbonsai showcase gif](https://i.imgur.com/YvGutcK.gif)
 
 # cbonsai
-
-<img src="https://i.imgur.com/YvGutcK.gif" style="float: right" width=400px>
 
 `cbonsai` is a bonsai tree generator, written in `C` using `ncurses`. It intelligently creates, colors, and positions a bonsai tree, and is entirely configurable via CLI options-- see [usage](#usage). There are 2 modes of operation: `static` (the default), and `live`. See [modes](#modes) for details.
 
 `cbonsai` is always looking for ideas for improvement. Feel free to open an issue if you've got an idea or a bug.
-
-</div>
 
 ## Installation
 
