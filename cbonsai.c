@@ -773,7 +773,8 @@ int main(int argc, char* argv[]) {
 				else if (color >= 8) printf("\033[9%im", color - 8);
 
 				// print character
-				printf("%c", mvwinch(stdscr, y, x));
+				// mvwinch returns chtype which depends on machine, so we type cast
+				printf("%c", (char) mvwinch(stdscr, y, x));
 			}
 		}
 		printf("%s\n", "\033[0m");
