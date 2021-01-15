@@ -1,7 +1,7 @@
 .POSIX:
 CC	= cc
 CFLAGS	= -Wall -pedantic
-LDLIBS	= -lncurses -lpanel
+LDLIBS	= $(shell pkg-config --libs ncurses panel)
 PREFIX	= /usr/local
 
 cbonsai: cbonsai.c
