@@ -515,41 +515,38 @@ void init(struct config conf) {
 	if (has_colors()) {
 		start_color();
 
+		// use native background color when possible
+		int bg = COLOR_BLACK;
+		if (use_default_colors() != ERR) bg = -1;
+
 		// define color pairs
-		if (use_default_colors() != ERR) {
-			init_pair(0, 0, -1);
-			init_pair(1, 1, -1);
-			init_pair(2, 2, -1);
-			init_pair(3, 3, -1);
-			init_pair(4, 4, -1);
-			init_pair(5, 5, -1);
-			init_pair(6, 6, -1);
-			init_pair(7, 7, -1);
-			init_pair(8, 8, -1);
-			init_pair(9, 9, -1);
-			init_pair(10, 10, -1);
-			init_pair(11, 11, -1);
-			init_pair(12, 12, -1);
-			init_pair(13, 13, -1);
-			init_pair(14, 14, -1);
-			init_pair(15, 15, -1);
-		} else {
-		init_pair(0, 0, COLOR_BLACK);
-		init_pair(1, 1, COLOR_BLACK);
-		init_pair(2, 2, COLOR_BLACK);
-		init_pair(3, 3, COLOR_BLACK);
-		init_pair(4, 4, COLOR_BLACK);
-		init_pair(5, 5, COLOR_BLACK);
-		init_pair(6, 6, COLOR_BLACK);
-		init_pair(7, 7, COLOR_BLACK);
-		init_pair(8, 8, COLOR_BLACK);
-		init_pair(9, 9, COLOR_BLACK);
-		init_pair(10, 10, COLOR_BLACK);
-		init_pair(11, 11, COLOR_BLACK);
-		init_pair(12, 12, COLOR_BLACK);
-		init_pair(13, 13, COLOR_BLACK);
-		init_pair(14, 14, COLOR_BLACK);
-		init_pair(15, 15, COLOR_BLACK);
+		init_pair(0, 0, bg);
+		init_pair(1, 1, bg);
+		init_pair(2, 2, bg);
+		init_pair(3, 3, bg);
+		init_pair(4, 4, bg);
+		init_pair(5, 5, bg);
+		init_pair(6, 6, bg);
+		init_pair(7, 7, bg);
+		init_pair(8, 8, bg);
+		init_pair(9, 9, bg);
+		init_pair(10, 10, bg);
+		init_pair(11, 11, bg);
+		init_pair(12, 12, bg);
+		init_pair(13, 13, bg);
+		init_pair(14, 14, bg);
+		init_pair(15, 15, bg);
+
+		// restrict color pallete in non-256color terminals (e.g. screen or linux)
+		if (COLORS < 256) {
+			init_pair(8, 7, bg);	// gray will look white
+			init_pair(9, 1, bg);
+			init_pair(10, 2, bg);
+			init_pair(11, 3, bg);
+			init_pair(12, 4, bg);
+			init_pair(13, 5, bg);
+			init_pair(14, 6, bg);
+			init_pair(15, 7, bg);
 		}
 	} else {
 		printf("%s", "Warning: terminal does not have color support.");
