@@ -23,6 +23,10 @@ AUR user `nichobi` has kindly packaged `cbonsai` in the AUR, called [cbonsai-git
 yay -S cbonsai-git
 ```
 
+### Debian-based
+
+Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/releases).
+
 ### Manual
 
 You'll need to have a working `ncurses` library. If you're on a `Debian`-based system, you can install `ncurses` like so:
