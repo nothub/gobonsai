@@ -27,6 +27,17 @@ yay -S cbonsai-git
 
 Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/releases).
 
+### MacOS
+
+Follow the Manual installation, but if you install `ncurses` via homebrew, you may see this:
+
+```
+For pkg-config to find ncurses you may need to set:
+  set -gx PKG_CONFIG_PATH "/usr/local/opt/ncurses/lib/pkgconfig"
+```
+
+You may need to follow these instructions before running `make install`.
+
 ### Manual
 
 You'll need to have a working `ncurses` library. If you're on a `Debian`-based system, you can install `ncurses` like so:
