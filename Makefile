@@ -7,7 +7,8 @@ PREFIX	= /usr/local
 cbonsai: cbonsai.c
 
 install: cbonsai
-	install -TDm 0755 cbonsai $(DESTDIR)$(PREFIX)/bin/cbonsai
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m 0755 cbonsai $(DESTDIR)$(PREFIX)/bin/cbonsai
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cbonsai
