@@ -2,7 +2,7 @@
 
 <img src="https://i.imgur.com/rnqJx3P.gif" align="right" width="400px">
 
-`cbonsai` is a bonsai tree generator, written in `C` using `ncurses`. It intelligently creates, colors, and positions a bonsai tree, and is entirely configurable via CLI options-- see [usage](#usage). There are 2 modes of operation: `static` (the default), and `live`. See [modes](#modes) for details.
+`cbonsai` is a bonsai tree generator, written in `C` using `ncurses`. It intelligently creates, colors, and positions a bonsai tree, and is entirely configurable via CLI options-- see [usage](#usage). There are 2 modes of operation: `static` (see finished bonsai tree), and `live` (see growth step-by-step).
 
 `cbonsai` is always looking for ideas for improvement- feel free to open an issue if you've got an idea or a bug!
 
@@ -14,6 +14,10 @@
 <br>
 
 ## Installation
+
+<a href="https://repology.org/project/cbonsai/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/cbonsai.svg" alt="Packaging status" align="right">
+</a>
 
 ### Arch Linux (AUR)
 
@@ -29,7 +33,7 @@ Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this re
 
 ### MacOS
 
-Follow the Manual installation, but if you install `ncurses` via homebrew, you may see this:
+Follow the [Manual](#manual) installation, but if you install `ncurses` via homebrew, you may see this:
 
 ```
 For pkg-config to find ncurses you may need to set:
@@ -87,16 +91,6 @@ Options:
   -v, --verbose          increase output verbosity
   -h, --help             show help
 ```
-
-## Modes
-
-### Static
-
-`static` mode is the default: the user only sees the final, completed tree as a picture.
-
-### Live
-
-`live` mode displays each "step" of growth and waits a little bit, so that the user can watch the tree being grown step by step.
 
 ## How it Works
 
