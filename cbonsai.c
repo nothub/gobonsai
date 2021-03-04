@@ -32,7 +32,7 @@ struct config {
 	double timeStep;
 
 	char* message;
-	char* leavesInput;
+	char leavesInput[128];
 	char* leaves[100];
 };
 
@@ -323,9 +323,12 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		}
 
 		// choose string to use for this branch
-		char *branchChar = malloc(100);
+		char *branchChar = malloc(32 * sizeof(char));
 		strcpy(branchChar, "?");	// fallback character
-		if (life < 4 || type >= 3) strcpy(branchChar, conf.leaves[rand() % conf.leavesSize]);
+		if (life < 4 || type >= 3) {
+			strncpy(branchChar, conf.leaves[rand() % conf.leavesSize], sizeof(branchChar) - 1);
+			branchChar[sizeof(branchChar) - 1] = '\0';
+		}
 		else {
 			switch(type) {
 				case 0: // trunk
@@ -650,7 +653,8 @@ int main(int argc, char* argv[]) {
 				}
 				break;
 			case 'c':
-				conf.leavesInput = optarg;
+				strncpy(conf.leavesInput, optarg, sizeof(conf.leavesInput) - 1);
+				conf.leavesInput[sizeof(conf.leavesInput) - 1] = '\0';
 				break;
 			case 'M':
 				if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
