@@ -520,22 +520,9 @@ void init(struct config conf) {
 		if (use_default_colors() != ERR) bg = -1;
 
 		// define color pairs
-		init_pair(0, 0, bg);
-		init_pair(1, 1, bg);
-		init_pair(2, 2, bg);
-		init_pair(3, 3, bg);
-		init_pair(4, 4, bg);
-		init_pair(5, 5, bg);
-		init_pair(6, 6, bg);
-		init_pair(7, 7, bg);
-		init_pair(8, 8, bg);
-		init_pair(9, 9, bg);
-		init_pair(10, 10, bg);
-		init_pair(11, 11, bg);
-		init_pair(12, 12, bg);
-		init_pair(13, 13, bg);
-		init_pair(14, 14, bg);
-		init_pair(15, 15, bg);
+		for(int i=0; i<16; i++){
+			init_pair(i, i, bg);
+		}
 
 		// restrict color pallete in non-256color terminals (e.g. screen or linux)
 		if (COLORS < 256) {
