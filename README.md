@@ -47,10 +47,16 @@ You may need to follow these instructions before running `make install`.
 You'll need to have a working `ncurses` library. If you're on a `Debian`-based system, you can install `ncurses` like so:
 
 ```bash
-sudo apt install ncurses
+sudo apt install libncurses-dev
 ```
 
-Ensure dependencies are met, then to install:
+Or on Fedora:
+
+```bash
+sudo dnf install ncurses-devel
+```
+
+Once dependencies are met, then install:
 
 ```bash
 git clone https://gitlab.com/jallbrit/cbonsai
@@ -91,6 +97,16 @@ Options:
   -v, --verbose          increase output verbosity
   -h, --help             show help
 ```
+
+## Add to `.bashrc`
+
+For a new bonsai tree every time you open a terminal, just add the following to the end of your `~/.bashrc`:
+
+```bash
+cbonsai -p
+```
+
+Notice it uses the print mode, so that you can immediately start typing commands below the bonsai tree.
 
 ## How it Works
 
