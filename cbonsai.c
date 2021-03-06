@@ -323,39 +323,41 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		}
 
 		// choose string to use for this branch
-		char *branchChar = malloc(32 * sizeof(char));
-		strcpy(branchChar, "?");	// fallback character
+		char *branchStr = malloc(32 * sizeof(char));
+		strcpy(branchStr, "?");	// fallback character
+
+		// if branch is almost dead, make it a leaf
 		if (life < 4 || type >= 3) {
-			strncpy(branchChar, conf.leaves[rand() % conf.leavesSize], sizeof(branchChar) - 1);
-			branchChar[sizeof(branchChar) - 1] = '\0';
+			strncpy(branchStr, conf.leaves[rand() % conf.leavesSize], sizeof(branchStr) - 1);
+			branchStr[sizeof(branchStr) - 1] = '\0';
 		}
 		else {
 			switch(type) {
 				case 0: // trunk
-					if (dy == 0) strcpy(branchChar, "/~");
-					else if (dx < 0) strcpy(branchChar, "\\|");
-					else if (dx == 0) strcpy(branchChar, "/|\\");
-					else if (dx > 0) strcpy(branchChar, "|/");
+					if (dy == 0) strcpy(branchStr, "/~");
+					else if (dx < 0) strcpy(branchStr, "\\|");
+					else if (dx == 0) strcpy(branchStr, "/|\\");
+					else if (dx > 0) strcpy(branchStr, "|/");
 					break;
 				case 1: // left shoot
-					if (dy > 0) strcpy(branchChar, "\\");
-					else if (dy == 0) strcpy(branchChar, "\\_");
-					else if (dx < 0) strcpy(branchChar, "\\|");
-					else if (dx == 0) strcpy(branchChar, "/|");
-					else if (dx > 0) strcpy(branchChar, "/");
+					if (dy > 0) strcpy(branchStr, "\\");
+					else if (dy == 0) strcpy(branchStr, "\\_");
+					else if (dx < 0) strcpy(branchStr, "\\|");
+					else if (dx == 0) strcpy(branchStr, "/|");
+					else if (dx > 0) strcpy(branchStr, "/");
 					break;
 				case 2: // right shoot
-					if (dy > 0) strcpy(branchChar, "/");
-					else if (dy == 0) strcpy(branchChar, "_/");
-					else if (dx < 0) strcpy(branchChar, "\\|");
-					else if (dx == 0) strcpy(branchChar, "/|");
-					else if (dx > 0) strcpy(branchChar, "/");
+					if (dy > 0) strcpy(branchStr, "/");
+					else if (dy == 0) strcpy(branchStr, "_/");
+					else if (dx < 0) strcpy(branchStr, "\\|");
+					else if (dx == 0) strcpy(branchStr, "/|");
+					else if (dx > 0) strcpy(branchStr, "/");
 					break;
 			}
 		}
 
-		mvwprintw(treeWin, y, x, "%s", branchChar);
-		free(branchChar);
+		mvwprintw(treeWin, y, x, "%s", branchStr);
+		free(branchStr);
 		wattroff(treeWin, A_BOLD);
 
 		// if live, show progress
