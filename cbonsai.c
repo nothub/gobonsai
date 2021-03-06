@@ -32,8 +32,7 @@ struct config {
 	double timeStep;
 
 	char* message;
-	char leavesInput[128];
-	char* leaves[100];
+	char* leaves[64];
 };
 
 void finish(void) {
@@ -583,7 +582,6 @@ int main(int argc, char* argv[]) {
 		.timeStep = 0.03,
 
 		.message = NULL,
-		.leavesInput = "&",
 		.leaves = {0},
 	};
 
@@ -604,6 +602,8 @@ int main(int argc, char* argv[]) {
 		{"help", no_argument, NULL, 'h'},
 		{0, 0, 0, 0}
 	};
+
+	char leavesInput[128] = "&";
 
 	// parse arguments
 	int option_index = 0;
@@ -654,8 +654,8 @@ int main(int argc, char* argv[]) {
 				}
 				break;
 			case 'c':
-				strncpy(conf.leavesInput, optarg, sizeof(conf.leavesInput) - 1);
-				conf.leavesInput[sizeof(conf.leavesInput) - 1] = '\0';
+				strncpy(leavesInput, optarg, sizeof(leavesInput) - 1);
+				leavesInput[sizeof(leavesInput) - 1] = '\0';
 				break;
 			case 'M':
 				if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
@@ -707,7 +707,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// delimit leaves on "," and add each token to the leaves[] list
-	char *token = strtok(conf.leavesInput, ",");
+	char *token = strtok(leavesInput, ",");
 	while (token != NULL) {
 		if (conf.leavesSize < 100) conf.leaves[conf.leavesSize] = token;
 		token = strtok(NULL, ",");
