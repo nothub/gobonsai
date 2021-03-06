@@ -422,8 +422,7 @@ int drawMessage(struct config conf) {
 	unsigned int i = 0;
 	int linePosition = 0;
 	int wordLength = 0;
-	char wordBuffer[500];
-	wordBuffer[0] = '\0';
+	char wordBuffer[512] = {'\0'};
 	char thisChar;
 	int messageBoxWidth = boxWidth - 1;
 	while (true) {
@@ -434,7 +433,7 @@ int drawMessage(struct config conf) {
 		}
 
 		// if char is not a space or null char
-		if (!(isspace(thisChar) || thisChar == '\0')) {
+		if (!(isspace(thisChar) || thisChar == '\0') && wordLength < sizeof(wordBuffer) / sizeof(wordBuffer[0])) {
 			strncat(wordBuffer, &thisChar, 1); // append thisChar to wordBuffer
 			wordLength++;
 			linePosition++;
