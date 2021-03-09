@@ -72,39 +72,39 @@ void printHelp(struct config conf) {
 void drawBase(WINDOW* baseWin, int baseType) {
 	// draw base art
 	switch(baseType) {
-		case 1:
-			wattron(baseWin, A_BOLD | COLOR_PAIR(8));
-			wprintw(baseWin, "%s", ":");
-			wattron(baseWin, COLOR_PAIR(2));
-			wprintw(baseWin, "%s", "___________");
-			wattron(baseWin, COLOR_PAIR(11));
-			wprintw(baseWin, "%s", "./~~~\\.");
-			wattron(baseWin, COLOR_PAIR(2));
-			wprintw(baseWin, "%s", "___________");
-			wattron(baseWin, COLOR_PAIR(8));
-			wprintw(baseWin, "%s", ":");
+	case 1:
+		wattron(baseWin, A_BOLD | COLOR_PAIR(8));
+		wprintw(baseWin, "%s", ":");
+		wattron(baseWin, COLOR_PAIR(2));
+		wprintw(baseWin, "%s", "___________");
+		wattron(baseWin, COLOR_PAIR(11));
+		wprintw(baseWin, "%s", "./~~~\\.");
+		wattron(baseWin, COLOR_PAIR(2));
+		wprintw(baseWin, "%s", "___________");
+		wattron(baseWin, COLOR_PAIR(8));
+		wprintw(baseWin, "%s", ":");
 
-			mvwprintw(baseWin, 1, 0, "%s", " \\                           / ");
-			mvwprintw(baseWin, 2, 0, "%s", "  \\_________________________/ ");
-			mvwprintw(baseWin, 3, 0, "%s", "  (_)                     (_)");
+		mvwprintw(baseWin, 1, 0, "%s", " \\                           / ");
+		mvwprintw(baseWin, 2, 0, "%s", "  \\_________________________/ ");
+		mvwprintw(baseWin, 3, 0, "%s", "  (_)                     (_)");
 
-			wattroff(baseWin, A_BOLD);
-			break;
-		case 2:
-			wattron(baseWin, COLOR_PAIR(8));
-			wprintw(baseWin, "%s", "(");
-			wattron(baseWin, COLOR_PAIR(2));
-			wprintw(baseWin, "%s", "---");
-			wattron(baseWin, COLOR_PAIR(11));
-			wprintw(baseWin, "%s", "./~~~\\.");
-			wattron(baseWin, COLOR_PAIR(2));
-			wprintw(baseWin, "%s", "---");
-			wattron(baseWin, COLOR_PAIR(8));
-			wprintw(baseWin, "%s", ")");
+		wattroff(baseWin, A_BOLD);
+		break;
+	case 2:
+		wattron(baseWin, COLOR_PAIR(8));
+		wprintw(baseWin, "%s", "(");
+		wattron(baseWin, COLOR_PAIR(2));
+		wprintw(baseWin, "%s", "---");
+		wattron(baseWin, COLOR_PAIR(11));
+		wprintw(baseWin, "%s", "./~~~\\.");
+		wattron(baseWin, COLOR_PAIR(2));
+		wprintw(baseWin, "%s", "---");
+		wattron(baseWin, COLOR_PAIR(8));
+		wprintw(baseWin, "%s", ")");
 
-			mvwprintw(baseWin, 1, 0, "%s", " (           ) ");
-			mvwprintw(baseWin, 2, 0, "%s", "  (_________)  ");
-			break;
+		mvwprintw(baseWin, 1, 0, "%s", " (           ) ");
+		mvwprintw(baseWin, 2, 0, "%s", "  (_________)  ");
+		break;
 	}
 }
 
@@ -114,14 +114,14 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 	int rows, cols;
 
 	switch(baseType) {
-		case 1:
-			baseWidth = 31;
-			baseHeight = 4;
-			break;
-		case 2:
-			baseWidth = 15;
-			baseHeight = 3;
-			break;
+	case 1:
+		baseWidth = 31;
+		baseHeight = 4;
+		break;
+	case 2:
+		baseWidth = 15;
+		baseHeight = 3;
+		break;
 	}
 
 	// calculate where base should go
@@ -146,7 +146,7 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 // roll (randomize) a given die
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
-// check for 'q' key press
+// check for key press
 void checkKeyPress(int screensaver) {
 	if ((screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
 		finish();
@@ -154,8 +154,8 @@ void checkKeyPress(int screensaver) {
 	}
 }
 
+// display changes
 void updateScreen(float timeStep) {
-	// display changes
 	update_panels();
 	doupdate();
 
@@ -166,109 +166,111 @@ void updateScreen(float timeStep) {
 	nanosleep(&ts, NULL);	// sleep for given time
 }
 
+// based on type of tree, determine what color a branch should be
 void chooseColor(int type, WINDOW* treeWin) {
 	switch(type) {
-		case 0:
-		case 1:
-		case 2: // trunk or shoot
-			if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
-			else wattron(treeWin, COLOR_PAIR(3));
-			break;
+	case 0:
+	case 1:
+	case 2: // trunk or shoot
+		if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
+		else wattron(treeWin, COLOR_PAIR(3));
+		break;
 
-		case 3: // dying
-			if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
-			else wattron(treeWin, COLOR_PAIR(2));
-			break;
+	case 3: // dying
+		if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
+		else wattron(treeWin, COLOR_PAIR(2));
+		break;
 
-		case 4: // dead
-			if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
-			else wattron(treeWin, COLOR_PAIR(10));
-			break;
+	case 4: // dead
+		if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
+		else wattron(treeWin, COLOR_PAIR(10));
+		break;
 	}
 }
 
+// determine change in X and Y coordinates of a given branch
 void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *returnDy) {
 	int dx, dy, dice;
 	switch (type) {
-		case 0: // trunk
+	case 0: // trunk
 
-			// new or dead trunk
-			if (age <= 2 || life < 4) {
-				dy = 0;
-				dx = (rand() % 3) - 1;
-			}
-			// young trunk should grow wide
-			else if (age < (multiplier * 3)) {
-
-				// every (multiplier * 0.8) steps, raise tree to next level
-				if (age % (int) (multiplier * 0.5) == 0) dy = -1;
-				else dy = 0;
-
-				roll(&dice, 10);
-				if (dice >= 0 && dice <=0) dx = -2;
-				else if (dice >= 1 && dice <= 3) dx = -1;
-				else if (dice >= 4 && dice <= 5) dx = 0;
-				else if (dice >= 6 && dice <= 8) dx = 1;
-				else if (dice >= 9 && dice <= 9) dx = 2;
-			}
-			// middle-aged trunk
-			else {
-				roll(&dice, 10);
-				if (dice > 2) dy = -1;
-				else dy = 0;
-				dx = (rand() % 3) - 1;
-			}
-			break;
-
-		case 1: // left shoot: trend left and little vertical movement
-			roll(&dice, 10);
-			if (dice >= 0 && dice <= 1) dy = -1;
-			else if (dice >= 2 && dice <= 7) dy = 0;
-			else if (dice >= 8 && dice <= 9) dy = 1;
-
-			roll(&dice, 10);
-			if (dice >= 0 && dice <=1) dx = -2;
-			else if (dice >= 2 && dice <= 5) dx = -1;
-			else if (dice >= 6 && dice <= 8) dx = 0;
-			else if (dice >= 9 && dice <= 9) dx = 1;
-			break;
-
-		case 2: // right shoot: trend right and little vertical movement
-			roll(&dice, 10);
-			if (dice >= 0 && dice <= 1) dy = -1;
-			else if (dice >= 2 && dice <= 7) dy = 0;
-			else if (dice >= 8 && dice <= 9) dy = 1;
-
-			roll(&dice, 10);
-			if (dice >= 0 && dice <=1) dx = 2;
-			else if (dice >= 2 && dice <= 5) dx = 1;
-			else if (dice >= 6 && dice <= 8) dx = 0;
-			else if (dice >= 9 && dice <= 9) dx = -1;
-			break;
-
-		case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
-			roll(&dice, 10);
-			if (dice >= 0 && dice <=1) dy = -1;
-			else if (dice >= 2 && dice <=8) dy = 0;
-			else if (dice >= 9 && dice <=9) dy = 1;
-
-			roll(&dice, 15);
-			if (dice >= 0 && dice <=0) dx = -3;
-			else if (dice >= 1 && dice <= 2) dx = -2;
-			else if (dice >= 3 && dice <= 5) dx = -1;
-			else if (dice >= 6 && dice <= 8) dx = 0;
-			else if (dice >= 9 && dice <= 11) dx = 1;
-			else if (dice >= 12 && dice <= 13) dx = 2;
-			else if (dice >= 14 && dice <= 14) dx = 3;
-			break;
-
-		case 4: // dead: fill in surrounding area
-			roll(&dice, 10);
-			if (dice >= 0 && dice <= 2) dy = -1;
-			else if (dice >= 3 && dice <= 6) dy = 0;
-			else if (dice >= 7 && dice <= 9) dy = 1;
+		// new or dead trunk
+		if (age <= 2 || life < 4) {
+			dy = 0;
 			dx = (rand() % 3) - 1;
-			break;
+		}
+		// young trunk should grow wide
+		else if (age < (multiplier * 3)) {
+
+			// every (multiplier * 0.8) steps, raise tree to next level
+			if (age % (int) (multiplier * 0.5) == 0) dy = -1;
+			else dy = 0;
+
+			roll(&dice, 10);
+			if (dice >= 0 && dice <=0) dx = -2;
+			else if (dice >= 1 && dice <= 3) dx = -1;
+			else if (dice >= 4 && dice <= 5) dx = 0;
+			else if (dice >= 6 && dice <= 8) dx = 1;
+			else if (dice >= 9 && dice <= 9) dx = 2;
+		}
+		// middle-aged trunk
+		else {
+			roll(&dice, 10);
+			if (dice > 2) dy = -1;
+			else dy = 0;
+			dx = (rand() % 3) - 1;
+		}
+		break;
+
+	case 1: // left shoot: trend left and little vertical movement
+		roll(&dice, 10);
+		if (dice >= 0 && dice <= 1) dy = -1;
+		else if (dice >= 2 && dice <= 7) dy = 0;
+		else if (dice >= 8 && dice <= 9) dy = 1;
+
+		roll(&dice, 10);
+		if (dice >= 0 && dice <=1) dx = -2;
+		else if (dice >= 2 && dice <= 5) dx = -1;
+		else if (dice >= 6 && dice <= 8) dx = 0;
+		else if (dice >= 9 && dice <= 9) dx = 1;
+		break;
+
+	case 2: // right shoot: trend right and little vertical movement
+		roll(&dice, 10);
+		if (dice >= 0 && dice <= 1) dy = -1;
+		else if (dice >= 2 && dice <= 7) dy = 0;
+		else if (dice >= 8 && dice <= 9) dy = 1;
+
+		roll(&dice, 10);
+		if (dice >= 0 && dice <=1) dx = 2;
+		else if (dice >= 2 && dice <= 5) dx = 1;
+		else if (dice >= 6 && dice <= 8) dx = 0;
+		else if (dice >= 9 && dice <= 9) dx = -1;
+		break;
+
+	case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
+		roll(&dice, 10);
+		if (dice >= 0 && dice <=1) dy = -1;
+		else if (dice >= 2 && dice <=8) dy = 0;
+		else if (dice >= 9 && dice <=9) dy = 1;
+
+		roll(&dice, 15);
+		if (dice >= 0 && dice <=0) dx = -3;
+		else if (dice >= 1 && dice <= 2) dx = -2;
+		else if (dice >= 3 && dice <= 5) dx = -1;
+		else if (dice >= 6 && dice <= 8) dx = 0;
+		else if (dice >= 9 && dice <= 11) dx = 1;
+		else if (dice >= 12 && dice <= 13) dx = 2;
+		else if (dice >= 14 && dice <= 14) dx = 3;
+		break;
+
+	case 4: // dead: fill in surrounding area
+		roll(&dice, 10);
+		if (dice >= 0 && dice <= 2) dy = -1;
+		else if (dice >= 3 && dice <= 6) dy = 0;
+		else if (dice >= 7 && dice <= 9) dy = 1;
+		dx = (rand() % 3) - 1;
+		break;
 	}
 
 	*returnDx = dx;
@@ -288,26 +290,26 @@ char* chooseString(int type, int life, char** leaves, int leavesSize, int dx, in
 	}
 	else {
 		switch(type) {
-			case 0: // trunk
-				if (dy == 0) strcpy(branchStr, "/~");
-				else if (dx < 0) strcpy(branchStr, "\\|");
-				else if (dx == 0) strcpy(branchStr, "/|\\");
-				else if (dx > 0) strcpy(branchStr, "|/");
-				break;
-			case 1: // left shoot
-				if (dy > 0) strcpy(branchStr, "\\");
-				else if (dy == 0) strcpy(branchStr, "\\_");
-				else if (dx < 0) strcpy(branchStr, "\\|");
-				else if (dx == 0) strcpy(branchStr, "/|");
-				else if (dx > 0) strcpy(branchStr, "/");
-				break;
-			case 2: // right shoot
-				if (dy > 0) strcpy(branchStr, "/");
-				else if (dy == 0) strcpy(branchStr, "_/");
-				else if (dx < 0) strcpy(branchStr, "\\|");
-				else if (dx == 0) strcpy(branchStr, "/|");
-				else if (dx > 0) strcpy(branchStr, "/");
-				break;
+		case 0: // trunk
+			if (dy == 0) strcpy(branchStr, "/~");
+			else if (dx < 0) strcpy(branchStr, "\\|");
+			else if (dx == 0) strcpy(branchStr, "/|\\");
+			else if (dx > 0) strcpy(branchStr, "|/");
+			break;
+		case 1: // left shoot
+			if (dy > 0) strcpy(branchStr, "\\");
+			else if (dy == 0) strcpy(branchStr, "\\_");
+			else if (dx < 0) strcpy(branchStr, "\\|");
+			else if (dx == 0) strcpy(branchStr, "/|");
+			else if (dx > 0) strcpy(branchStr, "/");
+			break;
+		case 2: // right shoot
+			if (dy > 0) strcpy(branchStr, "/");
+			else if (dy == 0) strcpy(branchStr, "_/");
+			else if (dx < 0) strcpy(branchStr, "\\|");
+			else if (dx == 0) strcpy(branchStr, "/|");
+			else if (dx > 0) strcpy(branchStr, "/");
+			break;
 		}
 	}
 
@@ -470,16 +472,16 @@ int drawMessage(struct config conf) {
 				wordBuffer[0] = '\0';	// clear word buffer
 
 				switch (thisChar) {
-					case ' ':
-						addSpaces(1, &linePosition, messageBoxWidth);
-						break;
-					case '\t':
-						addSpaces(1, &linePosition, messageBoxWidth);
-						break;
-					case '\n':
-						waddch(messageWin, thisChar);
-						linePosition = 0;
-						break;
+				case ' ':
+					addSpaces(1, &linePosition, messageBoxWidth);
+					break;
+				case '\t':
+					addSpaces(1, &linePosition, messageBoxWidth);
+					break;
+				case '\n':
+					waddch(messageWin, thisChar);
+					linePosition = 0;
+					break;
 				}
 
 			}
@@ -656,99 +658,99 @@ int main(int argc, char* argv[]) {
 	int c;
 	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
 		switch (c) {
-			case 'l':
-				conf.live = 1;
-				break;
-			case 't':
-				if (strtold(optarg, NULL) != 0) conf.timeStep = strtod(optarg, NULL);
-				else {
-					printf("error: invalid step time: '%s'\n", optarg);
-					exit(1);
-				}
-				if (conf.timeStep < 0) {
-					printf("error: invalid step time: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'i':
-				conf.infinite = 1;
-				break;
-			case 'w':
-				if (strtold(optarg, NULL) != 0) conf.timeWait = strtod(optarg, NULL);
-				else {
-					printf("error: invalid wait time: '%s'\n", optarg);
-					exit(1);
-				}
-				if (conf.timeWait < 0) {
-					printf("error: invalid wait time: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'S':
-				conf.live = 1;
-				conf.infinite = 1;
-				conf.screensaver = 1;
-				break;
-			case 'm':
-				conf.message = optarg;
-				break;
-			case 'b':
-				if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
-				else {
-					printf("error: invalid base index: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'c':
-				strncpy(leavesInput, optarg, sizeof(leavesInput) - 1);
-				leavesInput[sizeof(leavesInput) - 1] = '\0';
-				break;
-			case 'M':
-				if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
-				else {
-					printf("error: invalid multiplier: '%s'\n", optarg);
-					exit(1);
-				}
-				if (conf.multiplier < 0) {
-					printf("error: invalid multiplier: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'L':
-				if (strtold(optarg, NULL) != 0) conf.lifeStart = strtod(optarg, NULL);
-				else {
-					printf("error: invalid initial life: '%s'\n", optarg);
-					exit(1);
-				}
-				if (conf.lifeStart < 0) {
-					printf("error: invalid initial life: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'p':
-				conf.printTree = 1;
-				break;
-			case 's':
-				if (strtold(optarg, NULL) != 0) conf.seed = strtod(optarg, NULL);
-				else {
-					printf("error: invalid seed: '%s'\n", optarg);
-					exit(1);
-				}
-				if (conf.seed < 0) {
-					printf("error: invalid seed: '%s'\n", optarg);
-					exit(1);
-				}
-				break;
-			case 'v':
-				conf.verbosity++;
-				break;
+		case 'l':
+			conf.live = 1;
+			break;
+		case 't':
+			if (strtold(optarg, NULL) != 0) conf.timeStep = strtod(optarg, NULL);
+			else {
+				printf("error: invalid step time: '%s'\n", optarg);
+				exit(1);
+			}
+			if (conf.timeStep < 0) {
+				printf("error: invalid step time: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'i':
+			conf.infinite = 1;
+			break;
+		case 'w':
+			if (strtold(optarg, NULL) != 0) conf.timeWait = strtod(optarg, NULL);
+			else {
+				printf("error: invalid wait time: '%s'\n", optarg);
+				exit(1);
+			}
+			if (conf.timeWait < 0) {
+				printf("error: invalid wait time: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'S':
+			conf.live = 1;
+			conf.infinite = 1;
+			conf.screensaver = 1;
+			break;
+		case 'm':
+			conf.message = optarg;
+			break;
+		case 'b':
+			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
+			else {
+				printf("error: invalid base index: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'c':
+			strncpy(leavesInput, optarg, sizeof(leavesInput) - 1);
+			leavesInput[sizeof(leavesInput) - 1] = '\0';
+			break;
+		case 'M':
+			if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
+			else {
+				printf("error: invalid multiplier: '%s'\n", optarg);
+				exit(1);
+			}
+			if (conf.multiplier < 0) {
+				printf("error: invalid multiplier: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'L':
+			if (strtold(optarg, NULL) != 0) conf.lifeStart = strtod(optarg, NULL);
+			else {
+				printf("error: invalid initial life: '%s'\n", optarg);
+				exit(1);
+			}
+			if (conf.lifeStart < 0) {
+				printf("error: invalid initial life: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'p':
+			conf.printTree = 1;
+			break;
+		case 's':
+			if (strtold(optarg, NULL) != 0) conf.seed = strtod(optarg, NULL);
+			else {
+				printf("error: invalid seed: '%s'\n", optarg);
+				exit(1);
+			}
+			if (conf.seed < 0) {
+				printf("error: invalid seed: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		case 'v':
+			conf.verbosity++;
+			break;
 
-			// '?' represents unknown option. Treat it like --help.
-			case '?':
-			case 'h':
-				printHelp(conf);
-				return 0;
-				break;
+		// '?' represents unknown option. Treat it like --help.
+		case '?':
+		case 'h':
+			printHelp(conf);
+			return 0;
+			break;
 		}
 	}
 
