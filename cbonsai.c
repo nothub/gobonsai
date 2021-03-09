@@ -69,39 +69,8 @@ void printHelp(struct config conf) {
 	printf("  -h, --help             show help	\n");
 }
 
-void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
-	int baseWidth = 0;
-	int baseHeight = 0;
-	int rows, cols;
-
-	switch(baseType) {
-		case 1:
-			baseWidth = 31;
-			baseHeight = 4;
-			break;
-		case 2:
-			baseWidth = 15;
-			baseHeight = 3;
-			break;
-	}
-
-	// calculate where base should go
-	getmaxyx(stdscr, rows, cols);
-	int baseOriginY = (rows - baseHeight);
-	int baseOriginX = (cols / 2) - (baseWidth / 2);
-
-	// create windows
-	*baseWinPtr = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
-	*treeWinPtr = newwin(rows - baseHeight, cols, 0, 0);
-
-	WINDOW *baseWin = *baseWinPtr;
-	WINDOW *treeWin = *treeWinPtr;
-
-	// add windows to array of panels
-	myPanels[0] = new_panel(baseWin);
-	myPanels[1] = new_panel(treeWin);
-
-	// draw art
+void drawBase(WINDOW* baseWin, int baseType) {
+	// draw base art
 	switch(baseType) {
 		case 1:
 			wattron(baseWin, A_BOLD | COLOR_PAIR(8));
@@ -139,6 +108,41 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 	}
 }
 
+void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
+	int baseWidth = 0;
+	int baseHeight = 0;
+	int rows, cols;
+
+	switch(baseType) {
+		case 1:
+			baseWidth = 31;
+			baseHeight = 4;
+			break;
+		case 2:
+			baseWidth = 15;
+			baseHeight = 3;
+			break;
+	}
+
+	// calculate where base should go
+	getmaxyx(stdscr, rows, cols);
+	int baseOriginY = (rows - baseHeight);
+	int baseOriginX = (cols / 2) - (baseWidth / 2);
+
+	// create windows
+	*baseWinPtr = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
+	*treeWinPtr = newwin(rows - baseHeight, cols, 0, 0);
+
+	WINDOW *baseWin = *baseWinPtr;
+	WINDOW *treeWin = *treeWinPtr;
+
+	// add windows to array of panels
+	myPanels[0] = new_panel(baseWin);
+	myPanels[1] = new_panel(treeWin);
+
+	drawBase(baseWin, baseType);
+}
+
 // roll (randomize) a given die
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
@@ -150,11 +154,170 @@ void checkKeyPress(int screensaver) {
 	}
 }
 
+void updateScreen(float timeStep) {
+	// display changes
+	update_panels();
+	doupdate();
+
+	// convert given time into seconds and nanoseconds and sleep
+	struct timespec ts;
+	ts.tv_sec = timeStep / 1;
+	ts.tv_nsec = (timeStep - ts.tv_sec) * 1000000000;
+	nanosleep(&ts, NULL);	// sleep for given time
+}
+
+void chooseColor(int type, WINDOW* treeWin) {
+	switch(type) {
+		case 0:
+		case 1:
+		case 2: // trunk or shoot
+			if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
+			else wattron(treeWin, COLOR_PAIR(3));
+			break;
+
+		case 3: // dying
+			if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
+			else wattron(treeWin, COLOR_PAIR(2));
+			break;
+
+		case 4: // dead
+			if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
+			else wattron(treeWin, COLOR_PAIR(10));
+			break;
+	}
+}
+
+void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *returnDy) {
+	int dx, dy, dice;
+	switch (type) {
+		case 0: // trunk
+
+			// new or dead trunk
+			if (age <= 2 || life < 4) {
+				dy = 0;
+				dx = (rand() % 3) - 1;
+			}
+			// young trunk should grow wide
+			else if (age < (multiplier * 3)) {
+
+				// every (multiplier * 0.8) steps, raise tree to next level
+				if (age % (int) (multiplier * 0.5) == 0) dy = -1;
+				else dy = 0;
+
+				roll(&dice, 10);
+				if (dice >= 0 && dice <=0) dx = -2;
+				else if (dice >= 1 && dice <= 3) dx = -1;
+				else if (dice >= 4 && dice <= 5) dx = 0;
+				else if (dice >= 6 && dice <= 8) dx = 1;
+				else if (dice >= 9 && dice <= 9) dx = 2;
+			}
+			// middle-aged trunk
+			else {
+				roll(&dice, 10);
+				if (dice > 2) dy = -1;
+				else dy = 0;
+				dx = (rand() % 3) - 1;
+			}
+			break;
+
+		case 1: // left shoot: trend left and little vertical movement
+			roll(&dice, 10);
+			if (dice >= 0 && dice <= 1) dy = -1;
+			else if (dice >= 2 && dice <= 7) dy = 0;
+			else if (dice >= 8 && dice <= 9) dy = 1;
+
+			roll(&dice, 10);
+			if (dice >= 0 && dice <=1) dx = -2;
+			else if (dice >= 2 && dice <= 5) dx = -1;
+			else if (dice >= 6 && dice <= 8) dx = 0;
+			else if (dice >= 9 && dice <= 9) dx = 1;
+			break;
+
+		case 2: // right shoot: trend right and little vertical movement
+			roll(&dice, 10);
+			if (dice >= 0 && dice <= 1) dy = -1;
+			else if (dice >= 2 && dice <= 7) dy = 0;
+			else if (dice >= 8 && dice <= 9) dy = 1;
+
+			roll(&dice, 10);
+			if (dice >= 0 && dice <=1) dx = 2;
+			else if (dice >= 2 && dice <= 5) dx = 1;
+			else if (dice >= 6 && dice <= 8) dx = 0;
+			else if (dice >= 9 && dice <= 9) dx = -1;
+			break;
+
+		case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
+			roll(&dice, 10);
+			if (dice >= 0 && dice <=1) dy = -1;
+			else if (dice >= 2 && dice <=8) dy = 0;
+			else if (dice >= 9 && dice <=9) dy = 1;
+
+			roll(&dice, 15);
+			if (dice >= 0 && dice <=0) dx = -3;
+			else if (dice >= 1 && dice <= 2) dx = -2;
+			else if (dice >= 3 && dice <= 5) dx = -1;
+			else if (dice >= 6 && dice <= 8) dx = 0;
+			else if (dice >= 9 && dice <= 11) dx = 1;
+			else if (dice >= 12 && dice <= 13) dx = 2;
+			else if (dice >= 14 && dice <= 14) dx = 3;
+			break;
+
+		case 4: // dead: fill in surrounding area
+			roll(&dice, 10);
+			if (dice >= 0 && dice <= 2) dy = -1;
+			else if (dice >= 3 && dice <= 6) dy = 0;
+			else if (dice >= 7 && dice <= 9) dy = 1;
+			dx = (rand() % 3) - 1;
+			break;
+	}
+
+	*returnDx = dx;
+	*returnDy = dy;
+}
+
+char* chooseString(int type, int life, char** leaves, int leavesSize, int dx, int dy) {
+	char* branchStr;
+
+	branchStr = malloc(32 * sizeof(char));
+	strcpy(branchStr, "?");	// fallback character
+
+	// if branch is almost dead, make it a leaf
+	if (life < 4 || type >= 3) {
+		strncpy(branchStr, leaves[rand() % leavesSize], sizeof(branchStr) - 1);
+		branchStr[sizeof(branchStr) - 1] = '\0';
+	}
+	else {
+		switch(type) {
+			case 0: // trunk
+				if (dy == 0) strcpy(branchStr, "/~");
+				else if (dx < 0) strcpy(branchStr, "\\|");
+				else if (dx == 0) strcpy(branchStr, "/|\\");
+				else if (dx > 0) strcpy(branchStr, "|/");
+				break;
+			case 1: // left shoot
+				if (dy > 0) strcpy(branchStr, "\\");
+				else if (dy == 0) strcpy(branchStr, "\\_");
+				else if (dx < 0) strcpy(branchStr, "\\|");
+				else if (dx == 0) strcpy(branchStr, "/|");
+				else if (dx > 0) strcpy(branchStr, "/");
+				break;
+			case 2: // right shoot
+				if (dy > 0) strcpy(branchStr, "/");
+				else if (dy == 0) strcpy(branchStr, "_/");
+				else if (dx < 0) strcpy(branchStr, "\\|");
+				else if (dx == 0) strcpy(branchStr, "/|");
+				else if (dx > 0) strcpy(branchStr, "/");
+				break;
+		}
+	}
+
+	return branchStr;
+}
+
 void branch(struct config conf, int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
 	int dy = 0;
-	int dice = 0;
 	int age = 0;
 	int shootCooldown = conf.multiplier;
 
@@ -163,91 +326,9 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		life--;		// decrement remaining life counter
 		age = conf.lifeStart - life;
 
-		switch (type) {
-			case 0: // trunk
+		setDeltas(type, life, age, conf.multiplier, &dx, &dy);
 
-				// new or dead trunk
-				if (age <= 2 || life < 4) {
-					dy = 0;
-					dx = (rand() % 3) - 1;
-				}
-				// young trunk should grow wide
-				else if (age < (conf.multiplier * 3)) {
-
-					// every (multiplier * 0.8) steps, raise tree to next level
-					if (age % (int) (conf.multiplier * 0.5) == 0) dy = -1;
-					else dy = 0;
-
-					roll(&dice, 10);
-					if (dice >= 0 && dice <=0) dx = -2;
-					else if (dice >= 1 && dice <= 3) dx = -1;
-					else if (dice >= 4 && dice <= 5) dx = 0;
-					else if (dice >= 6 && dice <= 8) dx = 1;
-					else if (dice >= 9 && dice <= 9) dx = 2;
-				}
-				// middle-aged trunk
-				else {
-					roll(&dice, 10);
-					if (dice > 2) dy = -1;
-					else dy = 0;
-					dx = (rand() % 3) - 1;
-				}
-				break;
-
-			case 1: // left shoot: trend left and little vertical movement
-				roll(&dice, 10);
-				if (dice >= 0 && dice <= 1) dy = -1;
-				else if (dice >= 2 && dice <= 7) dy = 0;
-				else if (dice >= 8 && dice <= 9) dy = 1;
-
-				roll(&dice, 10);
-				if (dice >= 0 && dice <=1) dx = -2;
-				else if (dice >= 2 && dice <= 5) dx = -1;
-				else if (dice >= 6 && dice <= 8) dx = 0;
-				else if (dice >= 9 && dice <= 9) dx = 1;
-				break;
-
-			case 2: // right shoot: trend right and little vertical movement
-				roll(&dice, 10);
-				if (dice >= 0 && dice <= 1) dy = -1;
-				else if (dice >= 2 && dice <= 7) dy = 0;
-				else if (dice >= 8 && dice <= 9) dy = 1;
-
-				roll(&dice, 10);
-				if (dice >= 0 && dice <=1) dx = 2;
-				else if (dice >= 2 && dice <= 5) dx = 1;
-				else if (dice >= 6 && dice <= 8) dx = 0;
-				else if (dice >= 9 && dice <= 9) dx = -1;
-				break;
-
-			case 3: // dying: discourage vertical growth(?); trend left/right (-3,3)
-				roll(&dice, 10);
-				if (dice >= 0 && dice <=1) dy = -1;
-				else if (dice >= 2 && dice <=8) dy = 0;
-				else if (dice >= 9 && dice <=9) dy = 1;
-
-				roll(&dice, 15);
-				if (dice >= 0 && dice <=0) dx = -3;
-				else if (dice >= 1 && dice <= 2) dx = -2;
-				else if (dice >= 3 && dice <= 5) dx = -1;
-				else if (dice >= 6 && dice <= 8) dx = 0;
-				else if (dice >= 9 && dice <= 11) dx = 1;
-				else if (dice >= 12 && dice <= 13) dx = 2;
-				else if (dice >= 14 && dice <= 14) dx = 3;
-				break;
-
-			case 4: // dead: fill in surrounding area
-				roll(&dice, 10);
-				if (dice >= 0 && dice <= 2) dy = -1;
-				else if (dice >= 3 && dice <= 6) dy = 0;
-				else if (dice >= 7 && dice <= 9) dy = 1;
-				dx = (rand() % 3) - 1;
-				break;
-		}
-
-		int maxY, maxX;
-		(void) maxX;
-		getmaxyx(treeWin, maxY, maxX);
+		int maxY = getmaxy(treeWin);
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
 		// near-dead branch should branch into a lot of leaves
@@ -291,87 +372,28 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		}
 		shootCooldown--;
 
-		// move in x and y directions
 		if (conf.verbosity > 0) {
 			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
 			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
 			mvwprintw(treeWin, 7, 5, "type: %d", type);
 			mvwprintw(treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
 		}
-		x = (x + dx);
-		y = (y + dy);
 
-		// choose color
-		switch(type) {
-			case 0:
-			case 1:
-			case 2: // trunk or shoot
-				if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
-				else wattron(treeWin, COLOR_PAIR(3));
-				break;
+		// move in x and y directions
+		x += dx;
+		y += dy;
 
-			case 3: // dying
-				if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
-				else wattron(treeWin, COLOR_PAIR(2));
-				break;
-
-			case 4: // dead
-				if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
-				else wattron(treeWin, COLOR_PAIR(10));
-				break;
-		}
+		chooseColor(type, treeWin);
 
 		// choose string to use for this branch
-		char *branchStr = malloc(32 * sizeof(char));
-		strcpy(branchStr, "?");	// fallback character
-
-		// if branch is almost dead, make it a leaf
-		if (life < 4 || type >= 3) {
-			strncpy(branchStr, conf.leaves[rand() % conf.leavesSize], sizeof(branchStr) - 1);
-			branchStr[sizeof(branchStr) - 1] = '\0';
-		}
-		else {
-			switch(type) {
-				case 0: // trunk
-					if (dy == 0) strcpy(branchStr, "/~");
-					else if (dx < 0) strcpy(branchStr, "\\|");
-					else if (dx == 0) strcpy(branchStr, "/|\\");
-					else if (dx > 0) strcpy(branchStr, "|/");
-					break;
-				case 1: // left shoot
-					if (dy > 0) strcpy(branchStr, "\\");
-					else if (dy == 0) strcpy(branchStr, "\\_");
-					else if (dx < 0) strcpy(branchStr, "\\|");
-					else if (dx == 0) strcpy(branchStr, "/|");
-					else if (dx > 0) strcpy(branchStr, "/");
-					break;
-				case 2: // right shoot
-					if (dy > 0) strcpy(branchStr, "/");
-					else if (dy == 0) strcpy(branchStr, "_/");
-					else if (dx < 0) strcpy(branchStr, "\\|");
-					else if (dx == 0) strcpy(branchStr, "/|");
-					else if (dx > 0) strcpy(branchStr, "/");
-					break;
-			}
-		}
+		char *branchStr = chooseString(type, life, conf.leaves, conf.leavesSize, dx, dy);
 
 		mvwprintw(treeWin, y, x, "%s", branchStr);
-		free(branchStr);
 		wattroff(treeWin, A_BOLD);
+		free(branchStr);
 
 		// if live, show progress
-		if (conf.live) {
-			// display changes
-			update_panels();
-			doupdate();
-
-			// convert given time into seconds and nanoseconds and sleep
-			struct timespec ts;
-			ts.tv_sec = conf.timeStep / 1;
-			ts.tv_nsec = (conf.timeStep - ts.tv_sec) * 1000000000;
-			nanosleep(&ts, NULL);	// sleep for given time
-		}
-
+		if (conf.live) updateScreen(conf.timeStep);
 	}
 }
 
@@ -489,15 +511,7 @@ int drawMessage(struct config conf) {
 		}
 
 		if (conf.verbosity >= 2) {
-			update_panels();
-			doupdate();
-
-			// sleep for a little bit
-			struct timespec ts;
-			ts.tv_sec = 1;
-			ts.tv_nsec = 0;
-			nanosleep(&ts, NULL);
-
+			updateScreen(1);
 			mvwprintw(treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
 		}
 		if (thisChar == '\0') break;	// quit when we reach the end of the message
@@ -513,6 +527,8 @@ void init(struct config conf) {
 	curs_set(0);	// make cursor invisible
 	cbreak();	// don't wait for new line to grab user input
 	nodelay(stdscr, TRUE);	// force getch to be a non-blocking call
+
+	shootsMax = conf.multiplier + 1;
 
 	// if terminal has color capabilities, use them
 	if (has_colors()) {
@@ -539,7 +555,7 @@ void init(struct config conf) {
 			init_pair(15, 7, bg);
 		}
 	} else {
-		printf("%s", "Warning: terminal does not have color support.");
+		printf("%s", "Warning: terminal does not have color support.\n");
 	}
 
 	// define and draw windows, then create panels
@@ -563,6 +579,36 @@ void growTree(struct config conf) {
 	// display changes
 	update_panels();
 	doupdate();
+}
+
+// print stdscr to terminal window
+void printstdscr() {
+	int maxY, maxX, color, attribs;
+	getmaxyx(stdscr, maxY, maxX);
+
+	// loop through each character on stdscr
+	for (int y = 0; y < maxY; y++) {
+		for (int x = 0; x < maxX; x++) {
+			// get attributes of this character
+			color = mvwinch(stdscr, y, x) & A_COLOR;
+			attribs = (mvwinch(stdscr, y, x) & A_ATTRIBUTES) - color;
+			color /= 256;
+
+			// enable bold if needed
+			if ((attribs) == A_BOLD) printf("%s", "\033[1m");
+			else printf("%s", "\033[0m");
+
+			// enable correct color
+			if (color == 0) printf("%s", "\033[0m");
+			else if (color <= 7) printf("\033[3%im", color);
+			else if (color >= 8) printf("\033[9%im", color - 8);
+
+			// print character
+			// mvwinch returns chtype which depends on machine, so we type cast
+			printf("%c", (char) mvwinch(stdscr, y, x));
+		}
+	}
+	printf("%s\n", "\033[0m");
 }
 
 int main(int argc, char* argv[]) {
@@ -714,8 +760,6 @@ int main(int argc, char* argv[]) {
 		conf.leavesSize++;
 	}
 
-	shootsMax = conf.multiplier + 1;
-
 	// seed random number generator
 	if (conf.seed == 0) conf.seed = time(NULL);
 	srand(conf.seed);
@@ -728,8 +772,7 @@ int main(int argc, char* argv[]) {
 			checkKeyPress(conf.screensaver);
 
 			// seed random number generator
-			conf.seed = time(NULL);
-			srand(conf.seed);
+			srand(time(NULL));
 		}
 	} while (conf.infinite);
 
@@ -742,31 +785,7 @@ int main(int argc, char* argv[]) {
 		overlay(messageBorderWin, stdscr);
 		overlay(messageWin, stdscr);
 
-		// copy contents of stdscr to the terminal window
-		int maxY, maxX, color, attribs;
-		getmaxyx(stdscr, maxY, maxX);
-		for (int y = 0; y < maxY; y++) {
-			for (int x = 0; x < maxX; x++) {
-				// get attributes of this character
-				color = mvwinch(stdscr, y, x) & A_COLOR;
-				attribs = (mvwinch(stdscr, y, x) & A_ATTRIBUTES) - color;
-				color /= 256;
-
-				// enable bold if needed
-				if ((attribs) == A_BOLD) printf("%s", "\033[1m");
-				else printf("%s", "\033[0m");
-
-				// enable correct color
-				if (color == 0) printf("%s", "\033[0m");
-				else if (color <= 7) printf("\033[3%im", color);
-				else if (color >= 8) printf("\033[9%im", color - 8);
-
-				// print character
-				// mvwinch returns chtype which depends on machine, so we type cast
-				printf("%c", (char) mvwinch(stdscr, y, x));
-			}
-		}
-		printf("%s\n", "\033[0m");
+		printstdscr();
 	} else {
 		wgetch(treeWin);
 		finish();
