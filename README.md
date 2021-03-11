@@ -21,11 +21,7 @@
 
 ### Arch Linux (AUR)
 
-AUR user `nichobi` has kindly packaged `cbonsai` in the AUR, called [cbonsai-git](https://aur.archlinux.org/packages/cbonsai-git). It can be installed via an AUR helper, e.g. `yay`:
-
-```bash
-yay -S cbonsai-git
-```
+Nicholas Boyd Isacsson has kindly packaged `cbonsai` in the [AUR](https://aur.archlinux.org/packages/cbonsai/).
 
 ### Debian-based
 
