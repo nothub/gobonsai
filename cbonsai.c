@@ -42,7 +42,7 @@ void finish(void) {
 	curs_set(1);
 }
 
-void printHelp(struct config conf) {
+void printHelp(const struct config *conf) {
 	printf("Usage: cbonsai [OPTION]...\n");
 	printf("\n");
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
@@ -50,10 +50,10 @@ void printHelp(struct config conf) {
 	printf("Options:\n");
 	printf("  -l, --live             live mode: show each step of growth\n");
 	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
-	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", conf.timeStep);
+	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", conf->timeStep);
 	printf("  -i, --infinite         infinite mode: keep growing trees\n");
 	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
-	printf("                           generation [default: %.2f]\n", conf.timeWait);
+	printf("                           generation [default: %.2f]\n", conf->timeWait);
 	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
 	printf("                           quit on any keypress\n");
 	printf("  -m, --message=STR      attach message next to the tree\n");
@@ -61,8 +61,8 @@ void printHelp(struct config conf) {
 	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
 	printf("                           for leaves\n");
 	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: %i]\n", conf.multiplier);
-	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf.lifeStart);
+	printf("                           branching (0-20) [default: %i]\n", conf->multiplier);
+	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf->lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed=INT         seed random number generator\n");
 	printf("  -v, --verbose          increase output verbosity\n");
@@ -277,7 +277,7 @@ void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *
 	*returnDy = dy;
 }
 
-char* chooseString(int type, int life, char** leaves, int leavesSize, int dx, int dy) {
+char* chooseString(const struct config *conf, int type, int life, int dx, int dy) {
 	char* branchStr;
 
 	branchStr = malloc(32 * sizeof(char));
@@ -285,7 +285,7 @@ char* chooseString(int type, int life, char** leaves, int leavesSize, int dx, in
 
 	// if branch is almost dead, make it a leaf
 	if (life < 4 || type >= 3) {
-		strncpy(branchStr, leaves[rand() % leavesSize], sizeof(branchStr) - 1);
+		strncpy(branchStr, conf->leaves[rand() % conf->leavesSize], sizeof(branchStr) - 1);
 		branchStr[sizeof(branchStr) - 1] = '\0';
 	}
 	else {
@@ -316,19 +316,19 @@ char* chooseString(int type, int life, char** leaves, int leavesSize, int dx, in
 	return branchStr;
 }
 
-void branch(struct config conf, int y, int x, int type, int life) {
+void branch(const struct config *conf, int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
 	int dy = 0;
 	int age = 0;
-	int shootCooldown = conf.multiplier;
+	int shootCooldown = conf->multiplier;
 
 	while (life > 0) {
-		checkKeyPress(conf.screensaver);
+		checkKeyPress(conf->screensaver);
 		life--;		// decrement remaining life counter
-		age = conf.lifeStart - life;
+		age = conf->lifeStart - life;
 
-		setDeltas(type, life, age, conf.multiplier, &dx, &dy);
+		setDeltas(type, life, age, conf->multiplier, &dx, &dy);
 
 		int maxY = getmaxy(treeWin);
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
@@ -337,44 +337,44 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		if (life < 3) branch(conf, y, x, 4, life);
 
 		// dying trunk should branch into a lot of leaves
-		else if (type == 0 && life < (conf.multiplier + 2)) branch(conf, y, x, 3, life);
+		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, y, x, 3, life);
 
 		// dying shoot should branch into a lot of leaves
-		else if ((type == 1 || type == 2) && life < (conf.multiplier + 2)) branch(conf, y, x, 3, life);
+		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
 		/* else if (type == 0 && ( \ */
 		/* 		(rand() % (conf.multiplier)) == 0 || \ */
 		/* 		(life > conf.multiplier && life % conf.multiplier == 0) */
 		/* 		) ) { */
-		else if (type == 0 && (((rand() % 3) == 0) || (life % conf.multiplier == 0))) {
+		else if (type == 0 && (((rand() % 3) == 0) || (life % conf->multiplier == 0))) {
 
 			// if trunk is branching and not about to die, create another trunk with random life
 			if ((rand() % 8 == 0) && life > 7) {
-				shootCooldown = conf.multiplier * 2;	// reset shoot cooldown
+				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
 				trunks++;
 				branch(conf, y, x, 0, life + (rand() % 5 - 2));
 			}
 
 			// otherwise create a shoot
 			else if (shootCooldown <= 0) {
-				shootCooldown = conf.multiplier * 2;	// reset shoot cooldown
+				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
 
-				int shootLife = (life + conf.multiplier);
+				int shootLife = (life + conf->multiplier);
 
 				// first shoot is randomly directed
 				shoots++;
 				shootCounter++;
-				if (conf.verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
+				if (conf->verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
 
 				// create shoot
 				branch(conf, y, x, (shootCounter % 2) + 1, shootLife);
 			}
-			if (conf.verbosity) mvwprintw(treeWin, 10, 5, "trunks: %02i", trunks);
+			if (conf->verbosity) mvwprintw(treeWin, 10, 5, "trunks: %02i", trunks);
 		}
 		shootCooldown--;
 
-		if (conf.verbosity > 0) {
+		if (conf->verbosity > 0) {
 			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
 			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
 			mvwprintw(treeWin, 7, 5, "type: %d", type);
@@ -388,14 +388,14 @@ void branch(struct config conf, int y, int x, int type, int life) {
 		chooseColor(type, treeWin);
 
 		// choose string to use for this branch
-		char *branchStr = chooseString(type, life, conf.leaves, conf.leavesSize, dx, dy);
+		char *branchStr = chooseString(conf, type, life, dx, dy);
 
 		mvwprintw(treeWin, y, x, "%s", branchStr);
 		wattroff(treeWin, A_BOLD);
 		free(branchStr);
 
 		// if live, show progress
-		if (conf.live) updateScreen(conf.timeStep);
+		if (conf->live) updateScreen(conf->timeStep);
 	}
 }
 
@@ -413,7 +413,7 @@ void addSpaces(int count, int *linePosition, int maxWidth) {
 }
 
 // create ncurses windows to contain message and message box
-void createMessageWindows(struct config *conf) {
+void createMessageWindows(const struct config *conf) {
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
 
@@ -442,10 +442,10 @@ void createMessageWindows(struct config *conf) {
 	myPanels[3] = new_panel(messageWin);
 }
 
-int drawMessage(struct config conf) {
-	if (conf.message == NULL) return 1;
+int drawMessage(const struct config *conf) {
+	if (conf->message == NULL) return 1;
 
-	createMessageWindows(&conf);
+	createMessageWindows(conf);
 
 	int messageWinWidth = getmaxx(messageWin) - 2;
 
@@ -456,8 +456,8 @@ int drawMessage(struct config conf) {
 	char wordBuffer[512] = {'\0'};
 	char thisChar;
 	while (true) {
-		thisChar = conf.message[i];
-		if (conf.verbosity) {
+		thisChar = conf->message[i];
+		if (conf->verbosity) {
 			mvwprintw(treeWin, 9, 5, "index: %03d", i);
 			mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
 		}
@@ -507,7 +507,7 @@ int drawMessage(struct config conf) {
 
 			// if current line can't fit word, go to next line
 			else {
-				if (conf.verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
+				if (conf->verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
 				wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
 				linePosition = wordLength;	// reset line position
 				wordLength = 0;		// reset word length
@@ -519,7 +519,7 @@ int drawMessage(struct config conf) {
 			return 1;
 		}
 
-		if (conf.verbosity >= 2) {
+		if (conf->verbosity >= 2) {
 			updateScreen(1);
 			mvwprintw(treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
 		}
@@ -529,7 +529,7 @@ int drawMessage(struct config conf) {
 	return 0;
 }
 
-void init(struct config conf) {
+void init(const struct config *conf) {
 	savetty();	// save terminal settings
 	initscr();	// init ncurses screen
 	noecho();	// don't echo input to screen
@@ -537,7 +537,7 @@ void init(struct config conf) {
 	cbreak();	// don't wait for new line to grab user input
 	nodelay(stdscr, TRUE);	// force getch to be a non-blocking call
 
-	shootsMax = conf.multiplier + 1;
+	shootsMax = conf->multiplier + 1;
 
 	// if terminal has color capabilities, use them
 	if (has_colors()) {
@@ -568,11 +568,11 @@ void init(struct config conf) {
 	}
 
 	// define and draw windows, then create panels
-	drawWins(conf.baseType, &baseWin, &treeWin);
+	drawWins(conf->baseType, &baseWin, &treeWin);
 	drawMessage(conf);
 }
 
-void growTree(struct config conf) {
+void growTree(const struct config *conf) {
 	int maxY, maxX;
 	getmaxyx(treeWin, maxY, maxX);
 
@@ -580,10 +580,10 @@ void growTree(struct config conf) {
 	shoots = 0;
 	shootCounter = rand();
 
-	if (conf.verbosity > 0) {
+	if (conf->verbosity > 0) {
 		mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
 	}
-	branch(conf, maxY - 1, (maxX / 2), 0, conf.lifeStart);	// grow tree trunk
+	branch(conf, maxY - 1, (maxX / 2), 0, conf->lifeStart);	// grow tree trunk
 
 	// display changes
 	update_panels();
@@ -755,7 +755,7 @@ int main(int argc, char* argv[]) {
 		// '?' represents unknown option. Treat it like --help.
 		case '?':
 		case 'h':
-			printHelp(conf);
+			printHelp(&conf);
 			return 0;
 			break;
 		}
@@ -774,8 +774,8 @@ int main(int argc, char* argv[]) {
 	srand(conf.seed);
 
 	do {
-		init(conf);
-		growTree(conf);
+		init(&conf);
+		growTree(&conf);
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
 			checkKeyPress(conf.screensaver);
