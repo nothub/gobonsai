@@ -447,7 +447,7 @@ int drawMessage(const struct config *conf) {
 
 	createMessageWindows(conf);
 
-	int messageWinWidth = getmaxx(messageWin) - 2;
+	int maxWidth = getmaxx(messageWin) - 2;
 
 	// word wrap message as it is written
 	unsigned int i = 0;
@@ -473,17 +473,17 @@ int drawMessage(const struct config *conf) {
 		else if (isspace(thisChar) || thisChar == '\0') {
 
 			// if current line can fit word, add word to current line
-			if (linePosition <= messageWinWidth) {
+			if (linePosition <= maxWidth) {
 				wprintw(messageWin, "%s", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
 
 				switch (thisChar) {
 				case ' ':
-					addSpaces(1, &linePosition, messageWinWidth);
+					addSpaces(1, &linePosition, maxWidth);
 					break;
 				case '\t':
-					addSpaces(1, &linePosition, messageWinWidth);
+					addSpaces(1, &linePosition, maxWidth);
 					break;
 				case '\n':
 					waddch(messageWin, thisChar);
@@ -494,7 +494,7 @@ int drawMessage(const struct config *conf) {
 			}
 
 			// if word can't fit within a single line, just print it
-			else if (wordLength > messageWinWidth) {
+			else if (wordLength > maxWidth) {
 				wprintw(messageWin, "%s ", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
