@@ -412,22 +412,22 @@ void addSpaces(int count, int *linePosition, int maxWidth) {
 	}
 }
 
-int drawMessage(struct config conf) {
-	if (conf.message == NULL) return 1;
-
-	// determine dimensions of window box
+// create ncurses windows to contain message and message box
+void createMessageWindows(struct config *conf) {
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
+
 	int boxWidth = 0;
 	int boxHeight = 0;
-	if (strlen(conf.message) + 3 <= (0.25 * maxX)) {
-		boxWidth = strlen(conf.message) + 1;
+
+	if (strlen(conf->message) + 3 <= (0.25 * maxX)) {
+		boxWidth = strlen(conf->message) + 1;
 		boxHeight = 1;
 	} else {
 		boxWidth = 0.25 * maxX;
-		boxHeight = (strlen(conf.message) / boxWidth) + (strlen(conf.message) / boxWidth);
+		boxHeight = (strlen(conf->message) / boxWidth) + (strlen(conf->message) / boxWidth);
 	}
-	if (conf.verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
+	if (conf->verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
 
 	// create separate box for message border
 	messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
@@ -440,6 +440,14 @@ int drawMessage(struct config conf) {
 	// assign new windows to array of panels
 	myPanels[2] = new_panel(messageBorderWin);
 	myPanels[3] = new_panel(messageWin);
+}
+
+int drawMessage(struct config conf) {
+	if (conf.message == NULL) return 1;
+
+	createMessageWindows(&conf);
+
+	int messageWinWidth = getmaxx(messageWin) - 2;
 
 	// word wrap message as it is written
 	unsigned int i = 0;
@@ -447,7 +455,6 @@ int drawMessage(struct config conf) {
 	int wordLength = 0;
 	char wordBuffer[512] = {'\0'};
 	char thisChar;
-	int messageBoxWidth = boxWidth - 1;
 	while (true) {
 		thisChar = conf.message[i];
 		if (conf.verbosity) {
@@ -466,17 +473,17 @@ int drawMessage(struct config conf) {
 		else if (isspace(thisChar) || thisChar == '\0') {
 
 			// if current line can fit word, add word to current line
-			if (linePosition <= messageBoxWidth) {
+			if (linePosition <= messageWinWidth) {
 				wprintw(messageWin, "%s", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
 
 				switch (thisChar) {
 				case ' ':
-					addSpaces(1, &linePosition, messageBoxWidth);
+					addSpaces(1, &linePosition, messageWinWidth);
 					break;
 				case '\t':
-					addSpaces(1, &linePosition, messageBoxWidth);
+					addSpaces(1, &linePosition, messageWinWidth);
 					break;
 				case '\n':
 					waddch(messageWin, thisChar);
@@ -487,7 +494,7 @@ int drawMessage(struct config conf) {
 			}
 
 			// if word can't fit within a single line, just print it
-			else if (wordLength > messageBoxWidth) {
+			else if (wordLength > messageWinWidth) {
 				wprintw(messageWin, "%s ", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
