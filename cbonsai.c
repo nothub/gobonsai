@@ -462,9 +462,10 @@ int drawMessage(const struct config *conf) {
 			mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
 		}
 
-		// if char is not a space or null char
-		if (!(isspace(thisChar) || thisChar == '\0') && wordLength < sizeof(wordBuffer) / sizeof(wordBuffer[0])) {
-			strncat(wordBuffer, &thisChar, 1); // append thisChar to wordBuffer
+		// append this character to word buffer,
+		// if it's not space or NULL and it can fit
+		if (!(isspace(thisChar) || thisChar == '\0') && wordLength < (int) (sizeof(wordBuffer) / sizeof(wordBuffer[0]))) {
+			strncat(wordBuffer, &thisChar, 1);
 			wordLength++;
 			linePosition++;
 		}
