@@ -6,12 +6,6 @@
 #include <string.h>
 #include <ctype.h>
 
-// global variables
-int branches = 0;
-int shoots = 0;
-int trunks = 1;
-int shootCounter;
-
 struct config {
 	int live;
 	int infinite;
@@ -41,6 +35,12 @@ struct ncursesObjects {
 	PANEL* treePanel;
 	PANEL* messageBorderPanel;
 	PANEL* messagePanel;
+};
+
+struct counters {
+	int branches;
+	int shoots;
+	int shootCounter;
 };
 
 void finish(void) {
@@ -321,8 +321,8 @@ char* chooseString(const struct config *conf, int type, int life, int dx, int dy
 	return branchStr;
 }
 
-void branch(const struct config *conf, struct ncursesObjects *objects, int y, int x, int type, int life) {
-	branches++;
+void branch(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, int type, int life) {
+	myCounters->branches++;
 	int dx = 0;
 	int dy = 0;
 	int age = 0;
@@ -339,13 +339,13 @@ void branch(const struct config *conf, struct ncursesObjects *objects, int y, in
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
 		// near-dead branch should branch into a lot of leaves
-		if (life < 3) branch(conf, objects, y, x, 4, life);
+		if (life < 3) branch(conf, objects, myCounters, y, x, 4, life);
 
 		// dying trunk should branch into a lot of leaves
-		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, objects, y, x, 3, life);
+		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, objects, myCounters, y, x, 3, life);
 
 		// dying shoot should branch into a lot of leaves
-		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, objects, y, x, 3, life);
+		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, objects, myCounters, y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
 		/* else if (type == 0 && ( \ */
@@ -357,8 +357,7 @@ void branch(const struct config *conf, struct ncursesObjects *objects, int y, in
 			// if trunk is branching and not about to die, create another trunk with random life
 			if ((rand() % 8 == 0) && life > 7) {
 				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
-				trunks++;
-				branch(conf, objects, y, x, 0, life + (rand() % 5 - 2));
+				branch(conf, objects, myCounters, y, x, 0, life + (rand() % 5 - 2));
 			}
 
 			// otherwise create a shoot
@@ -368,14 +367,13 @@ void branch(const struct config *conf, struct ncursesObjects *objects, int y, in
 				int shootLife = (life + conf->multiplier);
 
 				// first shoot is randomly directed
-				shoots++;
-				shootCounter++;
-				if (conf->verbosity) mvwprintw(objects->treeWin, 4, 5, "shoots: %02d", shoots);
+				myCounters->shoots++;
+				myCounters->shootCounter++;
+				if (conf->verbosity) mvwprintw(objects->treeWin, 4, 5, "shoots: %02d", myCounters->shoots);
 
 				// create shoot
-				branch(conf, objects, y, x, (shootCounter % 2) + 1, shootLife);
+				branch(conf, objects, myCounters, y, x, (myCounters->shootCounter % 2) + 1, shootLife);
 			}
-			if (conf->verbosity) mvwprintw(objects->treeWin, 10, 5, "trunks: %02i", trunks);
 		}
 		shootCooldown--;
 
@@ -580,14 +578,14 @@ void growTree(const struct config *conf, struct ncursesObjects *objects) {
 	int maxY, maxX;
 	getmaxyx(objects->treeWin, maxY, maxX);
 
-	branches = 0;
-	shoots = 0;
-	shootCounter = rand();
+	struct counters myCounters  = { 0, 0, rand() };
 
 	if (conf->verbosity > 0) {
 		mvwprintw(objects->treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
 	}
-	branch(conf, objects, maxY - 1, (maxX / 2), 0, conf->lifeStart);	// grow tree trunk
+
+	// recursively grow tree trunk and branches
+	branch(conf, objects, &myCounters, maxY - 1, (maxX / 2), 0, conf->lifeStart);
 
 	// display changes
 	update_panels();
@@ -662,9 +660,9 @@ int main(int argc, char* argv[]) {
 		{0, 0, 0, 0}
 	};
 
-	char leavesInput[128] = "&";
-
 	struct ncursesObjects objects = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+
+	char leavesInput[128] = "&";
 
 	// parse arguments
 	int option_index = 0;
