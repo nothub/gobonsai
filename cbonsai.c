@@ -13,9 +13,6 @@ int trunks = 1;
 int shootsMax = 0;
 int shootCounter;
 
-WINDOW *baseWin, *treeWin, *messageBorderWin, *messageWin;
-PANEL *myPanels[4];
-
 struct config {
 	int live;
 	int infinite;
@@ -33,6 +30,18 @@ struct config {
 
 	char* message;
 	char* leaves[64];
+};
+
+struct ncursesObjects {
+	WINDOW* baseWin;
+	WINDOW* treeWin;
+	WINDOW* messageBorderWin;
+	WINDOW* messageWin;
+
+	PANEL* basePanel;
+	PANEL* treePanel;
+	PANEL* messageBorderPanel;
+	PANEL* messagePanel;
 };
 
 void finish(void) {
@@ -108,7 +117,7 @@ void drawBase(WINDOW* baseWin, int baseType) {
 	}
 }
 
-void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
+void drawWins(int baseType, struct ncursesObjects *objects) {
 	int baseWidth = 0;
 	int baseHeight = 0;
 	int rows, cols;
@@ -130,17 +139,14 @@ void drawWins(int baseType, WINDOW* *baseWinPtr, WINDOW* *treeWinPtr) {
 	int baseOriginX = (cols / 2) - (baseWidth / 2);
 
 	// create windows
-	*baseWinPtr = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
-	*treeWinPtr = newwin(rows - baseHeight, cols, 0, 0);
-
-	WINDOW *baseWin = *baseWinPtr;
-	WINDOW *treeWin = *treeWinPtr;
+	objects->baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
+	objects->treeWin = newwin(rows - baseHeight, cols, 0, 0);
 
 	// add windows to array of panels
-	myPanels[0] = new_panel(baseWin);
-	myPanels[1] = new_panel(treeWin);
+	objects->basePanel = new_panel(objects->baseWin);
+	objects->treePanel = new_panel(objects->treeWin);
 
-	drawBase(baseWin, baseType);
+	drawBase(objects->baseWin, baseType);
 }
 
 // roll (randomize) a given die
@@ -316,7 +322,7 @@ char* chooseString(const struct config *conf, int type, int life, int dx, int dy
 	return branchStr;
 }
 
-void branch(const struct config *conf, int y, int x, int type, int life) {
+void branch(const struct config *conf, struct ncursesObjects *objects, int y, int x, int type, int life) {
 	branches++;
 	int dx = 0;
 	int dy = 0;
@@ -330,17 +336,17 @@ void branch(const struct config *conf, int y, int x, int type, int life) {
 
 		setDeltas(type, life, age, conf->multiplier, &dx, &dy);
 
-		int maxY = getmaxy(treeWin);
+		int maxY = getmaxy(objects->treeWin);
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
 		// near-dead branch should branch into a lot of leaves
-		if (life < 3) branch(conf, y, x, 4, life);
+		if (life < 3) branch(conf, objects, y, x, 4, life);
 
 		// dying trunk should branch into a lot of leaves
-		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, y, x, 3, life);
+		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, objects, y, x, 3, life);
 
 		// dying shoot should branch into a lot of leaves
-		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, y, x, 3, life);
+		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, objects, y, x, 3, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
 		/* else if (type == 0 && ( \ */
@@ -353,7 +359,7 @@ void branch(const struct config *conf, int y, int x, int type, int life) {
 			if ((rand() % 8 == 0) && life > 7) {
 				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
 				trunks++;
-				branch(conf, y, x, 0, life + (rand() % 5 - 2));
+				branch(conf, objects, y, x, 0, life + (rand() % 5 - 2));
 			}
 
 			// otherwise create a shoot
@@ -365,33 +371,33 @@ void branch(const struct config *conf, int y, int x, int type, int life) {
 				// first shoot is randomly directed
 				shoots++;
 				shootCounter++;
-				if (conf->verbosity) mvwprintw(treeWin, 4, 5, "shoots: %02d", shoots);
+				if (conf->verbosity) mvwprintw(objects->treeWin, 4, 5, "shoots: %02d", shoots);
 
 				// create shoot
-				branch(conf, y, x, (shootCounter % 2) + 1, shootLife);
+				branch(conf, objects, y, x, (shootCounter % 2) + 1, shootLife);
 			}
-			if (conf->verbosity) mvwprintw(treeWin, 10, 5, "trunks: %02i", trunks);
+			if (conf->verbosity) mvwprintw(objects->treeWin, 10, 5, "trunks: %02i", trunks);
 		}
 		shootCooldown--;
 
 		if (conf->verbosity > 0) {
-			mvwprintw(treeWin, 5, 5, "dx: %02d", dx);
-			mvwprintw(treeWin, 6, 5, "dy: %02d", dy);
-			mvwprintw(treeWin, 7, 5, "type: %d", type);
-			mvwprintw(treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
+			mvwprintw(objects->treeWin, 5, 5, "dx: %02d", dx);
+			mvwprintw(objects->treeWin, 6, 5, "dy: %02d", dy);
+			mvwprintw(objects->treeWin, 7, 5, "type: %d", type);
+			mvwprintw(objects->treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
 		}
 
 		// move in x and y directions
 		x += dx;
 		y += dy;
 
-		chooseColor(type, treeWin);
+		chooseColor(type, objects->treeWin);
 
 		// choose string to use for this branch
 		char *branchStr = chooseString(conf, type, life, dx, dy);
 
-		mvwprintw(treeWin, y, x, "%s", branchStr);
-		wattroff(treeWin, A_BOLD);
+		mvwprintw(objects->treeWin, y, x, "%s", branchStr);
+		wattroff(objects->treeWin, A_BOLD);
 		free(branchStr);
 
 		// if live, show progress
@@ -399,7 +405,7 @@ void branch(const struct config *conf, int y, int x, int type, int life) {
 	}
 }
 
-void addSpaces(int count, int *linePosition, int maxWidth) {
+void addSpaces(WINDOW* messageWin, int count, int *linePosition, int maxWidth) {
 	// add spaces if there's enough space
 	if (*linePosition < (maxWidth - count)) {
 		/* if (verbosity) mvwprintw(treeWin, 12, 5, "inserting a space: linePosition: %02d", *linePosition); */
@@ -413,7 +419,7 @@ void addSpaces(int count, int *linePosition, int maxWidth) {
 }
 
 // create ncurses windows to contain message and message box
-void createMessageWindows(const struct config *conf) {
+void createMessageWindows(const struct config *conf, struct ncursesObjects *objects) {
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
 
@@ -427,27 +433,27 @@ void createMessageWindows(const struct config *conf) {
 		boxWidth = 0.25 * maxX;
 		boxHeight = (strlen(conf->message) / boxWidth) + (strlen(conf->message) / boxWidth);
 	}
-	if (conf->verbosity) mvwprintw(treeWin, 8, 5, "boxWidth: %0d", boxWidth);
+	if (conf->verbosity) mvwprintw(objects->treeWin, 8, 5, "boxWidth: %0d", boxWidth);
 
 	// create separate box for message border
-	messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
-	messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.7, maxX * 0.7);
+	objects->messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
+	objects->messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.7, maxX * 0.7);
 
 	// draw box
-	wattron(messageBorderWin, COLOR_PAIR(8));
-	box(messageBorderWin, 0, 0);
+	wattron(objects->messageBorderWin, COLOR_PAIR(8));
+	box(objects->messageBorderWin, 0, 0);
 
 	// assign new windows to array of panels
-	myPanels[2] = new_panel(messageBorderWin);
-	myPanels[3] = new_panel(messageWin);
+	objects->messageBorderPanel = new_panel(objects->messageBorderWin);
+	objects->messagePanel = new_panel(objects->messageWin);
 }
 
-int drawMessage(const struct config *conf) {
+int drawMessage(const struct config *conf, struct ncursesObjects *objects) {
 	if (conf->message == NULL) return 1;
 
-	createMessageWindows(conf);
+	createMessageWindows(conf, objects);
 
-	int maxWidth = getmaxx(messageWin) - 2;
+	int maxWidth = getmaxx(objects->messageWin) - 2;
 
 	// word wrap message as it is written
 	unsigned int i = 0;
@@ -458,8 +464,8 @@ int drawMessage(const struct config *conf) {
 	while (true) {
 		thisChar = conf->message[i];
 		if (conf->verbosity) {
-			mvwprintw(treeWin, 9, 5, "index: %03d", i);
-			mvwprintw(treeWin, 10, 5, "linePosition: %02d", linePosition);
+			mvwprintw(objects->treeWin, 9, 5, "index: %03d", i);
+			mvwprintw(objects->treeWin, 10, 5, "linePosition: %02d", linePosition);
 		}
 
 		// append this character to word buffer,
@@ -475,19 +481,19 @@ int drawMessage(const struct config *conf) {
 
 			// if current line can fit word, add word to current line
 			if (linePosition <= maxWidth) {
-				wprintw(messageWin, "%s", wordBuffer);	// print word
+				wprintw(objects->messageWin, "%s", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
 
 				switch (thisChar) {
 				case ' ':
-					addSpaces(1, &linePosition, maxWidth);
+					addSpaces(objects->messageWin, 1, &linePosition, maxWidth);
 					break;
 				case '\t':
-					addSpaces(1, &linePosition, maxWidth);
+					addSpaces(objects->messageWin, 1, &linePosition, maxWidth);
 					break;
 				case '\n':
-					waddch(messageWin, thisChar);
+					waddch(objects->messageWin, thisChar);
 					linePosition = 0;
 					break;
 				}
@@ -496,20 +502,20 @@ int drawMessage(const struct config *conf) {
 
 			// if word can't fit within a single line, just print it
 			else if (wordLength > maxWidth) {
-				wprintw(messageWin, "%s ", wordBuffer);	// print word
+				wprintw(objects->messageWin, "%s ", wordBuffer);	// print word
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
 
 				// our line position on this new line is the x coordinate
 				int y;
 				(void) y;
-				getyx(messageWin, y, linePosition);
+				getyx(objects->messageWin, y, linePosition);
 			}
 
 			// if current line can't fit word, go to next line
 			else {
-				if (conf->verbosity) mvwprintw(treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
-				wprintw(messageWin, "\n%s ", wordBuffer); // print newline, then word
+				if (conf->verbosity) mvwprintw(objects->treeWin, (i / 24) + 28, 5, "couldn't fit word. linePosition: %02d, wordLength: %02d", linePosition, wordLength);
+				wprintw(objects->messageWin, "\n%s ", wordBuffer); // print newline, then word
 				linePosition = wordLength;	// reset line position
 				wordLength = 0;		// reset word length
 				wordBuffer[0] = '\0';	// clear word buffer
@@ -522,7 +528,7 @@ int drawMessage(const struct config *conf) {
 
 		if (conf->verbosity >= 2) {
 			updateScreen(1);
-			mvwprintw(treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
+			mvwprintw(objects->treeWin, 11, 5, "word buffer: |% 15s|", wordBuffer);
 		}
 		if (thisChar == '\0') break;	// quit when we reach the end of the message
 		i++;
@@ -530,7 +536,7 @@ int drawMessage(const struct config *conf) {
 	return 0;
 }
 
-void init(const struct config *conf) {
+void init(const struct config *conf, struct ncursesObjects *objects) {
 	savetty();	// save terminal settings
 	initscr();	// init ncurses screen
 	noecho();	// don't echo input to screen
@@ -569,22 +575,22 @@ void init(const struct config *conf) {
 	}
 
 	// define and draw windows, then create panels
-	drawWins(conf->baseType, &baseWin, &treeWin);
-	drawMessage(conf);
+	drawWins(conf->baseType, objects);
+	drawMessage(conf, objects);
 }
 
-void growTree(const struct config *conf) {
+void growTree(const struct config *conf, struct ncursesObjects *objects) {
 	int maxY, maxX;
-	getmaxyx(treeWin, maxY, maxX);
+	getmaxyx(objects->treeWin, maxY, maxX);
 
 	branches = 0;
 	shoots = 0;
 	shootCounter = rand();
 
 	if (conf->verbosity > 0) {
-		mvwprintw(treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
+		mvwprintw(objects->treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
 	}
-	branch(conf, maxY - 1, (maxX / 2), 0, conf->lifeStart);	// grow tree trunk
+	branch(conf, objects, maxY - 1, (maxX / 2), 0, conf->lifeStart);	// grow tree trunk
 
 	// display changes
 	update_panels();
@@ -660,6 +666,8 @@ int main(int argc, char* argv[]) {
 	};
 
 	char leavesInput[128] = "&";
+
+	struct ncursesObjects objects = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 	// parse arguments
 	int option_index = 0;
@@ -775,8 +783,8 @@ int main(int argc, char* argv[]) {
 	srand(conf.seed);
 
 	do {
-		init(&conf);
-		growTree(&conf);
+		init(&conf, &objects);
+		growTree(&conf, &objects);
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
 			checkKeyPress(conf.screensaver);
@@ -790,22 +798,22 @@ int main(int argc, char* argv[]) {
 		finish();
 
 		// overlay all windows onto stdscr
-		overlay(baseWin, stdscr);
-		overlay(treeWin, stdscr);
-		overlay(messageBorderWin, stdscr);
-		overlay(messageWin, stdscr);
+		overlay(objects.baseWin, stdscr);
+		overlay(objects.treeWin, stdscr);
+		overlay(objects.messageBorderWin, stdscr);
+		overlay(objects.messageWin, stdscr);
 
 		printstdscr();
 	} else {
-		wgetch(treeWin);
+		wgetch(objects.treeWin);
 		finish();
 	}
 
 	// free window memory
-	delwin(baseWin);
-	delwin(treeWin);
-	delwin(messageBorderWin);
-	delwin(messageWin);
+	delwin(objects.baseWin);
+	delwin(objects.treeWin);
+	delwin(objects.messageBorderWin);
+	delwin(objects.messageWin);
 
 	return 0;
 }
