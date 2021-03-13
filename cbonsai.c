@@ -10,7 +10,6 @@
 int branches = 0;
 int shoots = 0;
 int trunks = 1;
-int shootsMax = 0;
 int shootCounter;
 
 struct config {
@@ -543,8 +542,6 @@ void init(const struct config *conf, struct ncursesObjects *objects) {
 	curs_set(0);	// make cursor invisible
 	cbreak();	// don't wait for new line to grab user input
 	nodelay(stdscr, TRUE);	// force getch to be a non-blocking call
-
-	shootsMax = conf->multiplier + 1;
 
 	// if terminal has color capabilities, use them
 	if (has_colors()) {
