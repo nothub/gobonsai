@@ -195,7 +195,9 @@ void chooseColor(int type, WINDOW* treeWin) {
 
 // determine change in X and Y coordinates of a given branch
 void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *returnDy) {
-	int dx, dy, dice;
+	int dx = 0;
+	int dy = 0;
+	int dice;
 	switch (type) {
 	case 0: // trunk
 
