@@ -593,7 +593,7 @@ void growTree(const struct config *conf, struct ncursesObjects *objects) {
 }
 
 // print stdscr to terminal window
-void printstdscr() {
+void printstdscr(void) {
 	int maxY, maxX, color, attribs;
 	getmaxyx(stdscr, maxY, maxX);
 
