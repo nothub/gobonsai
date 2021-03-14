@@ -141,9 +141,16 @@ void drawWins(int baseType, struct ncursesObjects *objects) {
 	objects->baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
 	objects->treeWin = newwin(rows - baseHeight, cols, 0, 0);
 
-	// add windows to array of panels
-	objects->basePanel = new_panel(objects->baseWin);
-	objects->treePanel = new_panel(objects->treeWin);
+	// create/replace tree and base panels
+	if (objects->basePanel)
+		replace_panel(objects->basePanel, objects->baseWin);
+	else
+		objects->basePanel = new_panel(objects->baseWin);
+
+	if (objects->treePanel)
+		replace_panel(objects->treePanel, objects->treeWin);
+	else
+		objects->treePanel = new_panel(objects->treeWin);
 
 	drawBase(objects->baseWin, baseType);
 }
@@ -418,21 +425,20 @@ void addSpaces(WINDOW* messageWin, int count, int *linePosition, int maxWidth) {
 }
 
 // create ncurses windows to contain message and message box
-void createMessageWindows(const struct config *conf, struct ncursesObjects *objects) {
+void createMessageWindows(struct ncursesObjects *objects, char* message) {
 	int maxY, maxX;
 	getmaxyx(stdscr, maxY, maxX);
 
 	int boxWidth = 0;
 	int boxHeight = 0;
 
-	if (strlen(conf->message) + 3 <= (0.25 * maxX)) {
-		boxWidth = strlen(conf->message) + 1;
+	if (strlen(message) + 3 <= (0.25 * maxX)) {
+		boxWidth = strlen(message) + 1;
 		boxHeight = 1;
 	} else {
 		boxWidth = 0.25 * maxX;
-		boxHeight = (strlen(conf->message) / boxWidth) + (strlen(conf->message) / boxWidth);
+		boxHeight = (strlen(message) / boxWidth) + (strlen(message) / boxWidth);
 	}
-	if (conf->verbosity) mvwprintw(objects->treeWin, 8, 5, "boxWidth: %0d", boxWidth);
 
 	// create separate box for message border
 	objects->messageBorderWin = newwin(boxHeight + 2, boxWidth + 4, (maxY * 0.7) - 1, (maxX * 0.7) - 2);
@@ -442,15 +448,22 @@ void createMessageWindows(const struct config *conf, struct ncursesObjects *obje
 	wattron(objects->messageBorderWin, COLOR_PAIR(8));
 	box(objects->messageBorderWin, 0, 0);
 
-	// assign new windows to array of panels
-	objects->messageBorderPanel = new_panel(objects->messageBorderWin);
-	objects->messagePanel = new_panel(objects->messageWin);
+	// create/replace message panels
+	if (objects->messageBorderPanel)
+		replace_panel(objects->messageBorderPanel, objects->messageBorderWin);
+	else
+		objects->messageBorderPanel = new_panel(objects->messageBorderWin);
+
+	if (objects->messagePanel)
+		replace_panel(objects->messagePanel, objects->messageWin);
+	else
+		objects->messagePanel = new_panel(objects->messageWin);
 }
 
-int drawMessage(const struct config *conf, struct ncursesObjects *objects) {
-	if (conf->message == NULL) return 1;
+int drawMessage(const struct config *conf, struct ncursesObjects *objects, char* message) {
+	if (!message) return 1;
 
-	createMessageWindows(conf, objects);
+	createMessageWindows(objects, message);
 
 	int maxWidth = getmaxx(objects->messageWin) - 2;
 
@@ -461,7 +474,7 @@ int drawMessage(const struct config *conf, struct ncursesObjects *objects) {
 	char wordBuffer[512] = {'\0'};
 	char thisChar;
 	while (true) {
-		thisChar = conf->message[i];
+		thisChar = message[i];
 		if (conf->verbosity) {
 			mvwprintw(objects->treeWin, 9, 5, "index: %03d", i);
 			mvwprintw(objects->treeWin, 10, 5, "linePosition: %02d", linePosition);
@@ -573,7 +586,7 @@ void init(const struct config *conf, struct ncursesObjects *objects) {
 
 	// define and draw windows, then create panels
 	drawWins(conf->baseType, objects);
-	drawMessage(conf, objects);
+	drawMessage(conf, objects, conf->message);
 }
 
 void growTree(const struct config *conf, struct ncursesObjects *objects) {
