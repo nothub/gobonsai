@@ -25,7 +25,7 @@ Nicholas Boyd Isacsson has kindly packaged `cbonsai` in the [AUR](https://aur.ar
 
 ### Debian-based
 
-Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/releases).
+Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/packages).
 
 ### MacOS
 
