@@ -6,6 +6,8 @@
 #include <string.h>
 #include <ctype.h>
 
+enum branchType {trunk, shootLeft, shootRight, dying, dead};
+
 struct config {
 	int live;
 	int infinite;
@@ -179,21 +181,21 @@ void updateScreen(float timeStep) {
 }
 
 // based on type of tree, determine what color a branch should be
-void chooseColor(int type, WINDOW* treeWin) {
+void chooseColor(enum branchType type, WINDOW* treeWin) {
 	switch(type) {
-	case 0:
-	case 1:
-	case 2: // trunk or shoot
+	case trunk:
+	case shootLeft:
+	case shootRight:
 		if (rand() % 2 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(11));
 		else wattron(treeWin, COLOR_PAIR(3));
 		break;
 
-	case 3: // dying
+	case dying:
 		if (rand() % 10 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(2));
 		else wattron(treeWin, COLOR_PAIR(2));
 		break;
 
-	case 4: // dead
+	case dead:
 		if (rand() % 3 == 0) wattron(treeWin, A_BOLD | COLOR_PAIR(10));
 		else wattron(treeWin, COLOR_PAIR(10));
 		break;
@@ -201,12 +203,12 @@ void chooseColor(int type, WINDOW* treeWin) {
 }
 
 // determine change in X and Y coordinates of a given branch
-void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *returnDy) {
+void setDeltas(enum branchType type, int life, int age, int multiplier, int *returnDx, int *returnDy) {
 	int dx = 0;
 	int dy = 0;
 	int dice;
 	switch (type) {
-	case 0: // trunk
+	case trunk: // trunk
 
 		// new or dead trunk
 		if (age <= 2 || life < 4) {
@@ -291,46 +293,45 @@ void setDeltas(int type, int life, int age, int multiplier, int *returnDx, int *
 	*returnDy = dy;
 }
 
-char* chooseString(const struct config *conf, int type, int life, int dx, int dy) {
+char* chooseString(const struct config *conf, enum branchType type, int life, int dx, int dy) {
 	char* branchStr;
 
 	branchStr = malloc(32 * sizeof(char));
 	strcpy(branchStr, "?");	// fallback character
 
-	// if branch is almost dead, make it a leaf
-	if (life < 4 || type >= 3) {
+	if (life < 4) type = dying;
+
+	switch(type) {
+	case trunk:
+		if (dy == 0) strcpy(branchStr, "/~");
+		else if (dx < 0) strcpy(branchStr, "\\|");
+		else if (dx == 0) strcpy(branchStr, "/|\\");
+		else if (dx > 0) strcpy(branchStr, "|/");
+		break;
+	case shootLeft:
+		if (dy > 0) strcpy(branchStr, "\\");
+		else if (dy == 0) strcpy(branchStr, "\\_");
+		else if (dx < 0) strcpy(branchStr, "\\|");
+		else if (dx == 0) strcpy(branchStr, "/|");
+		else if (dx > 0) strcpy(branchStr, "/");
+		break;
+	case shootRight:
+		if (dy > 0) strcpy(branchStr, "/");
+		else if (dy == 0) strcpy(branchStr, "_/");
+		else if (dx < 0) strcpy(branchStr, "\\|");
+		else if (dx == 0) strcpy(branchStr, "/|");
+		else if (dx > 0) strcpy(branchStr, "/");
+		break;
+	case dying:
+	case dead:
 		strncpy(branchStr, conf->leaves[rand() % conf->leavesSize], sizeof(branchStr) - 1);
 		branchStr[sizeof(branchStr) - 1] = '\0';
-	}
-	else {
-		switch(type) {
-		case 0: // trunk
-			if (dy == 0) strcpy(branchStr, "/~");
-			else if (dx < 0) strcpy(branchStr, "\\|");
-			else if (dx == 0) strcpy(branchStr, "/|\\");
-			else if (dx > 0) strcpy(branchStr, "|/");
-			break;
-		case 1: // left shoot
-			if (dy > 0) strcpy(branchStr, "\\");
-			else if (dy == 0) strcpy(branchStr, "\\_");
-			else if (dx < 0) strcpy(branchStr, "\\|");
-			else if (dx == 0) strcpy(branchStr, "/|");
-			else if (dx > 0) strcpy(branchStr, "/");
-			break;
-		case 2: // right shoot
-			if (dy > 0) strcpy(branchStr, "/");
-			else if (dy == 0) strcpy(branchStr, "_/");
-			else if (dx < 0) strcpy(branchStr, "\\|");
-			else if (dx == 0) strcpy(branchStr, "/|");
-			else if (dx > 0) strcpy(branchStr, "/");
-			break;
-		}
 	}
 
 	return branchStr;
 }
 
-void branch(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, int type, int life) {
+void branch(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, enum branchType type, int life) {
 	myCounters->branches++;
 	int dx = 0;
 	int dy = 0;
@@ -348,25 +349,28 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
 
 		// near-dead branch should branch into a lot of leaves
-		if (life < 3) branch(conf, objects, myCounters, y, x, 4, life);
+		if (life < 3)
+			branch(conf, objects, myCounters, y, x, dead, life);
 
 		// dying trunk should branch into a lot of leaves
-		else if (type == 0 && life < (conf->multiplier + 2)) branch(conf, objects, myCounters, y, x, 3, life);
+		else if (type == 0 && life < (conf->multiplier + 2))
+			branch(conf, objects, myCounters, y, x, dying, life);
 
 		// dying shoot should branch into a lot of leaves
-		else if ((type == 1 || type == 2) && life < (conf->multiplier + 2)) branch(conf, objects, myCounters, y, x, 3, life);
+		else if ((type == shootLeft || type == shootRight) && life < (conf->multiplier + 2))
+			branch(conf, objects, myCounters, y, x, dying, life);
 
 		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
 		/* else if (type == 0 && ( \ */
 		/* 		(rand() % (conf.multiplier)) == 0 || \ */
 		/* 		(life > conf.multiplier && life % conf.multiplier == 0) */
 		/* 		) ) { */
-		else if (type == 0 && (((rand() % 3) == 0) || (life % conf->multiplier == 0))) {
+		else if (type == trunk && (((rand() % 3) == 0) || (life % conf->multiplier == 0))) {
 
 			// if trunk is branching and not about to die, create another trunk with random life
 			if ((rand() % 8 == 0) && life > 7) {
 				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
-				branch(conf, objects, myCounters, y, x, 0, life + (rand() % 5 - 2));
+				branch(conf, objects, myCounters, y, x, trunk, life + (rand() % 5 - 2));
 			}
 
 			// otherwise create a shoot
@@ -600,7 +604,7 @@ void growTree(const struct config *conf, struct ncursesObjects *objects) {
 	}
 
 	// recursively grow tree trunk and branches
-	branch(conf, objects, &myCounters, maxY - 1, (maxX / 2), 0, conf->lifeStart);
+	branch(conf, objects, &myCounters, maxY - 1, (maxX / 2), trunk, conf->lifeStart);
 
 	// display changes
 	update_panels();
