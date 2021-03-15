@@ -445,8 +445,8 @@ void createMessageWindows(struct ncursesObjects *objects, char* message) {
 	objects->messageWin = newwin(boxHeight, boxWidth + 1, maxY * 0.7, maxX * 0.7);
 
 	// draw box
-	wattron(objects->messageBorderWin, COLOR_PAIR(8));
-	box(objects->messageBorderWin, 0, 0);
+	wattron(objects->messageBorderWin, COLOR_PAIR(8) | A_BOLD);
+	wborder(objects->messageBorderWin, '|', '|', '-', '-', '+', '+', '+', '+');
 
 	// create/replace message panels
 	if (objects->messageBorderPanel)
