@@ -1,7 +1,7 @@
 .POSIX:
 CC	= cc
-CFLAGS	+= -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -pedantic
 PKG_CONFIG	?= pkg-config
+CFLAGS	+= -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -pedantic $(shell $(PKG_CONFIG) --cflags ncurses panel)
 LDLIBS	= $(shell $(PKG_CONFIG) --libs ncurses panel || echo "-lncurses -ltinfo -lpanel")
 PREFIX	= /usr/local
 
