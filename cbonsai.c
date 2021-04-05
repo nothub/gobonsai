@@ -11,6 +11,9 @@
 #include <string.h>
 #include <wchar.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 enum branchType {trunk, shootLeft, shootRight, dying, dead};
 
@@ -25,12 +28,17 @@ struct config {
 	int baseType;
 	int seed;
 	int leavesSize;
+	int save;
+	int load;
+	int targetBranchCount;
 
 	double timeWait;
 	double timeStep;
 
 	char* message;
 	char* leaves[64];
+	char* saveFile;
+	char* loadFile;
 };
 
 struct ncursesObjects {
@@ -49,6 +57,7 @@ struct counters {
 	int branches;
 	int shoots;
 	int shootCounter;
+	time_t timer;
 };
 
 void finish(void) {
@@ -80,6 +89,8 @@ void printHelp(const struct config *conf) {
 	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf->lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed=INT         seed random number generator\n");
+	printf("  -C, --continue=STR     load progress from file [default: %s]\n", conf->loadFile);
+	printf("  -W, --save=STR         save progress to file [default: %s]\n", conf->saveFile);
 	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
 }
@@ -183,6 +194,12 @@ void updateScreen(float timeStep) {
 	ts.tv_sec = timeStep / 1;
 	ts.tv_nsec = (timeStep - ts.tv_sec) * 1000000000;
 	nanosleep(&ts, NULL);	// sleep for given time
+}
+
+void saveToFile(char* fname, int seed, int counter) {
+	FILE *fp = fopen(fname, "w");
+	fprintf(fp, "%d %d", seed, counter);
+	fclose(fp);
 }
 
 // based on type of tree, determine what color a branch should be
@@ -426,7 +443,19 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 		free(branchStr);
 
 		// if live, show progress
-		if (conf->live) updateScreen(conf->timeStep);
+		if (conf->live) {
+			if (conf->targetBranchCount > myCounters->branches) {
+				// we have not yet cought up to loaded state
+				// fast forward
+				updateScreen(0.001);
+			} else if ((time(NULL) - myCounters->timer) > 10) {
+				saveToFile(conf->saveFile, conf->seed, myCounters->branches);
+				myCounters->timer = time(NULL);
+				updateScreen(conf->timeStep);
+			} else {
+				updateScreen(conf->timeStep);
+			}
+		}
 	}
 }
 
@@ -612,7 +641,7 @@ void growTree(const struct config *conf, struct ncursesObjects *objects) {
 	int maxY, maxX;
 	getmaxyx(objects->treeWin, maxY, maxX);
 
-	struct counters myCounters  = { 0, 0, rand() };
+	struct counters myCounters  = { 0, 0, rand(), time(NULL) };
 
 	if (conf->verbosity > 0) {
 		mvwprintw(objects->treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
@@ -672,6 +701,46 @@ void printstdscr(void) {
 	printf("\033[0m\n");
 }
 
+// find homedir for default file location
+void getFilePath(char **path) {
+	char* postfix = "/.cache/bonsai";
+	char* homedir = getenv("HOME");
+
+	if (homedir == NULL) {
+		homedir = getpwuid(getuid())->pw_dir;
+	}
+	if (homedir == NULL) {
+		printf("error: unable to find homedir. Set save path manually\n");
+		exit(1);
+	}
+
+	// fit paths plus "/" and null byte
+	size_t n = strlen(homedir) + strlen(postfix) + sizeof(char);
+	*path = (char *) malloc(n);
+	snprintf(*path, n, "%s%s", homedir, postfix);
+}
+
+// load seed and counter from file
+void loadFromFile(struct config *conf) {
+	FILE* fp = fopen(conf->loadFile, "r");
+	char seed[1024];	// buffer for seed
+	char state[1024];	// buffer for state counter
+
+	if (access(conf->loadFile, F_OK) != 0 ) {
+		printf("State file not found. %s\n", conf->loadFile);
+		return;
+	}
+	if (fscanf(fp, "%1023s %1023s", seed, state) != 2) {
+		printf("Error in save file format\n");
+		exit(1);
+	}
+
+	conf->seed = strtod(seed, NULL);
+	conf->targetBranchCount = strtod(state, NULL);
+
+	fclose(fp);
+}
+
 int main(int argc, char* argv[]) {
 	setlocale(LC_ALL, "");
 
@@ -686,12 +755,17 @@ int main(int argc, char* argv[]) {
 		.baseType = 1,
 		.seed = 0,
 		.leavesSize = 0,
+		.save = 0,
+		.load = 0,
+		.targetBranchCount = 0,
 
 		.timeWait = 4,
 		.timeStep = 0.03,
 
 		.message = NULL,
 		.leaves = {0},
+		.saveFile = "~/.cache/cbonsai",
+		.loadFile = "~/.cache/cbonsai",
 	};
 
 	struct option long_options[] = {
@@ -707,6 +781,8 @@ int main(int argc, char* argv[]) {
 		{"life", required_argument, NULL, 'L'},
 		{"print", required_argument, NULL, 'p'},
 		{"seed", required_argument, NULL, 's'},
+		{"continue", optional_argument, NULL, 'C'},
+		{"save", optional_argument, NULL, 'W'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"help", no_argument, NULL, 'h'},
 		{0, 0, 0, 0}
@@ -719,7 +795,7 @@ int main(int argc, char* argv[]) {
 	// parse arguments
 	int option_index = 0;
 	int c;
-	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:C::W::vh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'l':
 			conf.live = 1;
@@ -804,6 +880,24 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 			break;
+		case 'C':
+			if (optarg != NULL) {
+				conf.loadFile = optarg;
+			} else {
+			// build default path
+				getFilePath(&conf.loadFile);
+			}
+			conf.load = 1;
+			break;
+		case 'W':
+			if (optarg != NULL) {
+				conf.saveFile = optarg;
+			} else {
+				// build default path
+				getFilePath(&conf.saveFile);
+			}
+			conf.save = 1;
+			break;
 		case 'v':
 			conf.verbosity++;
 			break;
@@ -823,6 +917,10 @@ int main(int argc, char* argv[]) {
 		if (conf.leavesSize < 100) conf.leaves[conf.leavesSize] = token;
 		token = strtok(NULL, ",");
 		conf.leavesSize++;
+	}
+
+	if (conf.load) {
+		loadFromFile(&conf);
 	}
 
 	// seed random number generator
