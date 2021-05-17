@@ -40,16 +40,16 @@ You may need to follow these instructions before running `make install`.
 
 ### Manual
 
-You'll need to have a working `ncurses` library. If you're on a `Debian`-based system, you can install `ncurses` like so:
+You'll need to have a working `ncursesw` library. If you're on a `Debian`-based system, you can install `ncursesw` like so:
 
 ```bash
-sudo apt install libncurses-dev
+sudo apt install libncursesw5-dev
 ```
 
 Or on Fedora:
 
 ```bash
-sudo dnf install ncurses-devel
+sudo dnf install ncursesw5-devel
 ```
 
 Once dependencies are met, then install:
