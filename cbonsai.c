@@ -413,7 +413,15 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 		// choose string to use for this branch
 		char *branchStr = chooseString(conf, type, life, dx, dy);
 
-		mvwprintw(objects->treeWin, y, x, "%s", branchStr);
+		// grab wide character from branchStr
+		wchar_t wc = 0;
+		mbstate_t *ps = 0;
+		mbrtowc(&wc, branchStr, 32, ps);
+
+		// print, but ensure wide characters don't overlap
+		if(x % wcwidth(wc) == 0)
+			mvwprintw(objects->treeWin, y, x, "%s", branchStr);
+
 		wattroff(objects->treeWin, A_BOLD);
 		free(branchStr);
 
