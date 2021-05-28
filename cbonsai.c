@@ -301,9 +301,9 @@ void setDeltas(enum branchType type, int life, int age, int multiplier, int *ret
 char* chooseString(const struct config *conf, enum branchType type, int life, int dx, int dy) {
 	char* branchStr;
 
-#define STR_LEN 32
+	const unsigned int maxStrLen = 32;
 
-	branchStr = malloc(STR_LEN * sizeof(char));
+	branchStr = malloc(maxStrLen);
 	strcpy(branchStr, "?");	// fallback character
 
 	if (life < 4) type = dying;
@@ -331,11 +331,10 @@ char* chooseString(const struct config *conf, enum branchType type, int life, in
 		break;
 	case dying:
 	case dead:
-		strncpy(branchStr, conf->leaves[rand() % conf->leavesSize], STR_LEN - 1);
-		branchStr[STR_LEN - 1] = '\0';
+		strncpy(branchStr, conf->leaves[rand() % conf->leavesSize], maxStrLen - 1);
+		branchStr[maxStrLen - 1] = '\0';
 	}
 
-#undef STR_LEN
 	return branchStr;
 }
 
