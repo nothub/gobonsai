@@ -3,9 +3,9 @@
 #endif
 
 #include <stdlib.h>
-#include <ncursesw/curses.h>
+#include <curses.h>
 #include <locale.h>
-#include <ncursesw/panel.h>
+#include <panel.h>
 #include <getopt.h>
 #include <time.h>
 #include <string.h>
