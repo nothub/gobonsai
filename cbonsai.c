@@ -1,4 +1,6 @@
-#define _XOPEN_SOURCE_EXTENDED
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
+#endif
 
 #include <stdlib.h>
 #include <ncursesw/curses.h>
