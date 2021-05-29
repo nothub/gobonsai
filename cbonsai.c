@@ -784,8 +784,8 @@ int main(int argc, char* argv[]) {
 		{"life", required_argument, NULL, 'L'},
 		{"print", required_argument, NULL, 'p'},
 		{"seed", required_argument, NULL, 's'},
-		{"continue", optional_argument, NULL, 'C'},
-		{"save", optional_argument, NULL, 'W'},
+		{"continue", required_argument, NULL, 'C'},
+		{"save", required_argument, NULL, 'W'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"help", no_argument, NULL, 'h'},
 		{0, 0, 0, 0}
@@ -798,7 +798,7 @@ int main(int argc, char* argv[]) {
 	// parse arguments
 	int option_index = 0;
 	int c;
-	while ((c = getopt_long(argc, argv, "lt:iw:Sm:b:c:M:L:ps:C::W::vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, ":lt:iw:Sm:b:c:M:L:ps:C:W:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'l':
 			conf.live = 1;
@@ -884,21 +884,51 @@ int main(int argc, char* argv[]) {
 			}
 			break;
 		case 'C':
+			// skip argument if it's actually an option
+			if (optarg[0] == '-') optind -= 1;
+			else conf.loadFile = optarg;
+
 			conf.load = 1;
-			if (optarg != NULL) conf.loadFile = optarg;
 			expandWords(&conf.loadFile);
 			break;
 		case 'W':
+			// skip argument if it's actually an option
+			if (optarg[0] == '-') optind -= 1;
+			else conf.saveFile = optarg;
+
 			conf.save = 1;
-			if (optarg != NULL) conf.saveFile = optarg;
 			expandWords(&conf.saveFile);
 			break;
 		case 'v':
 			conf.verbosity++;
 			break;
 
-		// '?' represents unknown option. Treat it like --help.
+		// option has required argument, but it was not given
+		case ':':
+			switch (optopt) {
+			case 'W':
+				conf.save = 1;
+				expandWords(&conf.saveFile);
+				break;
+			case 'C':
+				conf.load = 1;
+				expandWords(&conf.loadFile);
+				break;
+			default:
+				printf("error: option requires an argument -- '%c'\n", optopt);
+				printHelp(&conf);
+				return 0;
+				break;
+			}
+			break;
+
+		// invalid option was given
 		case '?':
+			printf("error: invalid option -- '%c'\n", optopt);
+			printHelp(&conf);
+			return 0;
+			break;
+
 		case 'h':
 			printHelp(&conf);
 			return 0;
