@@ -126,8 +126,8 @@ void printHelp(const struct config *conf) {
 	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf->lifeStart);
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed=INT         seed random number generator\n");
-	printf("  -C, --continue=STR     load progress from file [default: %s]\n", conf->loadFile);
-	printf("  -W, --save=STR         save progress to file [default: %s]\n", conf->saveFile);
+	printf("  -W, --save=FILE        save progress to file [default: %s]\n", conf->saveFile);
+	printf("  -C, --load=FILE        load progress from file [default: %s]\n", conf->loadFile);
 	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
 }
@@ -784,8 +784,8 @@ int main(int argc, char* argv[]) {
 		{"life", required_argument, NULL, 'L'},
 		{"print", required_argument, NULL, 'p'},
 		{"seed", required_argument, NULL, 's'},
-		{"continue", required_argument, NULL, 'C'},
 		{"save", required_argument, NULL, 'W'},
+		{"load", required_argument, NULL, 'C'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"help", no_argument, NULL, 'h'},
 		{0, 0, 0, 0}
@@ -883,14 +883,6 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 			break;
-		case 'C':
-			// skip argument if it's actually an option
-			if (optarg[0] == '-') optind -= 1;
-			else conf.loadFile = optarg;
-
-			conf.load = 1;
-			expandWords(&conf.loadFile);
-			break;
 		case 'W':
 			// skip argument if it's actually an option
 			if (optarg[0] == '-') optind -= 1;
@@ -898,6 +890,14 @@ int main(int argc, char* argv[]) {
 
 			conf.save = 1;
 			expandWords(&conf.saveFile);
+			break;
+		case 'C':
+			// skip argument if it's actually an option
+			if (optarg[0] == '-') optind -= 1;
+			else conf.loadFile = optarg;
+
+			conf.load = 1;
+			expandWords(&conf.loadFile);
 			break;
 		case 'v':
 			conf.verbosity++;
