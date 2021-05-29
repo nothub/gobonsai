@@ -57,13 +57,14 @@ struct counters {
 	int branches;
 	int shoots;
 	int shootCounter;
-	time_t timer;
 };
 
-void finish(void) {
+void finish(const struct config *conf, struct counters *myCounters) {
 	clear();
 	refresh();
 	endwin();	// delete ncurses screen
+	if (conf->save)
+		saveToFile(conf->saveFile, conf->seed, myCounters->branches);
 }
 
 void printHelp(const struct config *conf) {
@@ -177,9 +178,9 @@ void drawWins(int baseType, struct ncursesObjects *objects) {
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
 // check for key press
-void checkKeyPress(int screensaver) {
-	if ((screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
-		finish();
+void checkKeyPress(const struct config *conf, struct counters *myCounters) {
+	if ((conf->screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
+		finish(conf, myCounters);
 		exit(0);
 	}
 }
@@ -363,7 +364,7 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 	int shootCooldown = conf->multiplier;
 
 	while (life > 0) {
-		checkKeyPress(conf->screensaver);
+		checkKeyPress(conf, myCounters);
 		life--;		// decrement remaining life counter
 		age = conf->lifeStart - life;
 
@@ -442,20 +443,10 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 		wattroff(objects->treeWin, A_BOLD);
 		free(branchStr);
 
-		// if live, show progress
-		if (conf->live) {
-			if (conf->targetBranchCount > myCounters->branches) {
-				// we have not yet cought up to loaded state
-				// fast forward
-				updateScreen(0.001);
-			} else if ((time(NULL) - myCounters->timer) > 10) {
-				saveToFile(conf->saveFile, conf->seed, myCounters->branches);
-				myCounters->timer = time(NULL);
-				updateScreen(conf->timeStep);
-			} else {
-				updateScreen(conf->timeStep);
-			}
-		}
+		// if live, update screen
+		// skip updating if we're still loading from file
+		if (conf->live && !(conf->load && myCounters->branches < conf->targetBranchCount))
+			updateScreen(conf->timeStep);
 	}
 }
 
@@ -637,18 +628,21 @@ void init(const struct config *conf, struct ncursesObjects *objects) {
 	drawMessage(conf, objects, conf->message);
 }
 
-void growTree(const struct config *conf, struct ncursesObjects *objects) {
+void growTree(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters) {
 	int maxY, maxX;
 	getmaxyx(objects->treeWin, maxY, maxX);
 
-	struct counters myCounters  = { 0, 0, rand(), time(NULL) };
+	// reset counters
+	myCounters->shoots = 0;
+	myCounters->branches = 0;
+	myCounters->shootCounter = rand();
 
 	if (conf->verbosity > 0) {
 		mvwprintw(objects->treeWin, 2, 5, "maxX: %03d, maxY: %03d", maxX, maxY);
 	}
 
 	// recursively grow tree trunk and branches
-	branch(conf, objects, &myCounters, maxY - 1, (maxX / 2), trunk, conf->lifeStart);
+	branch(conf, objects, myCounters, maxY - 1, (maxX / 2), trunk, conf->lifeStart);
 
 	// display changes
 	update_panels();
@@ -927,12 +921,14 @@ int main(int argc, char* argv[]) {
 	if (conf.seed == 0) conf.seed = time(NULL);
 	srand(conf.seed);
 
+	struct counters myCounters;
+
 	do {
 		init(&conf, &objects);
-		growTree(&conf, &objects);
+		growTree(&conf, &objects, &myCounters);
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
-			checkKeyPress(conf.screensaver);
+			checkKeyPress(&conf, &myCounters);
 
 			// seed random number generator
 			srand(time(NULL));
@@ -940,7 +936,7 @@ int main(int argc, char* argv[]) {
 	} while (conf.infinite);
 
 	if (conf.printTree) {
-		finish();
+		finish(&conf, &myCounters);
 
 		// overlay all windows onto stdscr
 		overlay(objects.baseWin, stdscr);
@@ -951,7 +947,7 @@ int main(int argc, char* argv[]) {
 		printstdscr();
 	} else {
 		wgetch(objects.treeWin);
-		finish();
+		finish(&conf, &myCounters);
 	}
 
 	// free window memory
