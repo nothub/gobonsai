@@ -831,6 +831,12 @@ int main(int argc, char* argv[]) {
 		case 'S':
 			conf.live = 1;
 			conf.infinite = 1;
+
+			conf.save = 1;
+			expandWords(&conf.saveFile);
+			conf.load = 1;
+			expandWords(&conf.loadFile);
+
 			conf.screensaver = 1;
 			break;
 		case 'm':
@@ -956,6 +962,7 @@ int main(int argc, char* argv[]) {
 	do {
 		init(&conf, &objects);
 		growTree(&conf, &objects, &myCounters);
+		if (conf.load) conf.targetBranchCount = 0;
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
 			checkKeyPress(&conf, &myCounters);

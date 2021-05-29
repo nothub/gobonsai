@@ -79,7 +79,7 @@ Options:
   -i, --infinite         infinite mode: keep growing trees
   -w, --wait=TIME        in infinite mode, wait TIME between each tree
                            generation [default: 4.00]
-  -S, --screensaver      screensaver mode; equivalent to -li and
+  -S, --screensaver      screensaver mode; equivalent to -liWC and
                            quit on any keypress
   -m, --message=STR      attach message next to the tree
   -b, --base=INT         ascii-art plant base to use, 0 is none
@@ -96,7 +96,32 @@ Options:
   -h, --help             show help
 ```
 
-## Add to `.bashrc`
+## Tips
+
+### Screensaver Mode
+
+Try out `-S/--screensaver` mode! As the help message states, it activates the `--live` and `--infinite` modes, quits upon any keypress, also saves/loads using the default cache file (`~/.cache/cbonsai`). This means:
+
+* When you start `cbonsai` with `--screensaver`, a tree (including its seed and progress) is loaded from the default cache file.
+* When you quit `cbonsai` and `--screensaver` was on, the current tree being generated (including its seed and progress) is written to the default cache file.
+
+This is helpful for a situations like the following: let's say you're growing a really big tree, really slowly:
+
+```bash
+$ cbonsai --screensaver --life 40 --multiplier 5 --time 20 --screensaver
+```
+
+Normally, when you quite `cbonsai` (e.g. by you hitting `q` or `ctrl-c`), you would lose all progress on that tree. However, by specifying `--screensaver`, the tree is automatically saved to a cache file upon quitting. The next time you run that exact same screensaver command:
+
+```bash
+$ cbonsai --screensaver --life 40 --multiplier 5 --time 20 --screensaver
+```
+
+The tree is automatically loaded from the cache file! And, since infinite mode is automatically turned on, it will finish the cached tree and just keep generating more. When you quit `cbonsai` again, the tree is once again written to the cache file for next time.
+
+Keep in mind that only the seed and number of branches are written to the cache file, so if you want to continue a previously generated tree, make sure you re-specify any other options you may have changed.
+
+### Add to `.bashrc`
 
 For a new bonsai tree every time you open a terminal, just add the following to the end of your `~/.bashrc`:
 
