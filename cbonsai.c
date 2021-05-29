@@ -12,8 +12,7 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
+#include <wordexp.h>
 
 enum branchType {trunk, shootLeft, shootRight, dying, dead};
 
@@ -58,6 +57,43 @@ struct counters {
 	int shoots;
 	int shootCounter;
 };
+
+int saveToFile(char* fname, int seed, int branchCount) {
+	FILE *fp = fopen(fname, "w");
+
+	if (!fp) {
+		printf("error: file was not opened properly for writing: %s\n", fname);
+		return 1;
+	}
+
+	fprintf(fp, "%d %d", seed, branchCount);
+	fclose(fp);
+
+	return 0;
+}
+
+// load seed and counter from file
+int loadFromFile(struct config *conf) {
+	FILE* fp = fopen(conf->loadFile, "r");
+
+	if (!fp) {
+		printf("error: file was not opened properly for reading: %s\n", conf->loadFile);
+		return 1;
+	}
+
+	int seed, targetBranchCount;
+	if (fscanf(fp, "%i %i", &seed, &targetBranchCount) != 2) {
+		printf("error: save file could not be read\n");
+		return 1;
+	}
+
+	conf->seed = seed;
+	conf->targetBranchCount = targetBranchCount;
+
+	fclose(fp);
+
+	return 0;
+}
 
 void finish(const struct config *conf, struct counters *myCounters) {
 	clear();
@@ -195,12 +231,6 @@ void updateScreen(float timeStep) {
 	ts.tv_sec = timeStep / 1;
 	ts.tv_nsec = (timeStep - ts.tv_sec) * 1000000000;
 	nanosleep(&ts, NULL);	// sleep for given time
-}
-
-void saveToFile(char* fname, int seed, int counter) {
-	FILE *fp = fopen(fname, "w");
-	fprintf(fp, "%d %d", seed, counter);
-	fclose(fp);
 }
 
 // based on type of tree, determine what color a branch should be
@@ -696,43 +726,22 @@ void printstdscr(void) {
 }
 
 // find homedir for default file location
-void getFilePath(char **path) {
-	char* postfix = "/.cache/bonsai";
-	char* homedir = getenv("HOME");
+void expandWords(char **input) {
+	wordexp_t exp_result;
+	wordexp(*input, &exp_result, 0);
 
-	if (homedir == NULL) {
-		homedir = getpwuid(getuid())->pw_dir;
-	}
-	if (homedir == NULL) {
-		printf("error: unable to find homedir. Set save path manually\n");
-		exit(1);
-	}
-
-	// fit paths plus "/" and null byte
-	size_t n = strlen(homedir) + strlen(postfix) + sizeof(char);
-	*path = (char *) malloc(n);
-	snprintf(*path, n, "%s%s", homedir, postfix);
-}
-
-// load seed and counter from file
-void loadFromFile(struct config *conf) {
-	FILE* fp = fopen(conf->loadFile, "r");
-	char seed[1024];	// buffer for seed
-	char state[1024];	// buffer for state counter
-
-	if (access(conf->loadFile, F_OK) != 0 ) {
-		printf("State file not found. %s\n", conf->loadFile);
+	if (exp_result.we_wordc < 1) {
+		printf("error: could not parse filename: %s\n", *input);
 		return;
 	}
-	if (fscanf(fp, "%1023s %1023s", seed, state) != 2) {
-		printf("Error in save file format\n");
-		exit(1);
-	}
 
-	conf->seed = strtod(seed, NULL);
-	conf->targetBranchCount = strtod(state, NULL);
+	char* result = exp_result.we_wordv[0];
 
-	fclose(fp);
+	size_t bufsize = (strlen(result)*sizeof(char)) + sizeof(char);
+	*input = (char *) malloc(bufsize);
+	strncpy(*input, result, bufsize - 1);
+
+	wordfree(&exp_result);
 }
 
 int main(int argc, char* argv[]) {
@@ -875,22 +884,14 @@ int main(int argc, char* argv[]) {
 			}
 			break;
 		case 'C':
-			if (optarg != NULL) {
-				conf.loadFile = optarg;
-			} else {
-			// build default path
-				getFilePath(&conf.loadFile);
-			}
 			conf.load = 1;
+			if (optarg != NULL) conf.loadFile = optarg;
+			expandWords(&conf.loadFile);
 			break;
 		case 'W':
-			if (optarg != NULL) {
-				conf.saveFile = optarg;
-			} else {
-				// build default path
-				getFilePath(&conf.saveFile);
-			}
 			conf.save = 1;
+			if (optarg != NULL) conf.saveFile = optarg;
+			expandWords(&conf.saveFile);
 			break;
 		case 'v':
 			conf.verbosity++;
@@ -913,9 +914,8 @@ int main(int argc, char* argv[]) {
 		conf.leavesSize++;
 	}
 
-	if (conf.load) {
+	if (conf.load)
 		loadFromFile(&conf);
-	}
 
 	// seed random number generator
 	if (conf.seed == 0) conf.seed = time(NULL);
