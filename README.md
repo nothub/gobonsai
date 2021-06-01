@@ -108,13 +108,13 @@ Try out `-S/--screensaver` mode! As the help message states, it activates the `-
 This is helpful for a situations like the following: let's say you're growing a really big tree, really slowly:
 
 ```bash
-$ cbonsai --screensaver --life 40 --multiplier 5 --time 20 --screensaver
+$ cbonsai --life 40 --multiplier 5 --time 20 --screensaver
 ```
 
 Normally, when you quite `cbonsai` (e.g. by you hitting `q` or `ctrl-c`), you would lose all progress on that tree. However, by specifying `--screensaver`, the tree is automatically saved to a cache file upon quitting. The next time you run that exact same screensaver command:
 
 ```bash
-$ cbonsai --screensaver --life 40 --multiplier 5 --time 20 --screensaver
+$ cbonsai --life 40 --multiplier 5 --time 20 --screensaver
 ```
 
 The tree is automatically loaded from the cache file! And, since infinite mode is automatically turned on, it will finish the cached tree and just keep generating more. When you quit `cbonsai` again, the tree is once again written to the cache file for next time.
