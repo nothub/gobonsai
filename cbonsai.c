@@ -750,16 +750,14 @@ char* createDefaultCachePath(void) {
 
 	const char* env_XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
 	const char* env_HOME = getenv("HOME");
+	size_t bufsize;
 
 	// follow XDG Base Directory Specification for default cache file path
 	if (env_XDG_CACHE_HOME && strlen(env_XDG_CACHE_HOME)) {
 		char* toAppend = "/cbonsai";
 
-		size_t bufsize = strlen(env_XDG_CACHE_HOME)*sizeof(char);
-		bufsize += strlen(toAppend)*sizeof(char);
-		bufsize += sizeof(char);
-
 		// create result buffer
+		bufsize = strlen(env_XDG_CACHE_HOME) + strlen(toAppend) + 1;
 		result = (char *) malloc(bufsize);
 		strcpy(result, env_XDG_CACHE_HOME);
 		strcat(result, toAppend);
@@ -769,11 +767,8 @@ char* createDefaultCachePath(void) {
 	else if (env_HOME && strlen(env_HOME)) {
 		char* toAppend = "/.cache/cbonsai";
 
-		size_t bufsize = strlen(env_HOME)*sizeof(char);
-		bufsize += strlen(toAppend)*sizeof(char);
-		bufsize += sizeof(char);
-
 		// create result buffer
+		bufsize = strlen(env_HOME) + strlen(toAppend) + 1;
 		result = (char *) malloc(bufsize);
 		strcpy(result, env_HOME);
 		strcat(result, toAppend);
@@ -781,8 +776,8 @@ char* createDefaultCachePath(void) {
 	}
 	// if we also don't have $HOME, just use ./cbonsai
 	else {
-		printf("Using default...\n");
-		result = "cbonsai";
+		result = (char *) malloc(16);
+		strcpy(result, "cbonsai");
 	}
 
 	return result;
@@ -935,7 +930,8 @@ int main(int argc, char* argv[]) {
 			// skip argument if it's actually an option
 			if (optarg[0] == '-') optind -= 1;
 			else {
-				size_t bufsize = (strlen(optarg)*sizeof(char)) + sizeof(char);
+				free(conf.saveFile);
+				size_t bufsize = strlen(optarg) + 1;
 				conf.saveFile = (char *) malloc(bufsize);
 				strncpy(conf.saveFile, optarg, bufsize - 1);
 				conf.saveFile[bufsize - 1] = '\0';
@@ -947,9 +943,10 @@ int main(int argc, char* argv[]) {
 			// skip argument if it's actually an option
 			if (optarg[0] == '-') optind -= 1;
 			else {
-				size_t bufsize = (strlen(optarg)*sizeof(char)) + sizeof(char);
+				free(conf.loadFile);
+				size_t bufsize = strlen(optarg) + 1;
 				conf.loadFile = (char *) malloc(bufsize);
-				strncpy(conf.saveFile, optarg, bufsize - 1);
+				strncpy(conf.loadFile, optarg, bufsize - 1);
 				conf.loadFile[bufsize - 1] = '\0';
 			}
 
