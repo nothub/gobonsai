@@ -57,6 +57,24 @@ struct counters {
 	int shootCounter;
 };
 
+void quit(struct config *conf, struct ncursesObjects *objects) {
+	// delete panels
+	del_panel(objects->basePanel);
+	del_panel(objects->treePanel);
+	del_panel(objects->messageBorderPanel);
+	del_panel(objects->messagePanel);
+
+	// delete windows
+	delwin(objects->baseWin);
+	delwin(objects->treeWin);
+	delwin(objects->messageBorderWin);
+	delwin(objects->messageWin);
+
+	free(conf->saveFile);
+	free(conf->loadFile);
+	exit(0);
+}
+
 int saveToFile(char* fname, int seed, int branchCount) {
 	FILE *fp = fopen(fname, "w");
 
@@ -213,11 +231,12 @@ void drawWins(int baseType, struct ncursesObjects *objects) {
 void roll(int *dice, int mod) { *dice = rand() % mod; }
 
 // check for key press
-void checkKeyPress(const struct config *conf, struct counters *myCounters) {
+int checkKeyPress(const struct config *conf, struct counters *myCounters) {
 	if ((conf->screensaver && wgetch(stdscr) != ERR) || (wgetch(stdscr) == 'q')) {
 		finish(conf, myCounters);
-		exit(0);
+		return 1;
 	}
+	return 0;
 }
 
 // display changes
@@ -385,7 +404,7 @@ char* chooseString(const struct config *conf, enum branchType type, int life, in
 	return branchStr;
 }
 
-void branch(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, enum branchType type, int life) {
+void branch(struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, enum branchType type, int life) {
 	myCounters->branches++;
 	int dx = 0;
 	int dy = 0;
@@ -393,7 +412,9 @@ void branch(const struct config *conf, struct ncursesObjects *objects, struct co
 	int shootCooldown = conf->multiplier;
 
 	while (life > 0) {
-		checkKeyPress(conf, myCounters);
+		if (checkKeyPress(conf, myCounters) == 1)
+			quit(conf, objects);
+
 		life--;		// decrement remaining life counter
 		age = conf->lifeStart - life;
 
@@ -657,7 +678,7 @@ void init(const struct config *conf, struct ncursesObjects *objects) {
 	drawMessage(conf, objects, conf->message);
 }
 
-void growTree(const struct config *conf, struct ncursesObjects *objects, struct counters *myCounters) {
+void growTree(struct config *conf, struct ncursesObjects *objects, struct counters *myCounters) {
 	int maxY, maxX;
 	getmaxyx(objects->treeWin, maxY, maxX);
 
@@ -982,7 +1003,8 @@ int main(int argc, char* argv[]) {
 		if (conf.load) conf.targetBranchCount = 0;
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
-			checkKeyPress(&conf, &myCounters);
+			if (checkKeyPress(&conf, &myCounters) == 1)
+				quit(&conf, &objects);
 
 			// seed random number generator
 			srand(time(NULL));
@@ -1004,11 +1026,5 @@ int main(int argc, char* argv[]) {
 		finish(&conf, &myCounters);
 	}
 
-	// free window memory
-	delwin(objects.baseWin);
-	delwin(objects.treeWin);
-	delwin(objects.messageBorderWin);
-	delwin(objects.messageWin);
-
-	return 0;
+	quit(&conf, &objects);
 }
