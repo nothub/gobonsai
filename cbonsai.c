@@ -12,7 +12,6 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <wordexp.h>
 
 enum branchType {trunk, shootLeft, shootRight, dying, dead};
 
@@ -725,23 +724,47 @@ void printstdscr(void) {
 	printf("\033[0m\n");
 }
 
-// find homedir for default file location
-void expandWords(char **input) {
-	wordexp_t exp_result;
-	wordexp(*input, &exp_result, 0);
+char* createDefaultCachePath(void) {
+	char* result;
 
-	if (exp_result.we_wordc < 1) {
-		printf("error: could not parse filename: %s\n", *input);
-		return;
+	const char* env_XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
+	const char* env_HOME = getenv("HOME");
+
+	// follow XDG Base Directory Specification for default cache file path
+	if (env_XDG_CACHE_HOME && strlen(env_XDG_CACHE_HOME)) {
+		char* toAppend = "/cbonsai";
+
+		size_t bufsize = strlen(env_XDG_CACHE_HOME)*sizeof(char);
+		bufsize += strlen(toAppend)*sizeof(char);
+		bufsize += sizeof(char);
+
+		// create result buffer
+		result = (char *) malloc(bufsize);
+		strcpy(result, env_XDG_CACHE_HOME);
+		strcat(result, toAppend);
+		result[bufsize - 1] = '\0';
+	}
+	// if we don't have $XDG_CACHE_HOME, try $HOME
+	else if (env_HOME && strlen(env_HOME)) {
+		char* toAppend = "/.cache/cbonsai";
+
+		size_t bufsize = strlen(env_HOME)*sizeof(char);
+		bufsize += strlen(toAppend)*sizeof(char);
+		bufsize += sizeof(char);
+
+		// create result buffer
+		result = (char *) malloc(bufsize);
+		strcpy(result, env_HOME);
+		strcat(result, toAppend);
+		result[bufsize - 1] = '\0';
+	}
+	// if we also don't have $HOME, just use ./cbonsai
+	else {
+		printf("Using default...\n");
+		result = "cbonsai";
 	}
 
-	char* result = exp_result.we_wordv[0];
-
-	size_t bufsize = (strlen(result)*sizeof(char)) + sizeof(char);
-	*input = (char *) malloc(bufsize);
-	strncpy(*input, result, bufsize - 1);
-
-	wordfree(&exp_result);
+	return result;
 }
 
 int main(int argc, char* argv[]) {
@@ -767,8 +790,8 @@ int main(int argc, char* argv[]) {
 
 		.message = NULL,
 		.leaves = {0},
-		.saveFile = "~/.cache/cbonsai",
-		.loadFile = "~/.cache/cbonsai",
+		.saveFile = createDefaultCachePath(),
+		.loadFile = createDefaultCachePath(),
 	};
 
 	struct option long_options[] = {
@@ -833,9 +856,7 @@ int main(int argc, char* argv[]) {
 			conf.infinite = 1;
 
 			conf.save = 1;
-			expandWords(&conf.saveFile);
 			conf.load = 1;
-			expandWords(&conf.loadFile);
 
 			conf.screensaver = 1;
 			break;
@@ -895,7 +916,6 @@ int main(int argc, char* argv[]) {
 			else conf.saveFile = optarg;
 
 			conf.save = 1;
-			expandWords(&conf.saveFile);
 			break;
 		case 'C':
 			// skip argument if it's actually an option
@@ -903,7 +923,6 @@ int main(int argc, char* argv[]) {
 			else conf.loadFile = optarg;
 
 			conf.load = 1;
-			expandWords(&conf.loadFile);
 			break;
 		case 'v':
 			conf.verbosity++;
@@ -914,11 +933,9 @@ int main(int argc, char* argv[]) {
 			switch (optopt) {
 			case 'W':
 				conf.save = 1;
-				expandWords(&conf.saveFile);
 				break;
 			case 'C':
 				conf.load = 1;
-				expandWords(&conf.loadFile);
 				break;
 			default:
 				printf("error: option requires an argument -- '%c'\n", optopt);
