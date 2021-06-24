@@ -934,14 +934,24 @@ int main(int argc, char* argv[]) {
 		case 'W':
 			// skip argument if it's actually an option
 			if (optarg[0] == '-') optind -= 1;
-			else conf.saveFile = optarg;
+			else {
+				size_t bufsize = (strlen(optarg)*sizeof(char)) + sizeof(char);
+				conf.saveFile = (char *) malloc(bufsize);
+				strncpy(conf.saveFile, optarg, bufsize - 1);
+				conf.saveFile[bufsize - 1] = '\0';
+			}
 
 			conf.save = 1;
 			break;
 		case 'C':
 			// skip argument if it's actually an option
 			if (optarg[0] == '-') optind -= 1;
-			else conf.loadFile = optarg;
+			else {
+				size_t bufsize = (strlen(optarg)*sizeof(char)) + sizeof(char);
+				conf.loadFile = (char *) malloc(bufsize);
+				strncpy(conf.saveFile, optarg, bufsize - 1);
+				conf.loadFile[bufsize - 1] = '\0';
+			}
 
 			conf.load = 1;
 			break;
