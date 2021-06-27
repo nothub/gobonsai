@@ -57,7 +57,7 @@ struct counters {
 	int shootCounter;
 };
 
-void quit(struct config *conf, struct ncursesObjects *objects) {
+void quit(struct config *conf, struct ncursesObjects *objects, int returnCode) {
 	// delete panels
 	del_panel(objects->basePanel);
 	del_panel(objects->treePanel);
@@ -72,7 +72,7 @@ void quit(struct config *conf, struct ncursesObjects *objects) {
 
 	free(conf->saveFile);
 	free(conf->loadFile);
-	exit(0);
+	exit(returnCode);
 }
 
 int saveToFile(char* fname, int seed, int branchCount) {
@@ -413,7 +413,7 @@ void branch(struct config *conf, struct ncursesObjects *objects, struct counters
 
 	while (life > 0) {
 		if (checkKeyPress(conf, myCounters) == 1)
-			quit(conf, objects);
+			quit(conf, objects, 0);
 
 		life--;		// decrement remaining life counter
 		age = conf->lifeStart - life;
@@ -844,11 +844,11 @@ int main(int argc, char* argv[]) {
 			if (strtold(optarg, NULL) != 0) conf.timeStep = strtod(optarg, NULL);
 			else {
 				printf("error: invalid step time: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			if (conf.timeStep < 0) {
 				printf("error: invalid step time: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'i':
@@ -858,11 +858,11 @@ int main(int argc, char* argv[]) {
 			if (strtold(optarg, NULL) != 0) conf.timeWait = strtod(optarg, NULL);
 			else {
 				printf("error: invalid wait time: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			if (conf.timeWait < 0) {
 				printf("error: invalid wait time: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'S':
@@ -881,7 +881,7 @@ int main(int argc, char* argv[]) {
 			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
 			else {
 				printf("error: invalid base index: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'c':
@@ -892,22 +892,22 @@ int main(int argc, char* argv[]) {
 			if (strtold(optarg, NULL) != 0) conf.multiplier = strtod(optarg, NULL);
 			else {
 				printf("error: invalid multiplier: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			if (conf.multiplier < 0) {
 				printf("error: invalid multiplier: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'L':
 			if (strtold(optarg, NULL) != 0) conf.lifeStart = strtod(optarg, NULL);
 			else {
 				printf("error: invalid initial life: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			if (conf.lifeStart < 0) {
 				printf("error: invalid initial life: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'p':
@@ -917,11 +917,11 @@ int main(int argc, char* argv[]) {
 			if (strtold(optarg, NULL) != 0) conf.seed = strtod(optarg, NULL);
 			else {
 				printf("error: invalid seed: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			if (conf.seed < 0) {
 				printf("error: invalid seed: '%s'\n", optarg);
-				exit(1);
+				quit(&conf, &objects, 1);
 			}
 			break;
 		case 'W':
@@ -1009,7 +1009,7 @@ int main(int argc, char* argv[]) {
 		if (conf.infinite) {
 			timeout(conf.timeWait * 1000);
 			if (checkKeyPress(&conf, &myCounters) == 1)
-				quit(&conf, &objects);
+				quit(&conf, &objects, 0);
 
 			// seed random number generator
 			srand(time(NULL));
@@ -1031,5 +1031,5 @@ int main(int argc, char* argv[]) {
 		finish(&conf, &myCounters);
 	}
 
-	quit(&conf, &objects);
+	quit(&conf, &objects, 0);
 }
