@@ -747,39 +747,35 @@ void printstdscr(void) {
 
 char* createDefaultCachePath(void) {
 	char* result;
-
-	const char* env_XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
-	const char* env_HOME = getenv("HOME");
-	size_t bufsize;
+	size_t envlen;
 
 	// follow XDG Base Directory Specification for default cache file path
-	if (env_XDG_CACHE_HOME && strlen(env_XDG_CACHE_HOME)) {
+	const char* env_XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
+	if (env_XDG_CACHE_HOME && (envlen = strlen(env_XDG_CACHE_HOME))) {
 		char* toAppend = "/cbonsai";
 
 		// create result buffer
-		bufsize = strlen(env_XDG_CACHE_HOME) + strlen(toAppend) + 1;
-		result = malloc(bufsize);
-		strcpy(result, env_XDG_CACHE_HOME);
-		strcat(result, toAppend);
-		result[bufsize - 1] = '\0';
+		result = malloc(envlen + strlen(toAppend) + 1);
+		strncpy(result, env_XDG_CACHE_HOME, envlen);
+		strcpy(result + envlen, toAppend);
+		return result;
 	}
+
 	// if we don't have $XDG_CACHE_HOME, try $HOME
-	else if (env_HOME && strlen(env_HOME)) {
+	const char* env_HOME = getenv("HOME");
+	if (env_HOME && (envlen = strlen(env_HOME))) {
 		char* toAppend = "/.cache/cbonsai";
 
 		// create result buffer
-		bufsize = strlen(env_HOME) + strlen(toAppend) + 1;
-		result = malloc(bufsize);
-		strcpy(result, env_HOME);
-		strcat(result, toAppend);
-		result[bufsize - 1] = '\0';
-	}
-	// if we also don't have $HOME, just use ./cbonsai
-	else {
-		result = malloc(16);
-		strcpy(result, "cbonsai");
+		result = malloc(envlen + strlen(toAppend) + 1);
+		strncpy(result, env_HOME, envlen);
+		strcpy(result + envlen, toAppend);
+		return result;
 	}
 
+	// if we also don't have $HOME, just use ./cbonsai
+	result = malloc(16);
+	strcpy(result, "cbonsai");
 	return result;
 }
 
