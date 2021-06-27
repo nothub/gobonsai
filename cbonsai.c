@@ -758,7 +758,7 @@ char* createDefaultCachePath(void) {
 
 		// create result buffer
 		bufsize = strlen(env_XDG_CACHE_HOME) + strlen(toAppend) + 1;
-		result = (char *) malloc(bufsize);
+		result = malloc(bufsize);
 		strcpy(result, env_XDG_CACHE_HOME);
 		strcat(result, toAppend);
 		result[bufsize - 1] = '\0';
@@ -769,14 +769,14 @@ char* createDefaultCachePath(void) {
 
 		// create result buffer
 		bufsize = strlen(env_HOME) + strlen(toAppend) + 1;
-		result = (char *) malloc(bufsize);
+		result = malloc(bufsize);
 		strcpy(result, env_HOME);
 		strcat(result, toAppend);
 		result[bufsize - 1] = '\0';
 	}
 	// if we also don't have $HOME, just use ./cbonsai
 	else {
-		result = (char *) malloc(16);
+		result = malloc(16);
 		strcpy(result, "cbonsai");
 	}
 
@@ -932,7 +932,7 @@ int main(int argc, char* argv[]) {
 			else {
 				free(conf.saveFile);
 				size_t bufsize = strlen(optarg) + 1;
-				conf.saveFile = (char *) malloc(bufsize);
+				conf.saveFile = malloc(bufsize);
 				strncpy(conf.saveFile, optarg, bufsize - 1);
 				conf.saveFile[bufsize - 1] = '\0';
 			}
@@ -945,7 +945,7 @@ int main(int argc, char* argv[]) {
 			else {
 				free(conf.loadFile);
 				size_t bufsize = strlen(optarg) + 1;
-				conf.loadFile = (char *) malloc(bufsize);
+				conf.loadFile = malloc(bufsize);
 				strncpy(conf.loadFile, optarg, bufsize - 1);
 				conf.loadFile[bufsize - 1] = '\0';
 			}
