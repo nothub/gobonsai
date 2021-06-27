@@ -748,11 +748,12 @@ void printstdscr(void) {
 char* createDefaultCachePath(void) {
 	char* result;
 	size_t envlen;
+	char* toAppend;
 
 	// follow XDG Base Directory Specification for default cache file path
 	const char* env_XDG_CACHE_HOME = getenv("XDG_CACHE_HOME");
 	if (env_XDG_CACHE_HOME && (envlen = strlen(env_XDG_CACHE_HOME))) {
-		char* toAppend = "/cbonsai";
+		toAppend = "/cbonsai";
 
 		// create result buffer
 		result = malloc(envlen + strlen(toAppend) + 1);
@@ -764,7 +765,7 @@ char* createDefaultCachePath(void) {
 	// if we don't have $XDG_CACHE_HOME, try $HOME
 	const char* env_HOME = getenv("HOME");
 	if (env_HOME && (envlen = strlen(env_HOME))) {
-		char* toAppend = "/.cache/cbonsai";
+		toAppend = "/.cache/cbonsai";
 
 		// create result buffer
 		result = malloc(envlen + strlen(toAppend) + 1);
@@ -774,8 +775,9 @@ char* createDefaultCachePath(void) {
 	}
 
 	// if we also don't have $HOME, just use ./cbonsai
-	result = malloc(16);
-	strcpy(result, "cbonsai");
+	toAppend = "cbonsai";
+	result = malloc(strlen(toAppend) + 1);
+	strcpy(result, toAppend);
 	return result;
 }
 
