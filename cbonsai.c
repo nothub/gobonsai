@@ -120,7 +120,7 @@ void finish(const struct config *conf, struct counters *myCounters) {
 		saveToFile(conf->saveFile, conf->seed, myCounters->branches);
 }
 
-void printHelp(const struct config *conf) {
+void printHelp(void) {
 	printf("Usage: cbonsai [OPTION]...\n");
 	printf("\n");
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
@@ -128,10 +128,10 @@ void printHelp(const struct config *conf) {
 	printf("Options:\n");
 	printf("  -l, --live             live mode: show each step of growth\n");
 	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
-	printf("                           steps of growth (must be larger than 0) [default: %.2f]\n", conf->timeStep);
+	printf("                           steps of growth (must be larger than 0) [default: 0.03]\n");
 	printf("  -i, --infinite         infinite mode: keep growing trees\n");
 	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
-	printf("                           generation [default: %.2f]\n", conf->timeWait);
+	printf("                           generation [default: 4.00]\n");
 	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
 	printf("                           quit on any keypress\n");
 	printf("  -m, --message=STR      attach message next to the tree\n");
@@ -139,12 +139,12 @@ void printHelp(const struct config *conf) {
 	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
 	printf("                           for leaves\n");
 	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: %i]\n", conf->multiplier);
-	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: %i]\n", conf->lifeStart);
+	printf("                           branching (0-20) [default: 5]\n");
+	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]\n");
 	printf("  -p, --print            print tree to terminal when finished\n");
 	printf("  -s, --seed=INT         seed random number generator\n");
-	printf("  -W, --save=FILE        save progress to file [default: %s]\n", conf->saveFile);
-	printf("  -C, --load=FILE        load progress from file [default: %s]\n", conf->loadFile);
+	printf("  -W, --save=FILE        save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]\n");
+	printf("  -C, --load=FILE        load progress from file [default: $XDG_CACHE_HOME/cbonsai]\n");
 	printf("  -v, --verbose          increase output verbosity\n");
 	printf("  -h, --help             show help	\n");
 }
@@ -965,7 +965,7 @@ int main(int argc, char* argv[]) {
 				break;
 			default:
 				printf("error: option requires an argument -- '%c'\n", optopt);
-				printHelp(&conf);
+				printHelp();
 				return 0;
 				break;
 			}
@@ -974,12 +974,12 @@ int main(int argc, char* argv[]) {
 		// invalid option was given
 		case '?':
 			printf("error: invalid option -- '%c'\n", optopt);
-			printHelp(&conf);
+			printHelp();
 			return 0;
 			break;
 
 		case 'h':
-			printHelp(&conf);
+			printHelp();
 			return 0;
 			break;
 		}
