@@ -38,6 +38,14 @@ For pkg-config to find ncurses you may need to set:
 
 You may need to follow these instructions before running `make install`.
 
+On macOS, you may also install `cbonsai` using [MacPorts](https://www.macports.org).
+Simply install MacPorts, then issue the following commands:
+
+```bash
+$ sudo port selfupdate
+$ sudo port install cbonsai
+```
+
 ### Manual
 
 You'll need to have a working `ncursesw` library. If you're on a `Debian`-based system, you can install `ncursesw` like so:
