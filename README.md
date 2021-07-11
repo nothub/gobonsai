@@ -19,13 +19,22 @@
     <img src="https://repology.org/badge/vertical-allrepos/cbonsai.svg" alt="Packaging status" align="right">
 </a>
 
-### Arch Linux (AUR)
+`cbonsai` is available in multiple repositories. Check the repology chart to the right to see if `cbonsai` is packaged for your system. A big thank you to all the people who packaged `cbonsai`!
 
-Nicholas Boyd Isacsson has kindly packaged `cbonsai` in the [AUR](https://aur.archlinux.org/packages/cbonsai/).
+If no package exists for your system/distribution, you'll have to use the [manual](https://gitlab.com/jallbrit/cbonsai#manual) install instructions. Below are some more specific instructions for some distributions.
 
 ### Debian-based
 
-Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/packages).
+`cbonsai` is only available in the Debian Unstable repository. However, if you're not on unstable, Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/packages).
+
+### Fedora
+
+Mohammad Kefah has kindly packaged `cbonsai` in the [Fedora copr](https://copr.fedorainfracloud.org/), which is "similar to what the AUR is to Arch". On Fedora, it can be installed like so:
+
+```bash
+sudo dnf copr enable keefle/cbonsai
+sudo dnf install cbonsai
+```
 
 ### MacOS
 
@@ -38,12 +47,15 @@ For pkg-config to find ncurses you may need to set:
 
 You may need to follow these instructions before running `make install`.
 
-On macOS, you may also install `cbonsai` using [MacPorts](https://www.macports.org).
-Simply install MacPorts, then issue the following commands:
+If you are having trouble installing on MacOS, try reading [this issue](https://gitlab.com/jallbrit/cbonsai/-/issues/10).
+
+#### MacPorts
+
+On macOS, you may also install `cbonsai` using [MacPorts](https://www.macports.org). Simply install MacPorts, then issue the following commands:
 
 ```bash
-$ sudo port selfupdate
-$ sudo port install cbonsai
+sudo port selfupdate
+sudo port install cbonsai
 ```
 
 ### Manual
@@ -149,4 +161,4 @@ The algorithm is tweaked to look best at the default size, so larger sized trees
 
 ## Inspiration
 
-This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of  [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash` and was itself a port of [this bonsai tree generator](https://avelican.github.io/bonsai/) written in `javascript`.
+This project wouldn't be here if it weren't for its *roots*! `cbonsai` is a newer version of [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh), which was written in `bash` and was itself a port of [this bonsai tree generator](https://avelican.github.io/bonsai/) written in `javascript`.
