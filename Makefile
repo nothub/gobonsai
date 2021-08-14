@@ -8,7 +8,10 @@ MANDIR	= $(PREFIX)/share/man
 
 cbonsai: cbonsai.c
 
-install: cbonsai
+cbonsai.1: cbonsai.scd
+	scdoc <$< >$@
+
+install: cbonsai cbonsai.1
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
 	install -m 0755 cbonsai $(DESTDIR)$(PREFIX)/bin/cbonsai
@@ -20,5 +23,6 @@ uninstall:
 
 clean:
 	rm -f cbonsai
+	rm -f cbonsai.1
 
 .PHONY: install uninstall clean
