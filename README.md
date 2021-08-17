@@ -25,7 +25,7 @@ If no package exists for your system/distribution, you'll have to use the [manua
 
 ### Debian-based
 
-`cbonsai` is only available in the Debian Unstable repository. However, if you're not on unstable, Robin Gustafsson has kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/packages).
+`cbonsai` is available in Debian Testing and Unstable via `apt`. Robin Gustafsson has also kindly packaged `cbonsai` as a `.deb` file over in [this repository](https://gitlab.com/rgson/debian_cbonsai/-/packages).
 
 ### Fedora
 
