@@ -2,6 +2,8 @@
 #define _XOPEN_SOURCE 500
 #endif
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <curses.h>
 #include <locale.h>
@@ -24,6 +26,12 @@ struct config {
 	int lifeStart;
 	int multiplier;
 	int baseType;
+	int baseWidth;
+	int baseHeight;
+	int baseOriginX;
+	int baseOriginY;
+	int textOriginX;
+	int textOriginY;
 	int seed;
 	int leavesSize;
 	int save;
@@ -34,6 +42,7 @@ struct config {
 	double timeStep;
 
 	char* message;
+	char* text;
 	char* leaves[64];
 	char* saveFile;
 	char* loadFile;
@@ -126,27 +135,30 @@ void printHelp(void) {
 	printf("cbonsai is a beautifully random bonsai tree generator.\n");
 	printf("\n");
 	printf("Options:\n");
-	printf("  -l, --live             live mode: show each step of growth\n");
-	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
+	printf("  -l, --live             Live mode: show each step of growth\n");
+	printf("  -t, --time=TIME        In live mode, wait TIME secs between\n");
 	printf("                           steps of growth (must be larger than 0) [default: 0.03]\n");
-	printf("  -i, --infinite         infinite mode: keep growing trees\n");
-	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
+	printf("  -i, --infinite         Infinite mode: keep growing trees\n");
+	printf("  -w, --wait=TIME        In infinite mode, wait TIME between each tree\n");
 	printf("                           generation [default: 4.00]\n");
-	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
+	printf("  -S, --screensaver      Screensaver mode; equivalent to -li and\n");
 	printf("                           quit on any keypress\n");
-	printf("  -m, --message=STR      attach message next to the tree\n");
-	printf("  -b, --base=INT         ascii-art plant base to use, 0 is none\n");
-	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
+	printf("  -m, --message=STR      Attach message next to the tree\n");
+	printf("  -T, --textOrigin=y,x   Display text from STDIN at row Y, column X\n");
+	printf("  -b, --base=INT         Ascii-art plant base to use, 0 is none\n");
+	printf("  -y, --baseY=INT        Row of the upper-left corner of the plant base\n");
+	printf("  -x, --baseX=INT        Column of the upper-left corner of the plant base\n");
+	printf("  -c, --leaf=LIST        List of comma-delimited strings randomly chosen\n");
 	printf("                           for leaves\n");
-	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
+	printf("  -M, --multiplier=INT   Branch multiplier; higher -> more\n");
 	printf("                           branching (0-20) [default: 5]\n");
-	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]\n");
-	printf("  -p, --print            print tree to terminal when finished\n");
-	printf("  -s, --seed=INT         seed random number generator\n");
-	printf("  -W, --save=FILE        save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]\n");
-	printf("  -C, --load=FILE        load progress from file [default: $XDG_CACHE_HOME/cbonsai]\n");
-	printf("  -v, --verbose          increase output verbosity\n");
-	printf("  -h, --help             show help	\n");
+	printf("  -L, --life=INT         Life; higher -> more growth (0-200) [default: 32]\n");
+	printf("  -p, --print            Print tree to terminal when finished\n");
+	printf("  -s, --seed=INT         Seed random number generator\n");
+	printf("  -W, --save=FILE        Save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]\n");
+	printf("  -C, --load=FILE        Load progress from file [default: $XDG_CACHE_HOME/cbonsai]\n");
+	printf("  -v, --verbose          Increase output verbosity\n");
+	printf("  -h, --help             Show help	\n");
 }
 
 void drawBase(WINDOW* baseWin, int baseType) {
@@ -188,30 +200,10 @@ void drawBase(WINDOW* baseWin, int baseType) {
 	}
 }
 
-void drawWins(int baseType, struct ncursesObjects *objects) {
-	int baseWidth = 0;
-	int baseHeight = 0;
-	int rows, cols;
-
-	switch(baseType) {
-	case 1:
-		baseWidth = 31;
-		baseHeight = 4;
-		break;
-	case 2:
-		baseWidth = 15;
-		baseHeight = 3;
-		break;
-	}
-
-	// calculate where base should go
-	getmaxyx(stdscr, rows, cols);
-	int baseOriginY = (rows - baseHeight);
-	int baseOriginX = (cols / 2) - (baseWidth / 2);
-
+void drawWins(const struct config *conf, struct ncursesObjects *objects) {
 	// create windows
-	objects->baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
-	objects->treeWin = newwin(rows - baseHeight, cols, 0, 0);
+	objects->baseWin = newwin(conf->baseHeight, conf->baseWidth, conf->baseOriginY, conf->baseOriginX);
+	objects->treeWin = newwin(conf->baseOriginY, getmaxx(stdscr), 0, 0);
 
 	// create/replace tree and base panels
 	if (objects->basePanel)
@@ -224,7 +216,7 @@ void drawWins(int baseType, struct ncursesObjects *objects) {
 	else
 		objects->treePanel = new_panel(objects->treeWin);
 
-	drawBase(objects->baseWin, baseType);
+	drawBase(objects->baseWin, conf->baseType);
 }
 
 // roll (randomize) a given die
@@ -637,7 +629,7 @@ int drawMessage(const struct config *conf, struct ncursesObjects *objects, char*
 	return 0;
 }
 
-void init(const struct config *conf, struct ncursesObjects *objects) {
+void init(struct config *conf, struct ncursesObjects *objects) {
 	savetty();	// save terminal settings
 	initscr();	// init ncurses screen
 	noecho();	// don't echo input to screen
@@ -673,8 +665,26 @@ void init(const struct config *conf, struct ncursesObjects *objects) {
 		printf("%s", "Warning: terminal does not have color support.\n");
 	}
 
+	int rows, cols;
+	switch(conf->baseType) {
+	case 1:
+		conf->baseWidth = 31;
+		conf->baseHeight = 4;
+		break;
+	case 2:
+		conf->baseWidth = 15;
+		conf->baseHeight = 3;
+		break;
+	}
+
+	// calculate where base should go
+	getmaxyx(stdscr, rows, cols);
+	if (conf->baseOriginY < 0) conf->baseOriginY = (rows - conf->baseHeight);
+	if (conf->baseOriginX < 0) conf->baseOriginX = (cols / 2) - (conf->baseWidth / 2);
+
+
 	// define and draw windows, then create panels
-	drawWins(conf->baseType, objects);
+	drawWins(conf, objects);
 	drawMessage(conf, objects, conf->message);
 }
 
@@ -692,7 +702,7 @@ void growTree(struct config *conf, struct ncursesObjects *objects, struct counte
 	}
 
 	// recursively grow tree trunk and branches
-	branch(conf, objects, myCounters, maxY - 1, (maxX / 2), trunk, conf->lifeStart);
+	branch(conf, objects, myCounters, conf->baseOriginY - 1, conf->baseOriginX + conf->baseWidth / 2, trunk, conf->lifeStart);
 
 	// display changes
 	update_panels();
@@ -781,6 +791,72 @@ char* createDefaultCachePath(void) {
 	return result;
 }
 
+/* Parse a string like "10, 20" and set the values in the corresponding row and col args.
+ * Returns 0 on errors and 1 on success.
+ */
+int parse_rowcol(char *rowcol, int *row, int *col) {
+	char buf[10];
+	if (strlen(rowcol) > 11) return 0;
+	strcpy(buf, rowcol);
+
+	long pair[2];
+	char *token, *end;
+	int i;
+	token = strtok(buf, ",");
+	for (i=0; i < 2; i++) {
+		if (token == NULL) {
+			return 0;
+		} else {
+			errno = 0;
+			pair[i] = strtol(token, &end, 10);
+			if (errno != 0) {
+				perror("Error: ");
+				return 0;
+			}
+			if (pair[i] == 0 || *end != '\0') {
+				fprintf(stderr, "Failed to parse: '%s'\n", token);
+				return 0;
+			}
+			token = strtok(NULL, ",");
+		}
+	}
+	*row = pair[0];
+	*col = pair[1];
+	return 1;
+}
+
+char *slurp_stdin() {
+	size_t bufsize = 2048;
+	size_t chunksize = bufsize;
+
+	char *buf = malloc(bufsize);
+	if (buf == NULL) return NULL;
+
+	char *p = buf;
+	size_t total = 0;
+	while (1) {
+		total += fread(p, 1, chunksize-1, stdin);
+		if (ferror(stdin)) {
+			fprintf(stderr, "Error reading from STDIN!");
+			free(buf);
+			return NULL;
+		}
+		if (!feof(stdin)) {
+			char *bufnew = realloc(buf, bufsize*=2);
+			if (bufnew == NULL) {
+				free(buf);
+				return NULL;
+			}
+			buf = bufnew;
+			p = buf + total;
+		} else {
+			*(p + total + 1) = '\0';
+			break;
+		}
+	}
+	return buf;
+}
+
 int main(int argc, char* argv[]) {
 	setlocale(LC_ALL, "");
 
@@ -793,6 +869,11 @@ int main(int argc, char* argv[]) {
 		.lifeStart = 32,
 		.multiplier = 5,
 		.baseType = 1,
+		.baseWidth = 0,
+		.baseOriginY = -1,  // -1 means automatic (at the bottom)
+		.baseOriginX = -1,  // -1 means automatic (center)
+		.textOriginY = 0,
+		.textOriginX = 0,
 		.seed = 0,
 		.leavesSize = 0,
 		.save = 0,
@@ -803,6 +884,7 @@ int main(int argc, char* argv[]) {
 		.timeStep = 0.03,
 
 		.message = NULL,
+		.text = NULL,
 		.leaves = {0},
 		.saveFile = createDefaultCachePath(),
 		.loadFile = createDefaultCachePath(),
@@ -815,7 +897,10 @@ int main(int argc, char* argv[]) {
 		{"wait", required_argument, NULL, 'w'},
 		{"screensaver", no_argument, NULL, 'S'},
 		{"message", required_argument, NULL, 'm'},
+		{"textOrigin", required_argument, NULL, 'T'},
 		{"base", required_argument, NULL, 'b'},
+		{"baseY", required_argument, NULL, 'y'},
+		{"baseX", required_argument, NULL, 'x'},
 		{"leaf", required_argument, NULL, 'c'},
 		{"multiplier", required_argument, NULL, 'M'},
 		{"life", required_argument, NULL, 'L'},
@@ -835,7 +920,7 @@ int main(int argc, char* argv[]) {
 	// parse arguments
 	int option_index = 0;
 	int c;
-	while ((c = getopt_long(argc, argv, ":lt:iw:Sm:b:c:M:L:ps:C:W:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, ":lt:iw:Sm:T:b:y:x:c:M:L:ps:C:W:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'l':
 			conf.live = 1;
@@ -877,10 +962,31 @@ int main(int argc, char* argv[]) {
 		case 'm':
 			conf.message = optarg;
 			break;
+		case 'T':
+			if (!parse_rowcol(optarg, &conf.textOriginY, &conf.textOriginX)) {
+				printf("error: failed parsing row,col: '%s'\n", optarg);
+				quit(&conf, &objects, 1);
+			}
+			conf.text = slurp_stdin();
+			break;
 		case 'b':
 			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
 			else {
 				printf("error: invalid base index: '%s'\n", optarg);
+				quit(&conf, &objects, 1);
+			}
+			break;
+		case 'y':
+			if (strtold(optarg, NULL) > 0) conf.baseOriginY = strtod(optarg, NULL);
+			else {
+				printf("error: invalid base y origin: '%s'\n", optarg);
+				quit(&conf, &objects, 1);
+			}
+			break;
+		case 'x':
+			if (strtold(optarg, NULL) > 0) conf.baseOriginX = strtod(optarg, NULL);
+			else {
+				printf("error: invalid base x origin: '%s'\n", optarg);
 				quit(&conf, &objects, 1);
 			}
 			break;
@@ -1018,6 +1124,13 @@ int main(int argc, char* argv[]) {
 
 	if (conf.printTree) {
 		finish(&conf, &myCounters);
+
+		if (conf.textOriginY > 0 && conf.textOriginX > 0) {
+			if (conf.text != NULL) {
+				mvprintw(conf.textOriginY, conf.textOriginX, "%s", conf.text);
+				free(conf.text);
+			}
+		}
 
 		// overlay all windows onto stdscr
 		overlay(objects.baseWin, stdscr);
