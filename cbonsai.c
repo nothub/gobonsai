@@ -122,7 +122,6 @@ int loadFromFile(struct config *conf) {
 }
 
 void finish(const struct config *conf, struct counters *myCounters) {
-	clear();
 	refresh();
 	endwin();	// delete ncurses screen
 	if (conf->save)
@@ -677,15 +676,21 @@ void init(struct config *conf, struct ncursesObjects *objects) {
 		break;
 	}
 
+
 	// calculate where base should go
 	getmaxyx(stdscr, rows, cols);
 	if (conf->baseOriginY < 0) conf->baseOriginY = (rows - conf->baseHeight);
 	if (conf->baseOriginX < 0) conf->baseOriginX = (cols / 2) - (conf->baseWidth / 2);
 
-
 	// define and draw windows, then create panels
 	drawWins(conf, objects);
 	drawMessage(conf, objects, conf->message);
+
+	// If -T y,x is specified then display the text in the windows
+	if (conf->textOriginY >= 0 && conf->textOriginX >= 0) {
+		mvprintw(conf->textOriginY, conf->textOriginX, "%s", conf->text);
+		mvwprintw(objects->treeWin, conf->textOriginY, conf->textOriginX, "%s", conf->text);
+	}
 }
 
 void growTree(struct config *conf, struct ncursesObjects *objects, struct counters *myCounters) {
@@ -791,7 +796,7 @@ char* createDefaultCachePath(void) {
 	return result;
 }
 
-/* Parse a string like "10, 20" and set the values in the corresponding row and col args.
+/* Parse a string like "10,20" and set the values in the corresponding row and col args.
  * Returns 0 on errors and 1 on success.
  */
 int parse_rowcol(char *rowcol, int *row, int *col) {
@@ -813,16 +818,19 @@ int parse_rowcol(char *rowcol, int *row, int *col) {
 				perror("Error: ");
 				return 0;
 			}
-			if (pair[i] == 0 || *end != '\0') {
+			if (*end != '\0') {
 				fprintf(stderr, "Failed to parse: '%s'\n", token);
 				return 0;
 			}
 			token = strtok(NULL, ",");
 		}
 	}
-	*row = pair[0];
-	*col = pair[1];
-	return 1;
+	if (pair[0] >= 0 && pair[1] >= 0) {
+		*row = pair[0];
+		*col = pair[1];
+		return 1;
+	}
+	return 0;
 }
 
 char *slurp_stdin() {
@@ -872,8 +880,8 @@ int main(int argc, char* argv[]) {
 		.baseWidth = 0,
 		.baseOriginY = -1,  // -1 means automatic (at the bottom)
 		.baseOriginX = -1,  // -1 means automatic (center)
-		.textOriginY = 0,
-		.textOriginX = 0,
+		.textOriginY = -1,  // will be >= 0 if the -T option is used
+		.textOriginX = -1,  // will be >= 0 if the -T option is used
 		.seed = 0,
 		.leavesSize = 0,
 		.save = 0,
@@ -968,6 +976,10 @@ int main(int argc, char* argv[]) {
 				quit(&conf, &objects, 1);
 			}
 			conf.text = slurp_stdin();
+			if (conf.text == NULL) {
+				printf("error: Failed reading text from stdin!\n");
+				quit(&conf, &objects, 1);
+			}
 			break;
 		case 'b':
 			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
@@ -1124,13 +1136,6 @@ int main(int argc, char* argv[]) {
 
 	if (conf.printTree) {
 		finish(&conf, &myCounters);
-
-		if (conf.textOriginY > 0 && conf.textOriginX > 0) {
-			if (conf.text != NULL) {
-				mvprintw(conf.textOriginY, conf.textOriginX, "%s", conf.text);
-				free(conf.text);
-			}
-		}
 
 		// overlay all windows onto stdscr
 		overlay(objects.baseWin, stdscr);
