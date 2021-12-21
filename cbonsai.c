@@ -980,6 +980,10 @@ int main(int argc, char* argv[]) {
 				printf("error: Failed reading text from stdin!\n");
 				quit(&conf, &objects, 1);
 			}
+			if (!freopen(ctermid(NULL), "r", stdin)) {
+				perror("error freopen process tty: ");
+				quit(&conf, &objects, 1);
+			}
 			break;
 		case 'b':
 			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
