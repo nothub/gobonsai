@@ -15,18 +15,19 @@ else
 	scdoc <$< >$@
 endif
 
+.PHONY: install
 install: cbonsai cbonsai.6
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	mkdir -p $(DESTDIR)$(MANDIR)/man6
 	install -m 0755 cbonsai $(DESTDIR)$(PREFIX)/bin/cbonsai
 	[ ! -f cbonsai.6 ] || install -m 0644 cbonsai.6 $(DESTDIR)$(MANDIR)/man6/cbonsai.6
 
+.PHONY: uninstall
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cbonsai
 	rm -f $(DESTDIR)$(MANDIR)/man6/cbonsai.6
 
+.PHONY: clean
 clean:
 	rm -f cbonsai
 	rm -f cbonsai.6
-
-.PHONY: install uninstall clean
