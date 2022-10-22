@@ -1,7 +1,7 @@
 .POSIX:
 CC	= cc
 PKG_CONFIG	?= pkg-config
-CFLAGS	+= -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -pedantic $(shell $(PKG_CONFIG) --cflags ncursesw panelw)
+CFLAGS	+= -Wall -Wextra -Werror -Wshadow -Wpointer-arith -Wcast-qual -pedantic -fdiagnostics-generate-patch $(shell $(PKG_CONFIG) --cflags ncursesw panelw)
 LDLIBS	= $(shell $(PKG_CONFIG) --libs ncursesw panelw || echo "-lncursesw -ltinfo -lpanelw")
 PREFIX	= /usr/local
 MANDIR	= $(PREFIX)/share/man
