@@ -697,7 +697,7 @@ void init(struct config *conf, struct ncursesObjects *objects) {
 	if (conf->baseOriginX < 0) conf->baseOriginX = (cols / 2) - (conf->baseWidth / 2);
 
 	// define and draw windows, then create panels
-	drawWins(conf, objects);
+	drawWins(conf->baseType, objects);
 	drawMessage(conf, objects, conf->message);
 
 	// If -T y,x is specified then display the text in the windows
