@@ -90,27 +90,30 @@ Usage: cbonsai [OPTION]...
 cbonsai is a beautifully random bonsai tree generator.
 
 Options:
-  -l, --live             live mode: show each step of growth
-  -t, --time=TIME        in live mode, wait TIME secs between
+  -l, --live             Live mode: show each step of growth
+  -t, --time=TIME        In live mode, wait TIME secs between
                            steps of growth (must be larger than 0) [default: 0.03]
-  -i, --infinite         infinite mode: keep growing trees
-  -w, --wait=TIME        in infinite mode, wait TIME between each tree
+  -i, --infinite         Infinite mode: keep growing trees
+  -w, --wait=TIME        In infinite mode, wait TIME between each tree
                            generation [default: 4.00]
-  -S, --screensaver      screensaver mode; equivalent to -liWC and
+  -S, --screensaver      Screensaver mode; equivalent to -li and
                            quit on any keypress
-  -m, --message=STR      attach message next to the tree
-  -b, --base=INT         ascii-art plant base to use, 0 is none
-  -c, --leaf=LIST        list of comma-delimited strings randomly chosen
+  -m, --message=STR      Attach message next to the tree
+  -T, --textOrigin=y,x   Display text from STDIN at row Y, column X
+  -b, --base=INT         Ascii-art plant base to use, 0 is none
+  -y, --baseY=INT        Row of the upper-left corner of the plant base
+  -x, --baseX=INT        Column of the upper-left corner of the plant base
+  -c, --leaf=LIST        List of comma-delimited strings randomly chosen
                            for leaves
-  -M, --multiplier=INT   branch multiplier; higher -> more
+  -M, --multiplier=INT   Branch multiplier; higher -> more
                            branching (0-20) [default: 5]
-  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]
-  -p, --print            print tree to terminal when finished
-  -s, --seed=INT         seed random number generator
-  -W, --save=FILE        save progress to file [default: ~/.cache/cbonsai]
-  -C, --load=FILE        load progress from file [default: ~/.cache/cbonsai]
-  -v, --verbose          increase output verbosity
-  -h, --help             show help
+  -L, --life=INT         Life; higher -> more growth (0-200) [default: 32]
+  -p, --print            Print tree to terminal when finished
+  -s, --seed=INT         Seed random number generator
+  -W, --save=FILE        Save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]
+  -C, --load=FILE        Load progress from file [default: $XDG_CACHE_HOME/cbonsai]
+  -v, --verbose          Increase output verbosity
+  -h, --help             Show help
 ```
 
 ## Tips
@@ -147,6 +150,15 @@ cbonsai -p
 ```
 
 Notice it uses the print mode, so that you can immediately start typing commands below the bonsai tree.
+
+It's also possible place the bonsai next to some text from STDIN. For example:
+```bash
+# Get and format the text
+t=$(./cbonsai -h | sed 's/^/    /g')
+
+# Show the text with a bonsai next to it at the bottom of the terminal window.
+echo "$t" | ./cbonsai -p -T $((LINES - $(echo -n "$t" | wc -l))),0 -x 120
+```
 
 ## How it Works
 
