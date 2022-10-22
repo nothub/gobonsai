@@ -8,25 +8,25 @@ MANDIR	= $(PREFIX)/share/man
 
 cbonsai: cbonsai.c
 
-cbonsai.1: cbonsai.scd
+cbonsai.6: cbonsai.scd
 ifeq ($(shell command -v scdoc 2>/dev/null),)
 	$(warning Missing dependency: scdoc. The man page will not be generated.)
 else
 	scdoc <$< >$@
 endif
 
-install: cbonsai cbonsai.1
+install: cbonsai cbonsai.6
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	mkdir -p $(DESTDIR)$(MANDIR)/man1
+	mkdir -p $(DESTDIR)$(MANDIR)/man6
 	install -m 0755 cbonsai $(DESTDIR)$(PREFIX)/bin/cbonsai
-	[ ! -f cbonsai.1 ] || install -m 0644 cbonsai.1 $(DESTDIR)$(MANDIR)/man1/cbonsai.1
+	[ ! -f cbonsai.6 ] || install -m 0644 cbonsai.6 $(DESTDIR)$(MANDIR)/man6/cbonsai.6
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cbonsai
-	rm -f $(DESTDIR)$(MANDIR)/man1/cbonsai.1
+	rm -f $(DESTDIR)$(MANDIR)/man6/cbonsai.6
 
 clean:
 	rm -f cbonsai
-	rm -f cbonsai.1
+	rm -f cbonsai.6
 
 .PHONY: install uninstall clean
