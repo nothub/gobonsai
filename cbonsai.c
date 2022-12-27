@@ -12,6 +12,7 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 
 enum branchType {trunk, shootLeft, shootRight, dying, dead};
 
@@ -878,7 +879,13 @@ int main(int argc, char* argv[]) {
 			conf.message = optarg;
 			break;
 		case 'b':
-			if (strtold(optarg, NULL) != 0) conf.baseType = strtod(optarg, NULL);
+                        /* 0 can legitimately be returned, so we cannot check wether
+                           strtold(optarg, NULL) != 0.  We need to set errno to zero
+                           before the conversion attempt, and check it it changed
+                           afterwards. */
+                        errno = 0;
+                        strtold(optarg, NULL);
+                        if (!errno) conf.baseType = strtod(optarg, NULL);
 			else {
 				printf("error: invalid base index: '%s'\n", optarg);
 				quit(&conf, &objects, 1);
