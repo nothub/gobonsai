@@ -122,32 +122,34 @@ void finish(const struct config *conf, struct counters *myCounters) {
 }
 
 void printHelp(void) {
-	printf("Usage: cbonsai [OPTION]...\n");
-	printf("\n");
-	printf("cbonsai is a beautifully random bonsai tree generator.\n");
-	printf("\n");
-	printf("Options:\n");
-	printf("  -l, --live             live mode: show each step of growth\n");
-	printf("  -t, --time=TIME        in live mode, wait TIME secs between\n");
-	printf("                           steps of growth (must be larger than 0) [default: 0.03]\n");
-	printf("  -i, --infinite         infinite mode: keep growing trees\n");
-	printf("  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n");
-	printf("                           generation [default: 4.00]\n");
-	printf("  -S, --screensaver      screensaver mode; equivalent to -li and\n");
-	printf("                           quit on any keypress\n");
-	printf("  -m, --message=STR      attach message next to the tree\n");
-	printf("  -b, --base=INT         ascii-art plant base to use, 0 is none\n");
-	printf("  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n");
-	printf("                           for leaves\n");
-	printf("  -M, --multiplier=INT   branch multiplier; higher -> more\n");
-	printf("                           branching (0-20) [default: 5]\n");
-	printf("  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]\n");
-	printf("  -p, --print            print tree to terminal when finished\n");
-	printf("  -s, --seed=INT         seed random number generator\n");
-	printf("  -W, --save=FILE        save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]\n");
-	printf("  -C, --load=FILE        load progress from file [default: $XDG_CACHE_HOME/cbonsai]\n");
-	printf("  -v, --verbose          increase output verbosity\n");
-	printf("  -h, --help             show help	\n");
+	printf("%s",
+		"Usage: cbonsai [OPTION]...\n"
+	        "\n"
+	        "cbonsai is a beautifully random bonsai tree generator.\n"
+	        "\n"
+	        "Options:\n"
+	        "  -l, --live             live mode: show each step of growth\n"
+	        "  -t, --time=TIME        in live mode, wait TIME secs between\n"
+	        "                           steps of growth (must be larger than 0) [default: 0.03]\n"
+	        "  -i, --infinite         infinite mode: keep growing trees\n"
+	        "  -w, --wait=TIME        in infinite mode, wait TIME between each tree\n"
+	        "                           generation [default: 4.00]\n"
+	        "  -S, --screensaver      screensaver mode; equivalent to -li and\n"
+	        "                           quit on any keypress\n"
+	        "  -m, --message=STR      attach message next to the tree\n"
+	        "  -b, --base=INT         ascii-art plant base to use, 0 is none\n"
+	        "  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n"
+	        "                           for leaves\n"
+	        "  -M, --multiplier=INT   branch multiplier; higher -> more\n"
+	        "                           branching (0-20) [default: 5]\n"
+	        "  -L, --life=INT         life; higher -> more growth (0-200) [default: 32]\n"
+	        "  -p, --print            print tree to terminal when finished\n"
+	        "  -s, --seed=INT         seed random number generator\n"
+	        "  -W, --save=FILE        save progress to file [default: $XDG_CACHE_HOME/cbonsai or $HOME/.cache/cbonsai]\n"
+	        "  -C, --load=FILE        load progress from file [default: $XDG_CACHE_HOME/cbonsai]\n"
+	        "  -v, --verbose          increase output verbosity\n"
+	        "  -h, --help             show help\n"
+    );
 }
 
 void drawBase(WINDOW* baseWin, int baseType) {
