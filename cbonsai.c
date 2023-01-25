@@ -58,7 +58,7 @@ struct counters {
 	int shootCounter;
 };
 
-void quit(struct config *conf, struct ncursesObjects *objects, int returnCode) {
+void delObjects(struct ncursesObjects *objects) {
 	// delete panels
 	del_panel(objects->basePanel);
 	del_panel(objects->treePanel);
@@ -70,7 +70,10 @@ void quit(struct config *conf, struct ncursesObjects *objects, int returnCode) {
 	delwin(objects->treeWin);
 	delwin(objects->messageBorderWin);
 	delwin(objects->messageWin);
+}
 
+void quit(struct config *conf, struct ncursesObjects *objects, int returnCode) {
+	delObjects(objects);
 	free(conf->saveFile);
 	free(conf->loadFile);
 	exit(returnCode);
@@ -212,20 +215,16 @@ void drawWins(int baseType, struct ncursesObjects *objects) {
 	int baseOriginY = (rows - baseHeight);
 	int baseOriginX = (cols / 2) - (baseWidth / 2);
 
+	// clean up old objects
+	delObjects(objects);
+
 	// create windows
 	objects->baseWin = newwin(baseHeight, baseWidth, baseOriginY, baseOriginX);
 	objects->treeWin = newwin(rows - baseHeight, cols, 0, 0);
 
-	// create/replace tree and base panels
-	if (objects->basePanel)
-		replace_panel(objects->basePanel, objects->baseWin);
-	else
-		objects->basePanel = new_panel(objects->baseWin);
-
-	if (objects->treePanel)
-		replace_panel(objects->treePanel, objects->treeWin);
-	else
-		objects->treePanel = new_panel(objects->treeWin);
+	// create tree and base panels
+	objects->basePanel = new_panel(objects->baseWin);
+	objects->treePanel = new_panel(objects->treeWin);
 
 	drawBase(objects->baseWin, baseType);
 }
@@ -540,16 +539,9 @@ void createMessageWindows(struct ncursesObjects *objects, char* message) {
 	wattron(objects->messageBorderWin, COLOR_PAIR(8) | A_BOLD);
 	wborder(objects->messageBorderWin, '|', '|', '-', '-', '+', '+', '+', '+');
 
-	// create/replace message panels
-	if (objects->messageBorderPanel)
-		replace_panel(objects->messageBorderPanel, objects->messageBorderWin);
-	else
-		objects->messageBorderPanel = new_panel(objects->messageBorderWin);
-
-	if (objects->messagePanel)
-		replace_panel(objects->messagePanel, objects->messageWin);
-	else
-		objects->messagePanel = new_panel(objects->messageWin);
+	// create message panels
+	objects->messageBorderPanel = new_panel(objects->messageBorderWin);
+	objects->messagePanel = new_panel(objects->messageWin);
 }
 
 int drawMessage(const struct config *conf, struct ncursesObjects *objects, char* message) {
