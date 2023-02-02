@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/gdamore/tcell/v2"
 	nc "github.com/rthornton128/goncurses"
 	"github.com/spf13/pflag"
 )
