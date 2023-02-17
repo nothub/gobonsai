@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	random "math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -87,28 +88,18 @@ func main() {
 	defer ui.Close()
 
 	ui.SetManagerFunc(func(g *gocui.Gui) error {
-		width, height := g.Size()
-		v, err := g.SetView("hello", 0, 0, width-1, height-1, 0)
+		w, h := g.Size()
+		_, err := g.SetView("main", 0, 0, w-1, h-1, 0)
 		if err != nil {
-			if !errors.Is(err, gocui.ErrUnknownView) {
-				return err
-			}
-
-			if _, err := g.SetCurrentView("hello"); err != nil {
-				return err
-			}
-
-			err := v.SetWritePos(16, 8)
-			if err != nil {
-				return err
-			}
-
-			_, err = fmt.Fprintln(v, "Hello world!")
-			if err != nil {
+			if errors.Is(err, gocui.ErrUnknownView) {
+				_, err := g.SetCurrentView("main")
+				if err != nil {
+					return err
+				}
+			} else {
 				return err
 			}
 		}
-
 		return nil
 	})
 
@@ -118,6 +109,33 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+
+	go func() {
+		t := time.NewTicker(1 * time.Second)
+		for {
+			ui.Update(func(g *gocui.Gui) error {
+				v, err := g.View("main")
+				if err != nil {
+					return err
+				}
+
+				v.Clear()
+
+				err = v.SetWritePos(16, 8)
+				if err != nil {
+					return err
+				}
+
+				_, err = fmt.Fprintln(v, "Hello, World!", "🌳 🌲 🌴 🎄 🎋 🥦 🌱", strconv.Itoa(rand.Int()))
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			<-t.C
+		}
+	}()
 
 	err = ui.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
