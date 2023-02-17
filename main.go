@@ -1,42 +1,30 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"math/rand"
+	random "math/rand"
 	"strings"
 	"time"
 
-	_ "github.com/gdamore/tcell/v2"
-	nc "github.com/rthornton128/goncurses"
+	"github.com/awesome-gocui/gocui"
 	"github.com/spf13/pflag"
 )
 
-type baseType int
+var rand *random.Rand
+
+type branch int
 
 const (
-	bigPot baseType = iota
-	smallPot
-)
-
-type branchType int
-
-const (
-	trunk branchType = iota
+	trunk branch = iota
 	shootLeft
 	shootRight
 	dying
 	dead
 )
 
-type counters struct {
-	branches     int
-	shoots       int
-	shootCounter int
-}
-
 var opts options
-var tui tuiElements
 
 type options struct {
 	live        *bool
@@ -45,7 +33,7 @@ type options struct {
 	wait        *time.Duration
 	screensaver *bool
 	message     *string
-	base        *baseType
+	base        *int
 	leaves      []string
 	multiplier  *int
 	life        *int
@@ -58,38 +46,6 @@ type options struct {
 	usage       string
 }
 
-type tuiElements struct {
-	baseWin          *nc.Window
-	treeWin          *nc.Window
-	messageBorderWin *nc.Window
-	messageWin       *nc.Window
-
-	basePanel          *nc.Panel
-	treePanel          *nc.Panel
-	messageBorderPanel *nc.Panel
-	messagePanel       *nc.Panel
-}
-
-func (e *tuiElements) cleanup() {
-	windows := []*nc.Window{e.baseWin, e.treeWin, e.messageBorderWin, e.messageWin}
-	for i := range windows {
-		err := windows[i].Delete()
-		if err != nil {
-			log.Println(err)
-			//log.Fatal(err)
-		}
-	}
-
-	panels := []*nc.Panel{e.basePanel, e.treePanel, e.messageBorderPanel, e.messagePanel}
-	for i := range panels {
-		err := panels[i].Delete()
-		if err != nil {
-			log.Println(err)
-			//log.Fatal(err)
-		}
-	}
-}
-
 func flags() *options {
 	pflag.CommandLine.SortFlags = false
 
@@ -100,17 +56,13 @@ func flags() *options {
 	opts.wait = pflag.DurationP("wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	opts.screensaver = pflag.BoolP("screensaver", "S", false, "screensaver mode equivalent to -liWC and quit on any keypress")
 	opts.message = pflag.StringP("message", "m", "", "attach message next to the tree")
-	opts.base = (*baseType)(pflag.IntP("base", "b", 1, "ascii-art plant base to use, big: 1, small: 2"))
+	opts.base = pflag.IntP("base", "b", 1, "ascii-art plant base to use, big: 1, small: 2")
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	opts.multiplier = pflag.IntP("multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	opts.life = pflag.IntP("life", "L", 32, "life higher -> more growth (0-200)")
 	opts.print = pflag.BoolP("print", "p", false, "print tree to terminal when finished")
 	opts.seed = pflag.IntP("seed", "s", 0, "seed random number generator")
-	opts.save = pflag.StringP("save", "W", "~/.cache/cbonsai", "save progress to file")
-	opts.load = pflag.StringP("load", "C", "~/.cache/cbonsai", "load progress from file")
-	opts.verbose = pflag.BoolP("verbose", "v", false, "increase output verbosity")
 	opts.help = pflag.BoolP("help", "h", false, "show help")
-
 	pflag.Parse()
 
 	opts.leaves = strings.Split(*leavesRaw, ",")
@@ -120,192 +72,51 @@ func flags() *options {
 }
 
 func main() {
-	// init
-	rand.Seed(time.Now().UnixNano())
+	rand = random.New(random.NewSource(time.Now().UnixNano()))
 
-	// read options
 	opts = *flags()
 	if *opts.help {
 		fmt.Println(opts.usage)
 		return
 	}
 
-	// init curses window
-	stdscr, err := nc.Init()
+	ui, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
-	defer nc.End()
+	defer ui.Close()
 
-	nc.Echo(false)
-	nc.CBreak(false)
-	// TODO: pr to goncurses: NoDelay(stdscr, bool)
-	err = nc.Cursor(0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if nc.HasColors() {
-		err := nc.StartColor()
+	ui.SetManagerFunc(func(g *gocui.Gui) error {
+		width, height := g.Size()
+		v, err := g.SetView("hello", width/2-7, height/2, width/2+7, height/2+2, 0)
 		if err != nil {
-			log.Fatal(err)
+			if !errors.Is(err, gocui.ErrUnknownView) {
+				return err
+			}
+
+			if _, err := g.SetCurrentView("hello"); err != nil {
+				return err
+			}
+
+			_, err := fmt.Fprintln(v, "Hello world!")
+			if err != nil {
+				return err
+			}
 		}
 
-		// use native background color when possible
-		bg := nc.C_BLACK
-		if nc.UseDefaultColors() == nil {
-			bg = -1
-		}
+		return nil
+	})
 
-		// define color pairs
-		var i int16
-		for i = 1; i <= 16; i++ {
-			initPair(i, i, bg)
-		}
-
-		// restrict color pallete in non-256color terminals (e.g. screen or linux)
-		if nc.Colors() < 256 {
-			initPair(8, 7, bg) // gray will look white
-			initPair(9, 1, bg)
-			initPair(10, 2, bg)
-			initPair(11, 3, bg)
-			initPair(12, 4, bg)
-			initPair(13, 5, bg)
-			initPair(14, 6, bg)
-			initPair(15, 7, bg)
-		}
-	} else {
-		log.Println("Warning: terminal does not have color support.")
-	}
-
-	// base pot
-	var baseWidth int
-	var baseHeight int
-	switch *opts.base {
-	case bigPot:
-		baseWidth = 31
-		baseHeight = 4
-	case smallPot:
-		baseWidth = 15
-		baseHeight = 3
-	default:
-		baseWidth = 0
-		baseHeight = 0
-	}
-
-	// base position
-	rows, cols := stdscr.MaxYX()
-	baseOriginY := rows - baseHeight
-	baseOriginX := (cols / 2) - (baseWidth / 2)
-
-	tui.cleanup()
-
-	// create windows
-	tui.baseWin, err = nc.NewWindow(baseHeight, baseWidth, baseOriginY, baseOriginX)
+	err = ui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return gocui.ErrQuit
+	})
 	if err != nil {
-		log.Fatal(err)
-	}
-	tui.treeWin, err = nc.NewWindow(rows-baseHeight, cols, 0, 0)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
 
-	// create or replace panels
-	if tui.basePanel == nil {
-		tui.basePanel = nc.NewPanel(tui.baseWin)
-	} else {
-		err = tui.basePanel.Replace(tui.baseWin)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	if tui.treePanel == nil {
-		tui.treePanel = nc.NewPanel(tui.treeWin)
-	} else {
-		err = tui.treePanel.Replace(tui.treeWin)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	drawBase(tui.baseWin, opts.base)
-
-	stdscr.Refresh()
-	stdscr.GetChar()
-}
-
-func initPair(pair int16, fg int16, bg int16) {
-	err := nc.InitPair(pair, fg, bg)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func drawBase(window *nc.Window, base *baseType) {
-	switch *base {
-	case bigPot:
-		window.AttrOn(nc.A_BOLD | nc.ColorPair(8))
-		window.Print(":")
-		window.AttrOn(nc.ColorPair(2))
-		window.Print("___________")
-		window.AttrOn(nc.ColorPair(11))
-		window.Print("./~~~\\.")
-		window.AttrOn(nc.ColorPair(2))
-		window.Print("___________")
-		window.AttrOn(nc.ColorPair(8))
-		window.Print(":")
-		window.MovePrint(1, 0, " \\                           / ")
-		window.MovePrint(2, 0, "  \\_________________________/ ")
-		window.MovePrint(3, 0, "  (_)                     (_)")
-		window.AttrOff(nc.A_BOLD)
-	case smallPot:
-		window.AttrOn(nc.ColorPair(8))
-		window.Print("(")
-		window.AttrOn(nc.ColorPair(2))
-		window.Print("---")
-		window.AttrOn(nc.ColorPair(11))
-		window.Print("./~~~\\.")
-		window.AttrOn(nc.ColorPair(2))
-		window.Print("---")
-		window.AttrOn(nc.ColorPair(8))
-		window.Print(")")
-		window.MovePrint(1, 0, " (           ) ")
-		window.MovePrint(2, 0, "  (_________)  ")
-	}
-}
-
-// display changes
-func updateScreen() {
-	nc.UpdatePanels()
-	err := nc.Update()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	time.Sleep(*opts.time)
-}
-
-// based on type of tree, determine what color a branch should be
-func chooseColor(branchType branchType, treeWin *nc.Window) {
-	switch branchType {
-	case trunk, shootLeft, shootRight:
-		if rand.Int()%2 == 0 {
-			treeWin.AttrOn(nc.A_BOLD | nc.ColorPair(11))
-		} else {
-			treeWin.AttrOn(nc.ColorPair(3))
-		}
-	case dying:
-		if rand.Int()%10 == 0 {
-			treeWin.AttrOn(nc.A_BOLD | nc.ColorPair(2))
-		} else {
-			treeWin.AttrOn(nc.ColorPair(2))
-		}
-	case dead:
-		if rand.Int()%3 == 0 {
-			treeWin.AttrOn(nc.A_BOLD | nc.ColorPair(10))
-		} else {
-			treeWin.AttrOn(nc.ColorPair(10))
-		}
+	err = ui.MainLoop()
+	if err != nil && !errors.Is(err, gocui.ErrQuit) {
+		log.Fatalln(err.Error())
 	}
 }
 
@@ -315,7 +126,7 @@ func roll(mod int) int {
 }
 
 // determine change in X and Y coordinates of a given branch
-func setDeltas(branchType branchType, life int, age int, multiplier int, returnDx *int, returnDy *int) {
+func deltas(branchType branch, life int, age int, multiplier int, returnDx *int, returnDy *int) {
 	dx := 0
 	dy := 0
 
@@ -444,54 +255,54 @@ func setDeltas(branchType branchType, life int, age int, multiplier int, returnD
 	*returnDy = dy
 }
 
-func chooseString(branchType branchType, life int, dx int, dy int) string {
-	branchStr := "?"
+func leaf(branch branch, life int, dx int, dy int) string {
+	s := "?"
 
 	if life < 4 {
-		branchType = dying
+		branch = dying
 	}
 
-	switch branchType {
+	switch branch {
 	case trunk:
 		if dy == 0 {
-			branchStr = "/~"
+			s = "/~"
 		} else if dx < 0 {
-			branchStr = "\\|"
+			s = "\\|"
 		} else if dx == 0 {
-			branchStr = "/|\\"
+			s = "/|\\"
 		} else if dx > 0 {
-			branchStr = "|/"
+			s = "|/"
 		}
 
 	case shootLeft:
 		if dy > 0 {
-			branchStr = "\\"
+			s = "\\"
 		} else if dy == 0 {
-			branchStr = "\\_"
+			s = "\\_"
 		} else if dx < 0 {
-			branchStr = "\\|"
+			s = "\\|"
 		} else if dx == 0 {
-			branchStr = "/|"
+			s = "/|"
 		} else if dx > 0 {
-			branchStr = "/"
+			s = "/"
 		}
 
 	case shootRight:
 		if dy > 0 {
-			branchStr = "/"
+			s = "/"
 		} else if dy == 0 {
-			branchStr = "_/"
+			s = "_/"
 		} else if dx < 0 {
-			branchStr = "\\|"
+			s = "\\|"
 		} else if dx == 0 {
-			branchStr = "/|"
+			s = "/|"
 		} else if dx > 0 {
-			branchStr = "/"
+			s = "/"
 		}
 
 	case dying, dead:
-		branchStr = opts.leaves[rand.Int()%len(opts.leaves)]
+		s = opts.leaves[rand.Int()%len(opts.leaves)]
 	}
 
-	return branchStr
+	return s
 }

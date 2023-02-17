@@ -1,14 +1,15 @@
 *
 !*/
 
+!/.github/**/*.yaml
+
 !/.gitattributes
 !/.gitignore
 
-!/go.mod
-!/go.sum
-!/main.go
-
 !/Makefile
 
-!/LICENSE
+!/go.mod
+!/go.sum
+!/*.go
+
 !/README.md
