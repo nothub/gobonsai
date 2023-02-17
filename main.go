@@ -17,16 +17,6 @@ var rand *random.Rand
 
 var treeRunes = []string{"🌳", "🌲", "🌴", "🎄", "🎋", "🥦", "🌱"}
 
-type branch int
-
-const (
-	trunk branch = iota
-	shootLeft
-	shootRight
-	dying
-	dead
-)
-
 var opts options
 
 type options struct {

@@ -1,5 +1,15 @@
 package main
 
+type branch int
+
+const (
+	trunk branch = iota
+	shootLeft
+	shootRight
+	dying
+	dead
+)
+
 // determine change in X and Y coordinates of a given branch
 func deltas(branchType branch, life int, age int, multiplier int, returnDx *int, returnDy *int) {
 	dx := 0
@@ -181,3 +191,99 @@ func leaf(branch branch, life int, dx int, dy int) string {
 
 	return s
 }
+
+//void branch(struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, enum branchType type, int life) {
+//	myCounters->branches++;
+//	int dx = 0;
+//	int dy = 0;
+//	int age = 0;
+//	int shootCooldown = conf->multiplier;
+//
+//	while (life > 0) {
+//		if (checkKeyPress(conf, myCounters) == 1)
+//			quit(conf, objects, 0);
+//
+//		life--;		// decrement remaining life counter
+//		age = conf->lifeStart - life;
+//
+//		setDeltas(type, life, age, conf->multiplier, &dx, &dy);
+//
+//		int maxY = getmaxy(objects->treeWin);
+//		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
+//
+//		// near-dead branch should branch into a lot of leaves
+//		if (life < 3)
+//			branch(conf, objects, myCounters, y, x, dead, life);
+//
+//		// dying trunk should branch into a lot of leaves
+//		else if (type == 0 && life < (conf->multiplier + 2))
+//			branch(conf, objects, myCounters, y, x, dying, life);
+//
+//		// dying shoot should branch into a lot of leaves
+//		else if ((type == shootLeft || type == shootRight) && life < (conf->multiplier + 2))
+//			branch(conf, objects, myCounters, y, x, dying, life);
+//
+//		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
+//		/* else if (type == 0 && ( \ */
+//		/* 		(rand() % (conf.multiplier)) == 0 || \ */
+//		/* 		(life > conf.multiplier && life % conf.multiplier == 0) */
+//		/* 		) ) { */
+//		else if (type == trunk && (((rand() % 3) == 0) || (life % conf->multiplier == 0))) {
+//
+//			// if trunk is branching and not about to die, create another trunk with random life
+//			if ((rand() % 8 == 0) && life > 7) {
+//				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
+//				branch(conf, objects, myCounters, y, x, trunk, life + (rand() % 5 - 2));
+//			}
+//
+//			// otherwise create a shoot
+//			else if (shootCooldown <= 0) {
+//				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
+//
+//				int shootLife = (life + conf->multiplier);
+//
+//				// first shoot is randomly directed
+//				myCounters->shoots++;
+//				myCounters->shootCounter++;
+//				if (conf->verbosity) mvwprintw(objects->treeWin, 4, 5, "shoots: %02d", myCounters->shoots);
+//
+//				// create shoot
+//				branch(conf, objects, myCounters, y, x, (myCounters->shootCounter % 2) + 1, shootLife);
+//			}
+//		}
+//		shootCooldown--;
+//
+//		if (conf->verbosity > 0) {
+//			mvwprintw(objects->treeWin, 5, 5, "dx: %02d", dx);
+//			mvwprintw(objects->treeWin, 6, 5, "dy: %02d", dy);
+//			mvwprintw(objects->treeWin, 7, 5, "type: %d", type);
+//			mvwprintw(objects->treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
+//		}
+//
+//		// move in x and y directions
+//		x += dx;
+//		y += dy;
+//
+//		chooseColor(type, objects->treeWin);
+//
+//		// choose string to use for this branch
+//		char *branchStr = chooseString(conf, type, life, dx, dy);
+//
+//		// grab wide character from branchStr
+//		wchar_t wc = 0;
+//		mbstate_t *ps = 0;
+//		mbrtowc(&wc, branchStr, 32, ps);
+//
+//		// print, but ensure wide characters don't overlap
+//		if(x % wcwidth(wc) == 0)
+//			mvwprintw(objects->treeWin, y, x, "%s", branchStr);
+//
+//		wattroff(objects->treeWin, A_BOLD);
+//		free(branchStr);
+//
+//		// if live, update screen
+//		// skip updating if we're still loading from file
+//		if (conf->live && !(conf->load && myCounters->branches < conf->targetBranchCount))
+//			updateScreen(conf->timeStep);
+//	}
+//}
