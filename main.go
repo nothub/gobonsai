@@ -15,6 +15,8 @@ import (
 
 var rand *random.Rand
 
+var treeRunes = []string{"🌳", "🌲", "🌴", "🎄", "🎋", "🥦", "🌱"}
+
 type branch int
 
 const (
@@ -25,67 +27,79 @@ const (
 	dead
 )
 
-type Pot int
-
-const (
-	bigPot = iota
-	smallPot
-)
-
 var opts options
 
 type options struct {
-	live        *bool
-	time        *time.Duration
-	infinite    *bool
-	wait        *time.Duration
-	screensaver *bool
-	message     *string
-	pot         *int
+	live        bool
+	time        time.Duration
+	infinite    bool
+	wait        time.Duration
+	screensaver bool
+	message     string
+	pot         Pot
 	leaves      []string
-	multiplier  *int
-	life        *int
-	print       *bool
-	seed        *int
-	save        *string
-	load        *string
-	verbose     *bool
-	help        *bool
+	multiplier  int
+	life        int
+	print       bool
+	seed        int
+	help        bool
 	usage       string
 }
 
-func flags() *options {
+func flags() options {
 	pflag.CommandLine.SortFlags = false
 
 	var opts options
-	opts.live = pflag.BoolP("live", "l", false, "live mode: show each step of growth")
-	opts.time = pflag.DurationP("time", "t", 30*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
-	opts.infinite = pflag.BoolP("infinite", "i", false, "infinite mode: keep growing trees")
-	opts.wait = pflag.DurationP("wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
-	opts.screensaver = pflag.BoolP("screensaver", "S", false, "screensaver mode equivalent to -liWC and quit on any keypress")
-	opts.message = pflag.StringP("message", "m", "", "attach message next to the tree")
-	opts.pot = pflag.IntP("pot", "p", 1, "plant pot to use, big: 1, small: 2")
+	pot := pflag.IntP("pot", "P", 1, "plant pot to use, big: 1, small: 2")
+	pflag.IntVarP(&opts.seed, "seed", "s", 0, "seed random number generator")
+	pflag.BoolVarP(&opts.help, "help", "h", false, "show help")
+	// TODO:
+	pflag.BoolVarP(&opts.live, "live", "l", false, "live mode: show each step of growth")
+	pflag.DurationVarP(&opts.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
+	pflag.BoolVarP(&opts.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
+	pflag.DurationVarP(&opts.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
+	pflag.BoolVarP(&opts.screensaver, "screensaver", "S", false, "screensaver mode equivalent to -liWC and quit on any keypress")
+	pflag.StringVarP(&opts.message, "message", "m", "", "attach message next to the tree")
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
-	opts.multiplier = pflag.IntP("multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
-	opts.life = pflag.IntP("life", "L", 32, "life higher -> more growth (0-200)")
-	opts.seed = pflag.IntP("seed", "s", 0, "seed random number generator")
-	opts.help = pflag.BoolP("help", "h", false, "show help")
+	pflag.IntVarP(&opts.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
+	pflag.IntVarP(&opts.life, "life", "L", 32, "life higher -> more growth (0-200)")
+	pflag.BoolVarP(&opts.print, "print", "p", false, "print tree to terminal when finished")
 	pflag.Parse()
+
+	switch *pot {
+	case 1:
+		opts.pot = bigPot
+	case 2:
+		opts.pot = smallPot
+	default:
+		log.Fatalln("unknown pot type", strconv.Itoa(*pot))
+	}
 
 	opts.leaves = strings.Split(*leavesRaw, ",")
 	opts.usage = pflag.CommandLine.FlagUsages()
 
-	return &opts
+	return opts
+}
+
+func roll(mod int) int {
+	return rand.Int() % mod
 }
 
 func main() {
-	rand = random.New(random.NewSource(time.Now().UnixNano()))
+	opts = flags()
 
-	opts = *flags()
-	if *opts.help {
+	if opts.help {
 		fmt.Println(opts.usage)
 		return
 	}
+
+	if opts.seed <= 0 {
+		rand = random.New(random.NewSource(time.Now().Unix()))
+	} else {
+		rand = random.New(random.NewSource(int64(opts.seed)))
+	}
+
+	drawPot := opts.pot
 
 	ui, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
@@ -127,17 +141,23 @@ func main() {
 
 				v.Clear()
 
-				err = v.SetWritePos(16, 8)
+				err = v.SetWritePos(8, 4)
 				if err != nil {
 					return err
 				}
 
-				_, err = fmt.Fprintln(v, "Hello, World!", "🌳 🌲 🌴 🎄 🎋 🥦 🌱", strconv.Itoa(rand.Int()))
+				_, err = fmt.Fprintln(v, "Hello, World!", strconv.Itoa(rand.Int()))
 				if err != nil {
 					return err
 				}
 
-				drawBase(v, Pot(*opts.pot))
+				err = drawPot(v)
+				if err != nil {
+					return err
+				}
+
+				// TODO: tree
+				fmt.Fprintf(v, treeRunes[rand.Intn(len(treeRunes))])
 
 				return nil
 			})
@@ -149,251 +169,4 @@ func main() {
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
 		log.Fatalln(err.Error())
 	}
-}
-
-func drawBase(v *gocui.View, pot Pot) {
-
-	// base pot
-	var bw int
-	var bh int
-	switch *opts.pot {
-	case bigPot:
-		bw = 31
-		bh = 4
-	case smallPot:
-		bw = 15
-		bh = 3
-	default:
-		log.Fatalln("unknown pot type", strconv.Itoa(int(pot)))
-	}
-
-	// base position
-	vw, vh := v.Size()
-	x := (vw / 2) - (bw / 2)
-	y := vh - bh
-
-	switch pot {
-	case bigPot:
-		//window.AttrOn(nc.A_BOLD | nc.ColorPair(8))
-		v.SetWritePos(x, y)
-		fmt.Fprintf(v, ":")
-		//window.AttrOn(nc.ColorPair(2))
-		fmt.Fprintf(v, "___________")
-		//window.AttrOn(nc.ColorPair(11))
-		fmt.Fprintf(v, "./~~~\\.")
-		//window.AttrOn(nc.ColorPair(2))
-		fmt.Fprintf(v, "___________")
-		//window.AttrOn(nc.ColorPair(8))
-		fmt.Fprintf(v, ":")
-		v.SetWritePos(x, y+1)
-		fmt.Fprintf(v, " \\                           / ")
-		v.SetWritePos(x, y+2)
-		fmt.Fprintf(v, "  \\_________________________/ ")
-		v.SetWritePos(x, y+3)
-		fmt.Fprintf(v, "  (_)                     (_)")
-		//window.AttrOff(nc.A_BOLD)
-	case smallPot:
-		//window.AttrOn(nc.ColorPair(8))
-		v.SetWritePos(x, y)
-		fmt.Fprintf(v, "(")
-		//window.AttrOn(nc.ColorPair(2))
-		fmt.Fprintf(v, "---")
-		//window.AttrOn(nc.ColorPair(11))
-		fmt.Fprintf(v, "./~~~\\.")
-		//window.AttrOn(nc.ColorPair(2))
-		fmt.Fprintf(v, "---")
-		//window.AttrOn(nc.ColorPair(8))
-		fmt.Fprintf(v, ")")
-		v.SetWritePos(x, y+1)
-		fmt.Fprintf(v, " (           ) ")
-		v.SetWritePos(x, y+2)
-		fmt.Fprintf(v, "  (_________)  ")
-	}
-}
-
-// roll (randomize) a given die
-func roll(mod int) int {
-	return rand.Int() % mod
-}
-
-// determine change in X and Y coordinates of a given branch
-func deltas(branchType branch, life int, age int, multiplier int, returnDx *int, returnDy *int) {
-	dx := 0
-	dy := 0
-
-	switch branchType {
-	case trunk:
-		if age <= 2 || life < 4 {
-			// new or dead trunk
-			dy = 0
-			dx = (rand.Int() % 3) - 1
-
-		} else if age < (multiplier * 3) {
-			// young trunk should grow wide
-			// every (multiplier * 0.8) steps, raise tree to next level
-			if age%(multiplier/2) == 0 {
-				dy = -1
-			} else {
-				dy = 0
-			}
-
-			dice := roll(10)
-			if dice >= 0 && dice <= 0 {
-				dx = -2
-			} else if dice >= 1 && dice <= 3 {
-				dx = -1
-			} else if dice >= 4 && dice <= 5 {
-				dx = 0
-			} else if dice >= 6 && dice <= 8 {
-				dx = 1
-			} else if dice >= 9 && dice <= 9 {
-				dx = 2
-			}
-
-		} else {
-			// middle-aged trunk
-			dice := roll(10)
-			if dice > 2 {
-				dy = -1
-			} else {
-				dy = 0
-			}
-			dx = (rand.Int() % 3) - 1
-		}
-
-	case shootLeft: // trend left and little vertical movement
-		dice := roll(10)
-		if dice >= 0 && dice <= 1 {
-			dy = -1
-		} else if dice >= 2 && dice <= 7 {
-			dy = 0
-		} else if dice >= 8 && dice <= 9 {
-			dy = 1
-		}
-
-		dice = roll(10)
-		if dice >= 0 && dice <= 1 {
-			dx = -2
-		} else if dice >= 2 && dice <= 5 {
-			dx = -1
-		} else if dice >= 6 && dice <= 8 {
-			dx = 0
-		} else if dice >= 9 && dice <= 9 {
-			dx = 1
-		}
-
-	case shootRight: // trend right and little vertical movement
-		dice := roll(10)
-		if dice >= 0 && dice <= 1 {
-			dy = -1
-		} else if dice >= 2 && dice <= 7 {
-			dy = 0
-		} else if dice >= 8 && dice <= 9 {
-			dy = 1
-		}
-
-		dice = roll(10)
-		if dice >= 0 && dice <= 1 {
-			dx = 2
-		} else if dice >= 2 && dice <= 5 {
-			dx = 1
-		} else if dice >= 6 && dice <= 8 {
-			dx = 0
-		} else if dice >= 9 && dice <= 9 {
-			dx = -1
-		}
-
-	case dying: // discourage vertical growth(?) trend left/right (-3,3)
-		dice := roll(10)
-		if dice >= 0 && dice <= 1 {
-			dy = -1
-		} else if dice >= 2 && dice <= 8 {
-			dy = 0
-		} else if dice >= 9 && dice <= 9 {
-			dy = 1
-		}
-
-		dice = roll(15)
-		if dice >= 0 && dice <= 0 {
-			dx = -3
-		} else if dice >= 1 && dice <= 2 {
-			dx = -2
-		} else if dice >= 3 && dice <= 5 {
-			dx = -1
-		} else if dice >= 6 && dice <= 8 {
-			dx = 0
-		} else if dice >= 9 && dice <= 11 {
-			dx = 1
-		} else if dice >= 12 && dice <= 13 {
-			dx = 2
-		} else if dice >= 14 && dice <= 14 {
-			dx = 3
-		}
-
-	case dead: // fill in surrounding area
-		dice := roll(10)
-		if dice >= 0 && dice <= 2 {
-			dy = -1
-		} else if dice >= 3 && dice <= 6 {
-			dy = 0
-		} else if dice >= 7 && dice <= 9 {
-			dy = 1
-		}
-		dx = (rand.Int() % 3) - 1
-	}
-
-	*returnDx = dx
-	*returnDy = dy
-}
-
-func leaf(branch branch, life int, dx int, dy int) string {
-	s := "?"
-
-	if life < 4 {
-		branch = dying
-	}
-
-	switch branch {
-	case trunk:
-		if dy == 0 {
-			s = "/~"
-		} else if dx < 0 {
-			s = "\\|"
-		} else if dx == 0 {
-			s = "/|\\"
-		} else if dx > 0 {
-			s = "|/"
-		}
-
-	case shootLeft:
-		if dy > 0 {
-			s = "\\"
-		} else if dy == 0 {
-			s = "\\_"
-		} else if dx < 0 {
-			s = "\\|"
-		} else if dx == 0 {
-			s = "/|"
-		} else if dx > 0 {
-			s = "/"
-		}
-
-	case shootRight:
-		if dy > 0 {
-			s = "/"
-		} else if dy == 0 {
-			s = "_/"
-		} else if dx < 0 {
-			s = "\\|"
-		} else if dx == 0 {
-			s = "/|"
-		} else if dx > 0 {
-			s = "/"
-		}
-
-	case dying, dead:
-		s = opts.leaves[rand.Int()%len(opts.leaves)]
-	}
-
-	return s
 }
