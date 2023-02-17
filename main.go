@@ -25,6 +25,13 @@ const (
 	dead
 )
 
+type Pot int
+
+const (
+	bigPot = iota
+	smallPot
+)
+
 var opts options
 
 type options struct {
@@ -34,7 +41,7 @@ type options struct {
 	wait        *time.Duration
 	screensaver *bool
 	message     *string
-	base        *int
+	pot         *int
 	leaves      []string
 	multiplier  *int
 	life        *int
@@ -57,11 +64,10 @@ func flags() *options {
 	opts.wait = pflag.DurationP("wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	opts.screensaver = pflag.BoolP("screensaver", "S", false, "screensaver mode equivalent to -liWC and quit on any keypress")
 	opts.message = pflag.StringP("message", "m", "", "attach message next to the tree")
-	opts.base = pflag.IntP("base", "b", 1, "ascii-art plant base to use, big: 1, small: 2")
+	opts.pot = pflag.IntP("pot", "p", 1, "plant pot to use, big: 1, small: 2")
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	opts.multiplier = pflag.IntP("multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	opts.life = pflag.IntP("life", "L", 32, "life higher -> more growth (0-200)")
-	opts.print = pflag.BoolP("print", "p", false, "print tree to terminal when finished")
 	opts.seed = pflag.IntP("seed", "s", 0, "seed random number generator")
 	opts.help = pflag.BoolP("help", "h", false, "show help")
 	pflag.Parse()
@@ -131,6 +137,8 @@ func main() {
 					return err
 				}
 
+				drawBase(v, Pot(*opts.pot))
+
 				return nil
 			})
 			<-t.C
@@ -140,6 +148,66 @@ func main() {
 	err = ui.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
 		log.Fatalln(err.Error())
+	}
+}
+
+func drawBase(v *gocui.View, pot Pot) {
+
+	// base pot
+	var bw int
+	var bh int
+	switch *opts.pot {
+	case bigPot:
+		bw = 31
+		bh = 4
+	case smallPot:
+		bw = 15
+		bh = 3
+	default:
+		log.Fatalln("unknown pot type", strconv.Itoa(int(pot)))
+	}
+
+	// base position
+	vw, vh := v.Size()
+	x := (vw / 2) - (bw / 2)
+	y := vh - bh
+
+	switch pot {
+	case bigPot:
+		//window.AttrOn(nc.A_BOLD | nc.ColorPair(8))
+		v.SetWritePos(x, y)
+		fmt.Fprintf(v, ":")
+		//window.AttrOn(nc.ColorPair(2))
+		fmt.Fprintf(v, "___________")
+		//window.AttrOn(nc.ColorPair(11))
+		fmt.Fprintf(v, "./~~~\\.")
+		//window.AttrOn(nc.ColorPair(2))
+		fmt.Fprintf(v, "___________")
+		//window.AttrOn(nc.ColorPair(8))
+		fmt.Fprintf(v, ":")
+		v.SetWritePos(x, y+1)
+		fmt.Fprintf(v, " \\                           / ")
+		v.SetWritePos(x, y+2)
+		fmt.Fprintf(v, "  \\_________________________/ ")
+		v.SetWritePos(x, y+3)
+		fmt.Fprintf(v, "  (_)                     (_)")
+		//window.AttrOff(nc.A_BOLD)
+	case smallPot:
+		//window.AttrOn(nc.ColorPair(8))
+		v.SetWritePos(x, y)
+		fmt.Fprintf(v, "(")
+		//window.AttrOn(nc.ColorPair(2))
+		fmt.Fprintf(v, "---")
+		//window.AttrOn(nc.ColorPair(11))
+		fmt.Fprintf(v, "./~~~\\.")
+		//window.AttrOn(nc.ColorPair(2))
+		fmt.Fprintf(v, "---")
+		//window.AttrOn(nc.ColorPair(8))
+		fmt.Fprintf(v, ")")
+		v.SetWritePos(x, y+1)
+		fmt.Fprintf(v, " (           ) ")
+		v.SetWritePos(x, y+2)
+		fmt.Fprintf(v, "  (_________)  ")
 	}
 }
 
