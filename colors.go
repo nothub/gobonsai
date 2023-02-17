@@ -1,5 +1,9 @@
 package main
 
+import "github.com/fatih/color"
+
+var BOLD_RED = color.New(color.FgRed).Add(color.Bold)
+
 // int init_pair(short pair, short f, short b);
 // (set pair 'pair' to fg 'f' and bg 'b')
 
