@@ -88,7 +88,7 @@ func main() {
 
 	ui.SetManagerFunc(func(g *gocui.Gui) error {
 		width, height := g.Size()
-		v, err := g.SetView("hello", width/2-7, height/2, width/2+7, height/2+2, 0)
+		v, err := g.SetView("hello", 0, 0, width-1, height-1, 0)
 		if err != nil {
 			if !errors.Is(err, gocui.ErrUnknownView) {
 				return err
@@ -98,7 +98,12 @@ func main() {
 				return err
 			}
 
-			_, err := fmt.Fprintln(v, "Hello world!")
+			err := v.SetWritePos(16, 8)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(v, "Hello world!")
 			if err != nil {
 				return err
 			}
