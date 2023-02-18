@@ -41,6 +41,10 @@ func flags() options {
 	pot := pflag.IntP("pot", "P", 1, "plant pot to use, big: 1, small: 2")
 	pflag.Int64VarP(&opts.seed, "seed", "s", time.Now().UnixNano(), "seed random number generator")
 	pflag.BoolVarP(&opts.help, "help", "h", false, "show help")
+	pflag.BoolVarP(&opts.print, "print", "p", false, "print tree to terminal when finished")
+	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
+	pflag.IntVarP(&opts.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
+	pflag.IntVarP(&opts.life, "life", "L", 32, "life higher -> more growth (0-200)")
 	// TODO:
 	pflag.BoolVarP(&opts.live, "live", "l", false, "live mode: show each step of growth")
 	pflag.DurationVarP(&opts.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
@@ -48,10 +52,6 @@ func flags() options {
 	pflag.DurationVarP(&opts.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&opts.screensaver, "screensaver", "S", false, "screensaver mode equivalent to -liWC and quit on any keypress")
 	pflag.StringVarP(&opts.message, "message", "m", "", "attach message next to the tree")
-	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
-	pflag.IntVarP(&opts.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
-	pflag.IntVarP(&opts.life, "life", "L", 32, "life higher -> more growth (0-200)")
-	pflag.BoolVarP(&opts.print, "print", "p", false, "print tree to terminal when finished")
 	pflag.Parse()
 
 	switch *pot {
@@ -111,6 +111,8 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
+	var out string
+
 	go func() {
 		t := time.NewTicker(1 * time.Second)
 		for {
@@ -122,15 +124,17 @@ func main() {
 
 				v.Clear()
 
-				err = v.SetWritePos(4, 1)
-				if err != nil {
-					return err
-				}
-
-				_, err = fmt.Fprintf(v, "Seed: %s", strconv.Itoa(int(opts.seed)))
-				if err != nil {
-					return err
-				}
+				/* print seed:
+				   				_, y := v.Size()
+				   				err = v.SetWritePos(2, y-2)
+				   				if err != nil {
+				   				    return err
+				   				}
+				   				_, err = fmt.Fprintf(v, "Seed: %s", strconv.Itoa(int(opts.seed)))
+				   				if err != nil {
+				   				    return err
+				                   }
+				*/
 
 				err = drawPot(v)
 				if err != nil {
@@ -142,6 +146,18 @@ func main() {
 				err = drawTree(v, opts, potHeight)
 				if err != nil {
 					return err
+				}
+
+				if opts.print {
+					out = fmt.Sprint(v.Buffer())
+					g.Close()
+					should := false
+					for _, l := range strings.Split(out, "\n") {
+						if len(strings.TrimSpace(l)) > 0 || should {
+							fmt.Println(l)
+						}
+					}
+					return gocui.ErrQuit
 				}
 
 				return nil
