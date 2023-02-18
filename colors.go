@@ -61,6 +61,8 @@ var brownBold = color.New(color.FgRed, color.FgYellow, color.Bold)
 
 // based on type of tree, determine what color a branch should be
 func chooseColor(kind branch) *color.Color {
+	// TODO: these colors are wrong, we want original cbonsai colors (see above) instead!
+
 	switch kind {
 	case dying:
 		if rand.Int()%10 == 0 {
