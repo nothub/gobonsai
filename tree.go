@@ -1,16 +1,12 @@
 package main
 
-import (
-	"fmt"
-	"github.com/awesome-gocui/gocui"
-)
-
 type branch int
 
 const (
 	trunk branch = iota
 	shootLeft
 	shootRight
+	// TODO: find better names for these
 	dying
 	dead
 )
@@ -23,20 +19,18 @@ type counters struct {
 
 // The algorithm for tree generation was ported from the cbonsai codebase and ideally generates identical output.
 
-func drawTree(v *gocui.View, opts options, potHeight int) error {
+func drawTree(sc *screen, opts options) error {
 	counters := counters{
 		branches:     0,
 		shoots:       0,
 		shootCounter: rand.Int(),
 	}
 	life := opts.life
-	maxX, maxY := v.Size()
-	x := maxX / 2
-	y := maxY - 1 - potHeight
-	return drawBranch(v, opts, counters, life, trunk, x, y, maxY-potHeight)
+	_, maxY := sc.Size()
+	return drawBranch(sc, opts, counters, life, trunk, sc.x, sc.y, maxY-(maxY-sc.y-1))
 }
 
-func drawBranch(v *gocui.View, opts options, counters counters, life int, kind branch, x int, y int, maxY int) error {
+func drawBranch(sc *screen, opts options, counters counters, life int, kind branch, x int, y int, maxY int) error {
 	counters.branches++
 	dx := 0
 	dy := 0
@@ -55,21 +49,21 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 
 		// near-dead branch should branch into a lot of leaves
 		if life < 3 {
-			err := drawBranch(v, opts, counters, life, dead, x, y, maxY)
+			err := drawBranch(sc, opts, counters, life, dead, x, y, maxY)
 			if err != nil {
 				return err
 			}
 
 			// dying trunk should branch into a lot of leaves
 		} else if kind == trunk && life < (opts.multiplier+2) {
-			err := drawBranch(v, opts, counters, life, dying, x, y, maxY)
+			err := drawBranch(sc, opts, counters, life, dying, x, y, maxY)
 			if err != nil {
 				return err
 			}
 
 			// dying shoot should branch into a lot of leaves
 		} else if (kind == shootLeft || kind == shootRight) && life < (opts.multiplier+2) {
-			err := drawBranch(v, opts, counters, life, dying, x, y, maxY)
+			err := drawBranch(sc, opts, counters, life, dying, x, y, maxY)
 			if err != nil {
 				return err
 			}
@@ -80,7 +74,7 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 			// if trunk is branching and not about to die, create another trunk with random life
 			if (rand.Int()%8 == 0) && life > 7 {
 				shootCooldown = opts.multiplier * 2 // reset shoot cooldown
-				err := drawBranch(v, opts, counters, life+(rand.Int()%5-2), trunk, x, y, maxY)
+				err := drawBranch(sc, opts, counters, life+(rand.Int()%5-2), trunk, x, y, maxY)
 				if err != nil {
 					return err
 				}
@@ -95,7 +89,7 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 				counters.shootCounter++
 
 				// create shoot
-				err := drawBranch(v, opts, counters, shootLife, branch((counters.shootCounter%2)+1), x, y, maxY)
+				err := drawBranch(sc, opts, counters, shootLife, branch((counters.shootCounter%2)+1), x, y, maxY)
 				if err != nil {
 					return err
 				}
@@ -114,15 +108,9 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 		// choose string to use for this branch
 		leaf := chooseLeaf(kind, life, dx, dy)
 
-		err := v.SetWritePos(x, y)
-		if err != nil {
-			return err
-		}
-
-		_, err = fmt.Fprint(v, color.Sprint(leaf))
-		if err != nil {
-			return err
-		}
+		sc.x = x
+		sc.y = y
+		sc.draw(leaf, color)
 	}
 
 	return nil
