@@ -21,6 +21,8 @@ type counters struct {
 	shootCounter int
 }
 
+// The algorithm for tree generation was ported from the cbonsai codebase and ideally generates identical output.
+
 func drawTree(v *gocui.View, opts options, potHeight int) error {
 	counters := counters{
 		branches:     0,
