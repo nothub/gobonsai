@@ -21,27 +21,24 @@ type counters struct {
 	shootCounter int
 }
 
-func drawTree(v *gocui.View, opts options) error {
+func drawTree(v *gocui.View, opts options, potHeight int) error {
 	counters := counters{
 		branches:     0,
 		shoots:       0,
 		shootCounter: rand.Int(),
 	}
 	life := opts.life
-	return drawBranch(v, opts, counters, life, trunk)
-}
-
-func drawBranch(v *gocui.View, opts options, counters counters, life int, kind branch) error {
 	maxX, maxY := v.Size()
 	x := maxX / 2
-	y := maxY - 1
+	y := maxY - 1 - potHeight
+	return drawBranch(v, opts, counters, life, trunk, x, y, maxY-potHeight)
+}
 
+func drawBranch(v *gocui.View, opts options, counters counters, life int, kind branch, x int, y int, maxY int) error {
+	counters.branches++
 	dx := 0
 	dy := 0
-
 	age := 0
-
-	counters.branches++
 	shootCooldown := opts.multiplier
 
 	for life > 0 {
@@ -56,21 +53,21 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 
 		// near-dead branch should branch into a lot of leaves
 		if life < 3 {
-			err := drawBranch(v, opts, counters, life, dead)
+			err := drawBranch(v, opts, counters, life, dead, x, y, maxY)
 			if err != nil {
 				return err
 			}
 
 			// dying trunk should branch into a lot of leaves
 		} else if kind == trunk && life < (opts.multiplier+2) {
-			err := drawBranch(v, opts, counters, life, dying)
+			err := drawBranch(v, opts, counters, life, dying, x, y, maxY)
 			if err != nil {
 				return err
 			}
 
 			// dying shoot should branch into a lot of leaves
 		} else if (kind == shootLeft || kind == shootRight) && life < (opts.multiplier+2) {
-			err := drawBranch(v, opts, counters, life, dying)
+			err := drawBranch(v, opts, counters, life, dying, x, y, maxY)
 			if err != nil {
 				return err
 			}
@@ -81,7 +78,7 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 			// if trunk is branching and not about to die, create another trunk with random life
 			if (rand.Int()%8 == 0) && life > 7 {
 				shootCooldown = opts.multiplier * 2 // reset shoot cooldown
-				err := drawBranch(v, opts, counters, life+(rand.Int()%5-2), trunk)
+				err := drawBranch(v, opts, counters, life+(rand.Int()%5-2), trunk, x, y, maxY)
 				if err != nil {
 					return err
 				}
@@ -96,7 +93,7 @@ func drawBranch(v *gocui.View, opts options, counters counters, life int, kind b
 				counters.shootCounter++
 
 				// create shoot
-				err := drawBranch(v, opts, counters, shootLife, branch((counters.shootCounter%2)+1))
+				err := drawBranch(v, opts, counters, shootLife, branch((counters.shootCounter%2)+1), x, y, maxY)
 				if err != nil {
 					return err
 				}

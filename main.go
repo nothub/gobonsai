@@ -140,7 +140,9 @@ func main() {
 					return err
 				}
 
-				err = drawTree(v, opts)
+				potHeight := 3
+
+				err = drawTree(v, opts, potHeight)
 				if err != nil {
 					return err
 				}
