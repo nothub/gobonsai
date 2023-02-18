@@ -1,6 +1,17 @@
 package main
 
-import "github.com/fatih/color"
+import (
+	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
+	"log"
+	"strconv"
+)
+
+var b0 = tcell.Color94
+var b1 = tcell.ColorBrown
+var b2 = tcell.ColorSaddleBrown
+var b3 = tcell.ColorSandyBrown
+var b4 = tcell.ColorRosyBrown
 
 // TODO: use gocui attribute type instead of fatih/color module
 
@@ -85,5 +96,27 @@ func chooseColor(kind branch) *color.Color {
 		} else {
 			return yellow
 		}
+	}
+}
+
+func listColors(sc *screen, colors int) {
+	sc.x = 0
+	sc.y = 0
+	c := 0
+
+	for col := tcell.ColorValid; col < tcell.ColorYellowGreen; col++ {
+		style := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(col).Bold(true)
+		sc.draw(strconv.FormatUint(uint64(col), 10), style)
+		sc.x++
+		c++
+		if c%8 == 0 {
+			sc.x = 0
+			sc.y++
+		}
+	}
+
+	err := sc.PostEvent(EvDrawn())
+	if err != nil {
+		log.Panicln(err.Error())
 	}
 }

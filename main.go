@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	random "math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/awesome-gocui/gocui"
+	"github.com/gdamore/tcell/v2"
 	"github.com/spf13/pflag"
 )
 
@@ -60,7 +62,7 @@ func flags() options {
 	case 2:
 		opts.pot = smallPot
 	default:
-		log.Fatalln("unknown pot type", strconv.Itoa(*pot))
+		log.Panicln("unknown pot type", strconv.Itoa(*pot))
 	}
 
 	opts.leaves = strings.Split(*leavesRaw, ",")
@@ -79,11 +81,38 @@ func main() {
 
 	rand = random.New(random.NewSource(opts.seed))
 
+	sc, sh := newScreen()
+	defer sh()
+
+	// TODO: color schemes?
+	colors := sc.Colors()
+	listColors(sc, colors)
+
+	for {
+		ev := sc.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventResize:
+			// resize event will be emitted once initially
+			sc.Sync()
+
+		case *EventDrawn:
+			// finished drawing, show changes
+			sc.Show()
+
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
+				return
+			}
+		}
+	}
+
+	os.Exit(0)
+
 	drawPot := opts.pot // TODO generalize the pot func and use type for sizes struct
 
 	ui, err := gocui.NewGui(gocui.Output256, true)
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Panicln(err.Error())
 	}
 	defer ui.Close()
 
@@ -108,7 +137,7 @@ func main() {
 		return gocui.ErrQuit
 	})
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Panicln(err.Error())
 	}
 
 	var out string
@@ -167,6 +196,6 @@ func main() {
 
 	err = ui.MainLoop()
 	if err != nil && !errors.Is(err, gocui.ErrQuit) {
-		log.Fatalln(err.Error())
+		log.Panicln(err.Error())
 	}
 }
