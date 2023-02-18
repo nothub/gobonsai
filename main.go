@@ -15,8 +15,6 @@ import (
 
 var rand *random.Rand
 
-var treeRunes = []string{"🌳", "🌲", "🌴", "🎄", "🎋", "🥦", "🌱"}
-
 var opts options
 
 type options struct {
@@ -31,7 +29,7 @@ type options struct {
 	multiplier  int
 	life        int
 	print       bool
-	seed        int
+	seed        int64
 	help        bool
 	usage       string
 }
@@ -41,7 +39,7 @@ func flags() options {
 
 	var opts options
 	pot := pflag.IntP("pot", "P", 1, "plant pot to use, big: 1, small: 2")
-	pflag.IntVarP(&opts.seed, "seed", "s", 0, "seed random number generator")
+	pflag.Int64VarP(&opts.seed, "seed", "s", 0, "seed random number generator")
 	pflag.BoolVarP(&opts.help, "help", "h", false, "show help")
 	// TODO:
 	pflag.BoolVarP(&opts.live, "live", "l", false, "live mode: show each step of growth")
@@ -71,10 +69,6 @@ func flags() options {
 	return opts
 }
 
-func roll(mod int) int {
-	return rand.Int() % mod
-}
-
 func main() {
 	opts = flags()
 
@@ -83,13 +77,13 @@ func main() {
 		return
 	}
 
-	if opts.seed <= 0 {
-		rand = random.New(random.NewSource(time.Now().Unix()))
+	if opts.seed == 0 {
+		rand = random.New(random.NewSource(time.Now().UnixNano()))
 	} else {
-		rand = random.New(random.NewSource(int64(opts.seed)))
+		rand = random.New(random.NewSource(opts.seed))
 	}
 
-	drawPot := opts.pot
+	drawPot := opts.pot // TODO generalize the pot func and use type for sizes struct
 
 	ui, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
@@ -146,8 +140,10 @@ func main() {
 					return err
 				}
 
-				// TODO: tree
-				fmt.Fprintf(v, treeRunes[rand.Intn(len(treeRunes))])
+				err = drawTree(v, opts)
+				if err != nil {
+					return err
+				}
 
 				return nil
 			})

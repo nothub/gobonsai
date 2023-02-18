@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"github.com/awesome-gocui/gocui"
+)
+
 type branch int
 
 const (
@@ -10,8 +15,122 @@ const (
 	dead
 )
 
+type counters struct {
+	branches     int
+	shoots       int
+	shootCounter int
+}
+
+func drawTree(v *gocui.View, opts options) error {
+	counters := counters{
+		branches:     0,
+		shoots:       0,
+		shootCounter: rand.Int(),
+	}
+	life := opts.life
+	return drawBranch(v, opts, counters, life, trunk)
+}
+
+func drawBranch(v *gocui.View, opts options, counters counters, life int, kind branch) error {
+	maxX, maxY := v.Size()
+	x := maxX / 2
+	y := maxY - 1
+
+	dx := 0
+	dy := 0
+
+	age := 0
+
+	counters.branches++
+	shootCooldown := opts.multiplier
+
+	for life > 0 {
+		life--
+		age = opts.life - life
+		dx, dy = deltas(kind, life, age, opts.multiplier)
+
+		// reduce dy if too close to the ground
+		if dy > 0 && y > (maxY-2) {
+			dy--
+		}
+
+		// near-dead branch should branch into a lot of leaves
+		if life < 3 {
+			err := drawBranch(v, opts, counters, life, dead)
+			if err != nil {
+				return err
+			}
+
+			// dying trunk should branch into a lot of leaves
+		} else if kind == trunk && life < (opts.multiplier+2) {
+			err := drawBranch(v, opts, counters, life, dying)
+			if err != nil {
+				return err
+			}
+
+			// dying shoot should branch into a lot of leaves
+		} else if (kind == shootLeft || kind == shootRight) && life < (opts.multiplier+2) {
+			err := drawBranch(v, opts, counters, life, dying)
+			if err != nil {
+				return err
+			}
+
+			// trunks should re-branch either randomly, or upon every <multiplier> steps
+		} else if kind == trunk && (((rand.Int() % 3) == 0) || (life%opts.multiplier == 0)) {
+
+			// if trunk is branching and not about to die, create another trunk with random life
+			if (rand.Int()%8 == 0) && life > 7 {
+				shootCooldown = opts.multiplier * 2 // reset shoot cooldown
+				err := drawBranch(v, opts, counters, life+(rand.Int()%5-2), trunk)
+				if err != nil {
+					return err
+				}
+
+				// otherwise create a shoot
+			} else if shootCooldown <= 0 {
+				shootCooldown = opts.multiplier * 2 // reset shoot cooldown
+				shootLife := life + opts.multiplier
+
+				// first shoot is randomly directed
+				counters.shoots++
+				counters.shootCounter++
+
+				// create shoot
+				err := drawBranch(v, opts, counters, shootLife, branch((counters.shootCounter%2)+1))
+				if err != nil {
+					return err
+				}
+			}
+
+		}
+
+		shootCooldown--
+
+		// move in x and y directions
+		x += dx
+		y += dy
+
+		color := chooseColor(kind)
+
+		// choose string to use for this branch
+		leaf := chooseLeaf(kind, life, dx, dy)
+
+		err := v.SetWritePos(x, y)
+		if err != nil {
+			return err
+		}
+
+		_, err = fmt.Fprint(v, color.Sprint(leaf))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // determine change in X and Y coordinates of a given branch
-func deltas(branchType branch, life int, age int, multiplier int, returnDx *int, returnDy *int) {
+func deltas(branchType branch, life int, age int, multiplier int) (int, int) {
 	dx := 0
 	dy := 0
 
@@ -31,7 +150,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 				dy = 0
 			}
 
-			dice := roll(10)
+			dice := rand.Intn(10)
 			if dice >= 0 && dice <= 0 {
 				dx = -2
 			} else if dice >= 1 && dice <= 3 {
@@ -46,7 +165,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 
 		} else {
 			// middle-aged trunk
-			dice := roll(10)
+			dice := rand.Intn(10)
 			if dice > 2 {
 				dy = -1
 			} else {
@@ -56,7 +175,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 		}
 
 	case shootLeft: // trend left and little vertical movement
-		dice := roll(10)
+		dice := rand.Intn(10)
 		if dice >= 0 && dice <= 1 {
 			dy = -1
 		} else if dice >= 2 && dice <= 7 {
@@ -65,7 +184,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 			dy = 1
 		}
 
-		dice = roll(10)
+		dice = rand.Intn(10)
 		if dice >= 0 && dice <= 1 {
 			dx = -2
 		} else if dice >= 2 && dice <= 5 {
@@ -77,7 +196,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 		}
 
 	case shootRight: // trend right and little vertical movement
-		dice := roll(10)
+		dice := rand.Intn(10)
 		if dice >= 0 && dice <= 1 {
 			dy = -1
 		} else if dice >= 2 && dice <= 7 {
@@ -86,7 +205,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 			dy = 1
 		}
 
-		dice = roll(10)
+		dice = rand.Intn(10)
 		if dice >= 0 && dice <= 1 {
 			dx = 2
 		} else if dice >= 2 && dice <= 5 {
@@ -98,7 +217,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 		}
 
 	case dying: // discourage vertical growth(?) trend left/right (-3,3)
-		dice := roll(10)
+		dice := rand.Intn(10)
 		if dice >= 0 && dice <= 1 {
 			dy = -1
 		} else if dice >= 2 && dice <= 8 {
@@ -107,7 +226,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 			dy = 1
 		}
 
-		dice = roll(15)
+		dice = rand.Intn(15)
 		if dice >= 0 && dice <= 0 {
 			dx = -3
 		} else if dice >= 1 && dice <= 2 {
@@ -125,7 +244,7 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 		}
 
 	case dead: // fill in surrounding area
-		dice := roll(10)
+		dice := rand.Intn(10)
 		if dice >= 0 && dice <= 2 {
 			dy = -1
 		} else if dice >= 3 && dice <= 6 {
@@ -136,11 +255,10 @@ func deltas(branchType branch, life int, age int, multiplier int, returnDx *int,
 		dx = (rand.Int() % 3) - 1
 	}
 
-	*returnDx = dx
-	*returnDy = dy
+	return dx, dy
 }
 
-func leaf(branch branch, life int, dx int, dy int) string {
+func chooseLeaf(branch branch, life int, dx int, dy int) string {
 	s := "?"
 
 	if life < 4 {
@@ -191,99 +309,3 @@ func leaf(branch branch, life int, dx int, dy int) string {
 
 	return s
 }
-
-//void branch(struct config *conf, struct ncursesObjects *objects, struct counters *myCounters, int y, int x, enum branchType type, int life) {
-//	myCounters->branches++;
-//	int dx = 0;
-//	int dy = 0;
-//	int age = 0;
-//	int shootCooldown = conf->multiplier;
-//
-//	while (life > 0) {
-//		if (checkKeyPress(conf, myCounters) == 1)
-//			quit(conf, objects, 0);
-//
-//		life--;		// decrement remaining life counter
-//		age = conf->lifeStart - life;
-//
-//		setDeltas(type, life, age, conf->multiplier, &dx, &dy);
-//
-//		int maxY = getmaxy(objects->treeWin);
-//		if (dy > 0 && y > (maxY - 2)) dy--; // reduce dy if too close to the ground
-//
-//		// near-dead branch should branch into a lot of leaves
-//		if (life < 3)
-//			branch(conf, objects, myCounters, y, x, dead, life);
-//
-//		// dying trunk should branch into a lot of leaves
-//		else if (type == 0 && life < (conf->multiplier + 2))
-//			branch(conf, objects, myCounters, y, x, dying, life);
-//
-//		// dying shoot should branch into a lot of leaves
-//		else if ((type == shootLeft || type == shootRight) && life < (conf->multiplier + 2))
-//			branch(conf, objects, myCounters, y, x, dying, life);
-//
-//		// trunks should re-branch if not close to ground AND either randomly, or upon every <multiplier> steps
-//		/* else if (type == 0 && ( \ */
-//		/* 		(rand() % (conf.multiplier)) == 0 || \ */
-//		/* 		(life > conf.multiplier && life % conf.multiplier == 0) */
-//		/* 		) ) { */
-//		else if (type == trunk && (((rand() % 3) == 0) || (life % conf->multiplier == 0))) {
-//
-//			// if trunk is branching and not about to die, create another trunk with random life
-//			if ((rand() % 8 == 0) && life > 7) {
-//				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
-//				branch(conf, objects, myCounters, y, x, trunk, life + (rand() % 5 - 2));
-//			}
-//
-//			// otherwise create a shoot
-//			else if (shootCooldown <= 0) {
-//				shootCooldown = conf->multiplier * 2;	// reset shoot cooldown
-//
-//				int shootLife = (life + conf->multiplier);
-//
-//				// first shoot is randomly directed
-//				myCounters->shoots++;
-//				myCounters->shootCounter++;
-//				if (conf->verbosity) mvwprintw(objects->treeWin, 4, 5, "shoots: %02d", myCounters->shoots);
-//
-//				// create shoot
-//				branch(conf, objects, myCounters, y, x, (myCounters->shootCounter % 2) + 1, shootLife);
-//			}
-//		}
-//		shootCooldown--;
-//
-//		if (conf->verbosity > 0) {
-//			mvwprintw(objects->treeWin, 5, 5, "dx: %02d", dx);
-//			mvwprintw(objects->treeWin, 6, 5, "dy: %02d", dy);
-//			mvwprintw(objects->treeWin, 7, 5, "type: %d", type);
-//			mvwprintw(objects->treeWin, 8, 5, "shootCooldown: % 3d", shootCooldown);
-//		}
-//
-//		// move in x and y directions
-//		x += dx;
-//		y += dy;
-//
-//		chooseColor(type, objects->treeWin);
-//
-//		// choose string to use for this branch
-//		char *branchStr = chooseString(conf, type, life, dx, dy);
-//
-//		// grab wide character from branchStr
-//		wchar_t wc = 0;
-//		mbstate_t *ps = 0;
-//		mbrtowc(&wc, branchStr, 32, ps);
-//
-//		// print, but ensure wide characters don't overlap
-//		if(x % wcwidth(wc) == 0)
-//			mvwprintw(objects->treeWin, y, x, "%s", branchStr);
-//
-//		wattroff(objects->treeWin, A_BOLD);
-//		free(branchStr);
-//
-//		// if live, update screen
-//		// skip updating if we're still loading from file
-//		if (conf->live && !(conf->load && myCounters->branches < conf->targetBranchCount))
-//			updateScreen(conf->timeStep);
-//	}
-//}
