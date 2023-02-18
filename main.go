@@ -151,9 +151,8 @@ func main() {
 				if opts.print {
 					out = fmt.Sprint(v.Buffer())
 					g.Close()
-					should := false
 					for _, l := range strings.Split(out, "\n") {
-						if len(strings.TrimSpace(l)) > 0 || should {
+						if len(strings.TrimSpace(l)) > 0 {
 							fmt.Println(l)
 						}
 					}
