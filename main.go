@@ -39,7 +39,7 @@ func flags() options {
 
 	var opts options
 	pot := pflag.IntP("pot", "P", 1, "plant pot to use, big: 1, small: 2")
-	pflag.Int64VarP(&opts.seed, "seed", "s", 0, "seed random number generator")
+	pflag.Int64VarP(&opts.seed, "seed", "s", time.Now().UnixNano(), "seed random number generator")
 	pflag.BoolVarP(&opts.help, "help", "h", false, "show help")
 	// TODO:
 	pflag.BoolVarP(&opts.live, "live", "l", false, "live mode: show each step of growth")
@@ -77,15 +77,11 @@ func main() {
 		return
 	}
 
-	if opts.seed == 0 {
-		rand = random.New(random.NewSource(time.Now().UnixNano()))
-	} else {
-		rand = random.New(random.NewSource(opts.seed))
-	}
+	rand = random.New(random.NewSource(opts.seed))
 
 	drawPot := opts.pot // TODO generalize the pot func and use type for sizes struct
 
-	ui, err := gocui.NewGui(gocui.OutputNormal, true)
+	ui, err := gocui.NewGui(gocui.Output256, true)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -96,10 +92,11 @@ func main() {
 		_, err := g.SetView("main", 0, 0, w-1, h-1, 0)
 		if err != nil {
 			if errors.Is(err, gocui.ErrUnknownView) {
-				_, err := g.SetCurrentView("main")
+				v, err := g.SetCurrentView("main")
 				if err != nil {
 					return err
 				}
+				v.Frame = false
 			} else {
 				return err
 			}
@@ -125,12 +122,12 @@ func main() {
 
 				v.Clear()
 
-				err = v.SetWritePos(8, 4)
+				err = v.SetWritePos(4, 1)
 				if err != nil {
 					return err
 				}
 
-				_, err = fmt.Fprintln(v, "Hello, World!", strconv.Itoa(rand.Int()))
+				_, err = fmt.Fprintf(v, "Seed: %s", strconv.Itoa(int(opts.seed)))
 				if err != nil {
 					return err
 				}
