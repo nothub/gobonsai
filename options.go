@@ -33,29 +33,35 @@ func options() opts {
 	// TODO: sort flags
 
 	var o opts
-	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
-	seed := pflag.Int64P("seed", "s", time.Now().UnixNano(), "seed random number generator")
-	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
-	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
-	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
-	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
 	pflag.DurationVarP(&o.time, "time", "t", 33*time.Millisecond, "in live mode, wait TIME between steps of growth")
 	pflag.BoolVarP(&o.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
+	// -m
+	// -tx
+	// -ty
+	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
+	// -bx
+	// -by
+	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
+	// -a
+	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
+	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
+	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to stdout on exit")
+	seed := pflag.Int64P("seed", "s", time.Now().UnixNano(), "seed random number generator")
+	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
 	/* TODO: https://gitlab.com/jallbrit/cbonsai/-/merge_requests/16
 
-	          TODO: read message from -m and stdin
-	          -tx, --textX=INT  Col pos of upper-left corner of message text
-	          -ty, --textY=INT  Row pos of upper-left corner of message text
+	   	          TODO: read message from -m and stdin
+	   	          -tx, --textX=INT  Col pos of upper-left corner of message text
+	   	          -ty, --textY=INT  Row pos of upper-left corner of message text
 
-	          TODO: make -a be a shortcut for setting relative values for -y
-	          -bx, --baseX=INT  Col pos of upper-left corner of plant base
-	   	   -by, --baseY=INT  Row pos of upper-left corner of plant base
+	   	          TODO: make -a be a shortcut for setting relative values for -y
+	   	          -bx, --baseX=INT  Col pos of upper-left corner of plant base
+	              -by, --baseY=INT  Row pos of upper-left corner of plant base
 	*/
 	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
-	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to stdout on exit")
 	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
 	pflag.Parse()
 
