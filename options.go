@@ -22,6 +22,7 @@ type opts struct {
 	leaves      []string
 	multiplier  int
 	life        int
+	align       align
 	print       bool
 	help        bool
 }
@@ -31,7 +32,7 @@ func options() opts {
 	// TODO: sort flags
 
 	var o opts
-	pot := pflag.IntP("base", "b", 1, "base pot to use, big: 1, small: 2")
+	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
 	seed := pflag.Int64P("seed", "s", time.Now().UnixNano(), "seed random number generator")
 	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
@@ -47,9 +48,10 @@ func options() opts {
 	   -p, --print            Print tree to terminal when finished
 	*/
 	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
-	pflag.DurationVarP(&o.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0) [default: 0.03]")
+	pflag.DurationVarP(&o.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
 	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to terminal when finished")
+	alignRaw := pflag.IntP("align", "a", 0, "align tree: center=0 left=1 right=2")
 	pflag.Parse()
 
 	if o.help {
@@ -65,6 +67,8 @@ func options() opts {
 	default:
 		log.Panicln("unknown pot type", strconv.Itoa(*pot))
 	}
+
+	o.align = align(*alignRaw)
 
 	o.leaves = strings.Split(*leavesRaw, ",")
 
