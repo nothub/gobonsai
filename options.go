@@ -37,9 +37,11 @@ func options() opts {
 	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
+	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
+	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
+	pflag.DurationVarP(&o.time, "time", "t", 33*time.Millisecond, "in live mode, wait TIME between steps of growth")
 	pflag.BoolVarP(&o.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
-	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
 	/* TODO: https://gitlab.com/jallbrit/cbonsai/-/merge_requests/16
 
@@ -51,8 +53,6 @@ func options() opts {
 	          -bx, --baseX=INT  Col pos of upper-left corner of plant base
 	   	   -by, --baseY=INT  Row pos of upper-left corner of plant base
 	*/
-	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
-	pflag.DurationVarP(&o.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
 	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to stdout on exit")
 	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")

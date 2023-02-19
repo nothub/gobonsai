@@ -17,7 +17,6 @@ func main() {
 	defer sh()
 
 	go func() {
-		t := time.NewTicker(opts.wait)
 		for {
 			sc.Clear()
 
@@ -46,8 +45,8 @@ func main() {
 				break
 			}
 
-			// wait for tick
-			<-t.C
+			// chill out a bit
+			time.Sleep(opts.wait)
 		}
 	}()
 

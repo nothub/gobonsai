@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type align int
 
 const (
@@ -121,8 +123,8 @@ func drawBranch(sc *screen, opts opts, counters counters, life int, kind branch,
 		sc.draw(leaf, color)
 
 		if opts.live {
-			// -l, --live       Live mode: show each step of growth
-			// -t, --time=TIME  In live mode, wait TIME secs between steps of growth (must be larger than 0) [default: 0.03]
+			evDrawn(sc)
+			time.Sleep(opts.time)
 		}
 	}
 
