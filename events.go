@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"log"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 func post(sc *screen, ev tcell.Event) {

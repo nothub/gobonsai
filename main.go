@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	random "math/rand"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -12,9 +14,27 @@ var rand *random.Rand
 
 func main() {
 	opts := options()
+	sc := newScreen()
 
-	sc, sh := newScreen()
-	defer sh()
+	quit := func() {
+		var out strings.Builder
+		if opts.print {
+			w, h := sc.Size()
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					r, _, _, _ := sc.GetContent(x, y)
+					out.WriteRune(r)
+				}
+			}
+		}
+		p := recover()
+		sc.Fini()
+		if p != nil {
+			panic(p)
+		}
+		fmt.Println(out.String())
+	}
+	defer quit()
 
 	go func() {
 		for {
@@ -69,10 +89,6 @@ func main() {
 			sc.Show()
 
 		case *eventQuit:
-			if opts.print {
-				// TODO: print buffer to stdout
-				// -p, --print  Print tree to terminal when finished
-			}
 			// we can just exit here, the shutdown hook will clean up the terminal
 			return
 		}

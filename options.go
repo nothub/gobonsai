@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/pflag"
 	"log"
 	random "math/rand"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 type opts struct {

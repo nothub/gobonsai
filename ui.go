@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
-	"log"
 )
 
 type screen struct {
@@ -40,7 +41,7 @@ func (sc *screen) put(r rune, style tcell.Style) {
 }
 
 // Function sh is a shutdown hook for cleanup and should be deferred in the main method.
-func newScreen() (sc *screen, sh func()) {
+func newScreen() (sc *screen) {
 	tsc, err := tcell.NewScreen()
 	if err != nil {
 		log.Panicln(err.Error())
@@ -58,13 +59,5 @@ func newScreen() (sc *screen, sh func()) {
 
 	tsc.Clear()
 
-	sh = func() {
-		p := recover()
-		tsc.Fini()
-		if p != nil {
-			panic(p)
-		}
-	}
-
-	return &screen{Screen: tsc}, sh
+	return &screen{Screen: tsc}
 }
