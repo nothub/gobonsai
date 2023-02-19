@@ -1,66 +1,69 @@
 package main
 
 import (
-	"fmt"
-	"github.com/awesome-gocui/gocui"
+	"github.com/gdamore/tcell/v2"
 )
 
-type Pot func(v *gocui.View) error
+// TODO: generalize the pot func and use type for sizes struct
+type Pot func(sc *screen) error
 
-var bigPot = func(v *gocui.View) error {
+var bigPot = func(sc *screen) error {
 	pw, ph := 31, 4
-	px, py := potPos(v, pw, ph)
+	px, py := potPos(sc, pw, ph)
 
-	v.SetWritePos(px, py)
-	fmt.Fprintf(v, whiteBold.Sprint(":"))
-	fmt.Fprintf(v, greenBold.Sprint("___________"))
-	fmt.Fprintf(v, yellowBold.Sprint("./~~~\\."))
-	fmt.Fprintf(v, greenBold.Sprint("___________"))
-	fmt.Fprintf(v, whiteBold.Sprint(":"))
-	v.SetWritePos(px, py+1)
-	fmt.Fprintf(v, " \\                           / ")
-	v.SetWritePos(px, py+2)
-	fmt.Fprintf(v, "  \\_________________________/ ")
-	v.SetWritePos(px, py+3)
-	fmt.Fprintf(v, "  (_)                     (_)")
+	sc.x = px
+	sc.y = py
+
+	sc.draw(":", styleWhiteBold)
+	sc.draw("___________", styleGreenBold)
+	sc.draw("./~~~\\.", styleBrown)
+	sc.draw("___________", styleGreenBold)
+	sc.draw(":", styleWhiteBold)
+	sc.x = px
+	sc.y = py + 1
+	sc.draw(" \\                           / ", styleDefault)
+	sc.x = px
+	sc.y = py + 2
+	sc.draw("  \\_________________________/ ", styleDefault)
+	sc.x = px
+	sc.y = py + 3
+	sc.draw("  (_)                     (_)", styleDefault)
 
 	// tree grows from here upwards
-	x, y := px+(pw/2), py-1
-	err := v.SetWritePos(x, y)
-	if err != nil {
-		return err
-	}
+	sc.x = px + (pw / 2)
+	sc.y = py - 1
 
 	return nil
 }
 
-var smallPot = func(v *gocui.View) error {
+var smallPot = func(sc *screen) error {
 	pw, ph := 15, 3
-	px, py := potPos(v, pw, ph)
+	px, py := potPos(sc, pw, ph)
 
-	v.SetWritePos(px, py)
-	fmt.Fprintf(v, whiteBold.Sprint("("))
-	fmt.Fprintf(v, greenBold.Sprint("---"))
-	fmt.Fprintf(v, yellowBold.Sprint("./~~~\\."))
-	fmt.Fprintf(v, greenBold.Sprint("---"))
-	fmt.Fprintf(v, whiteBold.Sprint(")"))
-	v.SetWritePos(px, py+1)
-	fmt.Fprintf(v, " (           ) ")
-	v.SetWritePos(px, py+2)
-	fmt.Fprintf(v, "  (_________)  ")
+	sc.x = px
+	sc.y = py
+
+	sc.draw("(", styleWhiteBold)
+	sc.draw("---", styleGreenBold)
+	sc.draw("./~~~\\.", styleBrown)
+	sc.draw("---", styleGreenBold)
+	sc.draw(")", styleWhiteBold)
+	sc.x = px
+	sc.y = py + 1
+	sc.draw(" (           ) ", tcell.StyleDefault)
+	sc.x = px
+	sc.y = py + 2
+	sc.draw("  (_________)  ", tcell.StyleDefault)
 
 	// tree grows from here upwards
-	x, y := px+(pw/2), py-1
-	err := v.SetWritePos(x, y)
-	if err != nil {
-		return err
-	}
+	sc.x = px + (pw / 2)
+	sc.y = py - 1
 
 	return nil
 }
 
-func potPos(v *gocui.View, pw int, ph int) (x int, y int) {
-	vw, vh := v.Size()
+func potPos(sc *screen, pw int, ph int) (x int, y int) {
+	vw, vh := sc.Size()
 	x = (vw / 2) - (pw / 2)
 	y = vh - ph
 	return x, y
