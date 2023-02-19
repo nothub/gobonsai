@@ -51,7 +51,7 @@ func options() opts {
 	pflag.DurationVarP(&o.time, "time", "t", 50*time.Millisecond, "in live mode, wait TIME secs between steps of growth (must be larger than 0)")
 	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to terminal when finished")
-	alignRaw := pflag.IntP("align", "a", 0, "align tree: center=0 left=1 right=2")
+	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
 	pflag.Parse()
 
 	if o.help {

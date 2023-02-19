@@ -1,5 +1,13 @@
 package main
 
+type align int
+
+const (
+	center align = iota
+	left
+	right
+)
+
 type branch int
 
 const (
