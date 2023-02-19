@@ -2,17 +2,16 @@ package main
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"log"
 	"strconv"
 )
 
 var (
 	styleDefault   = tcell.StyleDefault
-	styleBrown     = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94)
-	styleBrownBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94).Bold(true)
 	styleGreen     = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorGreen)
 	styleGreenBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorGreen).Bold(true)
 	styleWhiteBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite).Bold(true)
+	styleBrown     = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94)
+	styleBrownBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94).Bold(true)
 )
 
 // TODO: check supported number of colors
@@ -63,8 +62,5 @@ func listColors(sc *screen) {
 		}
 	}
 
-	err := sc.PostEvent(EvDrawn())
-	if err != nil {
-		log.Panicln(err.Error())
-	}
+	evDrawn(sc)
 }

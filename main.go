@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	random "math/rand"
 	"time"
@@ -12,20 +11,13 @@ import (
 var rand *random.Rand
 
 func main() {
-	opts = flags()
-
-	if opts.help {
-		fmt.Println(opts.usage)
-		return
-	}
-
-	rand = random.New(random.NewSource(opts.seed))
+	opts := options()
 
 	sc, sh := newScreen()
 	defer sh()
 
 	go func() {
-		t := time.NewTicker(1 * time.Second)
+		t := time.NewTicker(opts.wait)
 		for {
 			sc.Clear()
 
@@ -41,14 +33,15 @@ func main() {
 				log.Panicln(err.Error())
 			}
 
-			if opts.print {
-				// TODO: print buffer and exit
-			}
+			// TODO: draw message
+			// -m, --message=STR  Attach message next to the tree
 
 			// refresh screen
-			err = sc.PostEvent(EvDrawn())
-			if err != nil {
-				log.Panicln(err.Error())
+			evDrawn(sc)
+
+			if !opts.infinite {
+				evQuit(sc)
+				break
 			}
 
 			// wait for tick
@@ -57,22 +50,30 @@ func main() {
 	}()
 
 	for {
-		ev := sc.PollEvent()
-		switch ev := ev.(type) {
+		switch ev := sc.PollEvent().(type) {
 		case *tcell.EventResize:
 			// resize event will be emitted once initially
 			sc.Sync()
 
-		case *EventDrawn:
+		case *tcell.EventKey:
+			if opts.screensaver ||
+				ev.Key() == tcell.KeyEscape ||
+				ev.Key() == tcell.KeyCtrlC ||
+				ev.Key() == tcell.KeyCtrlD {
+				evQuit(sc)
+			}
+
+		case *eventDrawn:
 			// finished drawing, show changes
 			sc.Show()
 
-		case *tcell.EventKey:
-			// TODO: handle relevant unix signals
-			// ev.Key() == tcell.KeyCtrlC
-			if ev.Key() == tcell.KeyEscape {
-				return
+		case *eventQuit:
+			if opts.print {
+				// TODO: print buffer to stdout
+				// -p, --print  Print tree to terminal when finished
 			}
+			// we can just exit here, the shutdown hook will clean up the terminal
+			return
 		}
 	}
 }

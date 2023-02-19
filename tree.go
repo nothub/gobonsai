@@ -19,7 +19,7 @@ type counters struct {
 
 // The algorithm for tree generation was ported from the cbonsai codebase and ideally generates identical output.
 
-func drawTree(sc *screen, opts options) error {
+func drawTree(sc *screen, opts opts) error {
 	counters := counters{
 		branches:     0,
 		shoots:       0,
@@ -30,7 +30,7 @@ func drawTree(sc *screen, opts options) error {
 	return drawBranch(sc, opts, counters, life, trunk, sc.x, sc.y, maxY-(maxY-sc.y-1))
 }
 
-func drawBranch(sc *screen, opts options, counters counters, life int, kind branch, x int, y int, maxY int) error {
+func drawBranch(sc *screen, opts opts, counters counters, life int, kind branch, x int, y int, maxY int) error {
 	counters.branches++
 	dx := 0
 	dy := 0
@@ -106,11 +106,16 @@ func drawBranch(sc *screen, opts options, counters counters, life int, kind bran
 		color := chooseColor(kind)
 
 		// choose string to use for this branch
-		leaf := chooseLeaf(kind, life, dx, dy)
+		leaf := chooseLeaf(kind, life, dx, dy, opts)
 
 		sc.x = x
 		sc.y = y
 		sc.draw(leaf, color)
+
+		if opts.live {
+			// -l, --live       Live mode: show each step of growth
+			// -t, --time=TIME  In live mode, wait TIME secs between steps of growth (must be larger than 0) [default: 0.03]
+		}
 	}
 
 	return nil
@@ -245,7 +250,7 @@ func deltas(branchType branch, life int, age int, multiplier int) (int, int) {
 	return dx, dy
 }
 
-func chooseLeaf(branch branch, life int, dx int, dy int) string {
+func chooseLeaf(branch branch, life int, dx int, dy int, opts opts) string {
 	s := "?"
 
 	if life < 4 {
