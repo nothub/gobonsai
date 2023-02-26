@@ -18,24 +18,16 @@ func main() {
 	opts := options()
 	sc := newScreen()
 
+	var out string
 	quit := func() {
-		var out strings.Builder
-		if opts.print {
-			// TODO: retain colors when printing
-			w, h := sc.Size()
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					r, _, _, _ := sc.GetContent(x, y)
-					out.WriteRune(r)
-				}
-			}
-		}
 		p := recover()
 		sc.Fini()
 		if p != nil {
 			panic(p)
 		}
-		fmt.Println(out.String())
+		if out != "" {
+			fmt.Println(out)
+		}
 	}
 	defer quit()
 
@@ -62,6 +54,40 @@ func main() {
 
 			// refresh screen
 			evDrawn(sc)
+
+			if opts.print {
+				// TODO: retain colors when printing
+
+				// convert screen content to string
+				var sb strings.Builder
+				w, h := sc.Size()
+				for y := 0; y < h; y++ {
+					for x := 0; x < w; x++ {
+						r, _, _, _ := sc.GetContent(x, y)
+						sb.WriteRune(r)
+					}
+				}
+
+				// trim empty space above tree
+				// TODO: fix tree space trimming on print
+				var trimmed []string
+				split := strings.Split(sb.String(), "\n")
+				for _, s := range split {
+					t := strings.TrimSpace(s)
+					if t != "" {
+						trimmed = append(trimmed, s)
+					}
+				}
+
+				// store output for printing later when screen cleanup is done
+				out = strings.Join(trimmed, "\n")
+
+				// send quit event
+				evQuit(sc)
+				// wait for shutdown signal
+				<-shutdown
+				break
+			}
 
 			if !opts.infinite {
 				// not in infinite (regrowing trees) mode
