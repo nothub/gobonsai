@@ -18,19 +18,18 @@ type opts struct {
 	infinite    bool
 	wait        time.Duration
 	screensaver bool
-	message     string // TODO: when not set by flag, try to read from stdin
 	pot         Pot
+	baseX       int
+	baseY       int
+	align       align
+	msg         string // TODO: when not set by flag, try to read from stdin
+	msgX        int
+	msgY        int
 	leaves      []string
 	multiplier  int
 	life        int
-	align       align
-	baseX       uint
-	baseY       uint
-	msgX        uint
-	msgY        uint
 	print       bool
 	noColor     bool
-	help        bool
 }
 
 func options() opts {
@@ -43,24 +42,29 @@ func options() opts {
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
 	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
-	pflag.UintVarP(&o.baseX, "base-x", "", 0, "column position of upper-left corner of plant base pot")
-	pflag.UintVarP(&o.baseY, "base-y", "", 0, "row position of upper-left corner of plant base pot")
+	pflag.IntVarP(&o.baseX, "base-x", "", 0, "column position of upper-left corner of plant base pot")
+	pflag.IntVarP(&o.baseY, "base-y", "", 0, "row position of upper-left corner of plant base pot")
 	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
-	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
-	pflag.UintVarP(&o.msgX, "message-x", "", 0, "column position of upper-left corner of message text")
-	pflag.UintVarP(&o.msgY, "message-y", "", 0, "row position of upper-left corner of message text")
+	pflag.StringVarP(&o.msg, "message", "m", "", "attach message next to the tree")
+	pflag.IntVarP(&o.msgX, "message-x", "", 0, "column position of upper-left corner of message text")
+	pflag.IntVarP(&o.msgY, "message-y", "", 0, "row position of upper-left corner of message text")
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
 	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
 	seed := pflag.Int64P("seed", "s", 42, "seed random number generator")
-	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
+	help := pflag.BoolP("help", "h", false, "show help")
 	pflag.Parse()
 
-	if o.help {
+	if *help {
 		fmt.Println(pflag.CommandLine.FlagUsages())
 		os.Exit(0)
+	}
+
+	if o.screensaver {
+		o.live = true
+		o.infinite = true
 	}
 
 	switch *pot {
@@ -76,11 +80,6 @@ func options() opts {
 	o.align = align(*alignRaw)
 
 	o.leaves = strings.Split(*leavesRaw, ",")
-
-	if o.screensaver {
-		o.live = true
-		o.infinite = true
-	}
 
 	rand = random.New(random.NewSource(*seed))
 

@@ -49,21 +49,21 @@ func main() {
 				log.Panicln(err.Error())
 			}
 
-			if opts.message != "" {
+			if opts.msg != "" {
 				// upper border
-				sc.x = int(opts.msgX)
-				sc.y = int(opts.msgY)
-				sc.draw("+"+strings.Repeat("-", len(opts.message)+2)+"+", styleGray)
+				sc.x = opts.msgX
+				sc.y = opts.msgY
+				sc.draw("+"+strings.Repeat("-", len(opts.msg)+2)+"+", styleGray)
 				// center with message and front- and back-border
-				sc.x = int(opts.msgX)
-				sc.y = int(opts.msgY) + 1
+				sc.x = opts.msgX
+				sc.y = opts.msgY + 1
 				sc.draw("| ", styleGray)
-				sc.draw(opts.message, styleDefault)
+				sc.draw(opts.msg, styleDefault)
 				sc.draw(" |", styleGray)
 				// lower border
-				sc.x = int(opts.msgX)
-				sc.y = int(opts.msgY) + 2
-				sc.draw("+"+strings.Repeat("-", len(opts.message)+2)+"+", styleGray)
+				sc.x = opts.msgX
+				sc.y = opts.msgY + 2
+				sc.draw("+"+strings.Repeat("-", len(opts.msg)+2)+"+", styleGray)
 			}
 
 			// refresh screen
