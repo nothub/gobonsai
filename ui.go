@@ -29,9 +29,7 @@ func (sc *screen) draw(text string, style tcell.Style) {
 }
 
 func (sc *screen) put(r rune, style tcell.Style) {
-	if shutdown {
-		// do not draw while shutdown to avoid
-		// a data race with screen.Fini()
+	if !shouldPrint {
 		return
 	}
 

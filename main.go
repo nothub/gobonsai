@@ -11,7 +11,8 @@ import (
 )
 
 var rand *random.Rand
-var shutdown = false
+var shutdown = make(chan bool)
+var shouldPrint = true
 
 func main() {
 	opts := options()
@@ -63,7 +64,9 @@ func main() {
 			evDrawn(sc)
 
 			if !opts.infinite {
-				evQuit(sc)
+				// not in infinite (regrowing trees) mode
+				// so we just wait here for the shutdown
+				<-shutdown
 				break
 			}
 
@@ -99,7 +102,13 @@ func main() {
 			sc.Show()
 
 		case *eventQuit:
-			shutdown = true
+			// stop drawing while shutdown to
+			// avoid a data race with screen.Fini()
+			shouldPrint = false
+
+			// signal shutdown to main loop
+			shutdown <- true
+
 			// we can just exit here, the shutdown hook will clean up the terminal
 			return
 		}
