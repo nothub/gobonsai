@@ -79,10 +79,18 @@ func main() {
 			sc.Sync()
 
 		case *tcell.EventKey:
-			if opts.screensaver ||
-				ev.Key() == tcell.KeyEscape ||
-				ev.Key() == tcell.KeyCtrlC ||
-				ev.Key() == tcell.KeyCtrlD {
+			if opts.screensaver {
+				evQuit(sc)
+				break
+			}
+			switch ev.Key() {
+			case tcell.KeyEscape:
+				evQuit(sc)
+			case tcell.KeyCtrlC:
+				// SIGINT
+				evQuit(sc)
+			case tcell.KeyCtrlD:
+				// SIGQUIT
 				evQuit(sc)
 			}
 
