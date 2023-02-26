@@ -39,14 +39,12 @@ func options() opts {
 	pflag.BoolVarP(&o.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
-	// -m
-	// -tx
-	// -ty
+	// -tx, --textX=INT  Col pos of upper-left corner of message text
+	// -ty, --textY=INT  Row pos of upper-left corner of message text
 	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
-	// -bx
-	// -by
+	// -bx, --baseX=INT  Col pos of upper-left corner of plant base
+	// -by, --baseY=INT  Row pos of upper-left corner of plant base
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
-	// -a
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
@@ -54,14 +52,8 @@ func options() opts {
 	seed := pflag.Int64P("seed", "s", 42, "seed random number generator")
 	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
 	/* TODO: https://gitlab.com/jallbrit/cbonsai/-/merge_requests/16
-
-	   	          TODO: read message from -m and stdin
-	   	          -tx, --textX=INT  Col pos of upper-left corner of message text
-	   	          -ty, --textY=INT  Row pos of upper-left corner of message text
-
-	   	          TODO: make -a be a shortcut for setting relative values for -y
-	   	          -bx, --baseX=INT  Col pos of upper-left corner of plant base
-	              -by, --baseY=INT  Row pos of upper-left corner of plant base
+	   TODO: read message from -m and stdin
+	   TODO: make -a be a shortcut for setting relative values for -y
 	*/
 	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
 	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
