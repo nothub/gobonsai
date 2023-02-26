@@ -20,6 +20,7 @@ func main() {
 	quit := func() {
 		var out strings.Builder
 		if opts.print {
+			// TODO: retain colors when printing
 			w, h := sc.Size()
 			for y := 0; y < h; y++ {
 				for x := 0; x < w; x++ {
