@@ -35,7 +35,6 @@ type opts struct {
 
 func options() opts {
 	pflag.CommandLine.SortFlags = false
-	// TODO: sort flags
 
 	var o opts
 	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
