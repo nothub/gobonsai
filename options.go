@@ -18,12 +18,16 @@ type opts struct {
 	infinite    bool
 	wait        time.Duration
 	screensaver bool
-	message     string
+	message     string // TODO: when not set by flag, try to read from stdin
 	pot         Pot
 	leaves      []string
 	multiplier  int
 	life        int
 	align       align
+	baseX       uint
+	baseY       uint
+	msgX        uint
+	msgY        uint
 	print       bool
 	noColor     bool
 	help        bool
@@ -39,11 +43,13 @@ func options() opts {
 	pflag.BoolVarP(&o.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
-	// -tx, --textX=INT  Col pos of upper-left corner of message text
-	// -ty, --textY=INT  Row pos of upper-left corner of message text
 	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
-	// -bx, --baseX=INT  Col pos of upper-left corner of plant base
-	// -by, --baseY=INT  Row pos of upper-left corner of plant base
+	pflag.UintVarP(&o.baseX, "base-x", "", 0, "column position of upper-left corner of plant base pot")
+	pflag.UintVarP(&o.baseY, "base-y", "", 0, "row position of upper-left corner of plant base pot")
+	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
+	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
+	pflag.UintVarP(&o.msgX, "message-x", "", 0, "column position of upper-left corner of message text")
+	pflag.UintVarP(&o.msgY, "message-y", "", 0, "row position of upper-left corner of message text")
 	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
@@ -51,12 +57,6 @@ func options() opts {
 	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
 	seed := pflag.Int64P("seed", "s", 42, "seed random number generator")
 	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
-	/* TODO: https://gitlab.com/jallbrit/cbonsai/-/merge_requests/16
-	   TODO: read message from -m and stdin
-	   TODO: make -a be a shortcut for setting relative values for -y
-	*/
-	pflag.StringVarP(&o.message, "message", "m", "", "attach message next to the tree")
-	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
 	pflag.Parse()
 
 	if o.help {
@@ -73,6 +73,7 @@ func options() opts {
 		log.Panicln("unknown pot type", strconv.Itoa(*pot))
 	}
 
+	// TODO: use align to set base-x and base-y values relative to window-size
 	o.align = align(*alignRaw)
 
 	o.leaves = strings.Split(*leavesRaw, ",")
