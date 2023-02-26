@@ -25,6 +25,7 @@ type opts struct {
 	life        int
 	align       align
 	print       bool
+	noColor     bool
 	help        bool
 }
 
@@ -49,6 +50,7 @@ func options() opts {
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print tree to stdout on exit")
+	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
 	seed := pflag.Int64P("seed", "s", 42, "seed random number generator")
 	pflag.BoolVarP(&o.help, "help", "h", false, "show help")
 	/* TODO: https://gitlab.com/jallbrit/cbonsai/-/merge_requests/16
