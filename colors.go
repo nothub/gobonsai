@@ -13,6 +13,7 @@ var (
 	styleWhiteBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite).Bold(true)
 	styleBrown     = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94)
 	styleBrownBold = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.Color94).Bold(true)
+	styleGray      = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorGray)
 )
 
 // TODO: check supported number of colors

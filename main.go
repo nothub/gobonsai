@@ -49,8 +49,22 @@ func main() {
 				log.Panicln(err.Error())
 			}
 
-			// TODO: draw message
-			// -m, --message=STR  Attach message next to the tree
+			if opts.message != "" {
+				// upper border
+				sc.x = int(opts.msgX)
+				sc.y = int(opts.msgY)
+				sc.draw("+"+strings.Repeat("-", len(opts.message)+2)+"+", styleGray)
+				// center with message and front- and back-border
+				sc.x = int(opts.msgX)
+				sc.y = int(opts.msgY) + 1
+				sc.draw("| ", styleGray)
+				sc.draw(opts.message, styleDefault)
+				sc.draw(" |", styleGray)
+				// lower border
+				sc.x = int(opts.msgX)
+				sc.y = int(opts.msgY) + 2
+				sc.draw("+"+strings.Repeat("-", len(opts.message)+2)+"+", styleGray)
+			}
 
 			// refresh screen
 			evDrawn(sc)
