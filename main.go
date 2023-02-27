@@ -54,20 +54,7 @@ func main() {
 			}
 
 			if opts.msg != "" {
-				// upper border
-				sc.x = opts.msgX
-				sc.y = opts.msgY
-				sc.draw("+"+strings.Repeat("-", len(opts.msg)+2)+"+", styleGray)
-				// center with message and front- and back-border
-				sc.x = opts.msgX
-				sc.y = opts.msgY + 1
-				sc.draw("| ", styleGray)
-				sc.draw(opts.msg, styleDefault)
-				sc.draw(" |", styleGray)
-				// lower border
-				sc.x = opts.msgX
-				sc.y = opts.msgY + 2
-				sc.draw("+"+strings.Repeat("-", len(opts.msg)+2)+"+", styleGray)
+				sc.drawMessage(opts.msg, opts.msgX, opts.msgY)
 			}
 
 			// refresh screen

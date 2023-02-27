@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
@@ -26,6 +27,23 @@ func (sc *screen) draw(text string, style tcell.Style) {
 
 		sc.put(r, style)
 	}
+}
+
+func (sc *screen) drawMessage(msg string, x int, y int) {
+	// upper border
+	sc.x = x
+	sc.y = y
+	sc.draw("+"+strings.Repeat("-", len(msg)+2)+"+", styleGray)
+	// center with message and front- and back-border
+	sc.x = x
+	sc.y = y + 1
+	sc.draw("| ", styleGray)
+	sc.draw(msg, styleDefault)
+	sc.draw(" |", styleGray)
+	// lower border
+	sc.x = x
+	sc.y = y + 2
+	sc.draw("+"+strings.Repeat("-", len(msg)+2)+"+", styleGray)
 }
 
 func (sc *screen) put(r rune, style tcell.Style) {
