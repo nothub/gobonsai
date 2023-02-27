@@ -42,9 +42,12 @@ func options() opts {
 	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
 	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
-	pflag.IntVarP(&o.baseX, "base-x", "", -1, "column position of upper-left corner of plant base pot")
-	pflag.IntVarP(&o.baseY, "base-y", "", -1, "row position of upper-left corner of plant base pot")
-	alignRaw := pflag.IntP("align", "a", int(center), "align tree: center=0 left=1 right=2")
+	pflag.IntVarP(&o.baseX, "base-x", "", 0, "column position of upper-left corner of plant base pot")
+	pflag.IntVarP(&o.baseY, "base-y", "", 0, "row position of upper-left corner of plant base pot")
+	alignRaw := pflag.IntP("align", "a", int(center), "align tree: "+
+		"center="+strconv.Itoa(int(center))+" "+
+		"left="+strconv.Itoa(int(left))+" "+
+		"right="+strconv.Itoa(int(right)))
 	pflag.StringVarP(&o.msg, "message", "m", "", "attach message next to the tree")
 	pflag.IntVarP(&o.msgX, "message-x", "", 4, "column position of upper-left corner of message text")
 	pflag.IntVarP(&o.msgY, "message-y", "", 2, "row position of upper-left corner of message text")
@@ -58,7 +61,9 @@ func options() opts {
 	pflag.Parse()
 
 	if *help {
-		fmt.Println(pflag.CommandLine.FlagUsages())
+		fmt.Println("A bonsai tree generator")
+		fmt.Println("\nUsage:\n  gobonsai [flags]")
+		fmt.Printf("\nFlags:\n%s\n", pflag.CommandLine.FlagUsages())
 		os.Exit(0)
 	}
 

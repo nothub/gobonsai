@@ -5,7 +5,7 @@ import "time"
 type align int
 
 const (
-	center align = iota
+	center align = iota + 1
 	left
 	right
 )
