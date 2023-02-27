@@ -33,6 +33,11 @@ func main() {
 
 	go func() {
 		for {
+			if !active {
+				<-shutdown
+				break
+			}
+
 			sc.Clear()
 
 			// draw pot and set cursor to tree start pos
