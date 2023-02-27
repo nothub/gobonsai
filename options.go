@@ -53,7 +53,7 @@ func options() opts {
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
 	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
-	seed := pflag.Int64P("seed", "s", 42, "seed random number generator")
+	seed := pflag.Int64P("seed", "s", 0, "seed random number generator (default random)")
 	help := pflag.BoolP("help", "h", false, "show help")
 	pflag.Parse()
 
@@ -81,6 +81,9 @@ func options() opts {
 
 	o.leaves = strings.Split(*leavesRaw, ",")
 
+	if *seed == 0 {
+		*seed = time.Now().UnixNano()
+	}
 	rand = random.New(random.NewSource(*seed))
 
 	return o
