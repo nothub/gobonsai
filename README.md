@@ -38,7 +38,7 @@ Flags:
 
 ---
 
-[gobonsai](](https://gitlab.com/nothub/gobonsai)) is a port of [cbonsai](https://gitlab.com/jallbrit/cbonsai)
+[gobonsai](https://github.com/nothub/gobonsai) is a port of [cbonsai](https://gitlab.com/jallbrit/cbonsai)
 (which was written in `C` and was itself a port of [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh)
 (which was written in `bash` and was itself a port of [bonsai](https://avelican.github.io/bonsai/)
 (which was written in `javascript`))).
