@@ -12,7 +12,7 @@ import (
 
 var rand *random.Rand
 var shutdown = make(chan bool)
-var shouldPrint = true
+var active = true // TODO: get rid of this to avoid race conditions
 
 func main() {
 	opts := options()
@@ -105,13 +105,19 @@ func main() {
 
 			if !opts.infinite {
 				// not in infinite (regrowing trees) mode
-				// so we just wait here for the shutdown
+				// so we just block here until shutdown
 				<-shutdown
 				break
 			}
 
-			// chill out a bit
-			time.Sleep(opts.wait)
+			switch {
+			case <-shutdown:
+				// break loop when supposed to shutdown
+				break
+			default:
+				// chill out a bit
+				time.Sleep(opts.wait)
+			}
 		}
 	}()
 
@@ -142,9 +148,7 @@ func main() {
 			sc.Show()
 
 		case *eventQuit:
-			// stop drawing while shutdown to
-			// avoid a data race with screen.Fini()
-			shouldPrint = false
+			active = false
 
 			// signal shutdown to main loop
 			shutdown <- true

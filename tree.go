@@ -122,7 +122,7 @@ func drawBranch(sc *screen, opts opts, counters counters, life int, kind branch,
 		sc.y = y
 		sc.draw(leaf, color)
 
-		if opts.live {
+		if opts.live && active {
 			evDrawn(sc)
 			time.Sleep(opts.time)
 		}
