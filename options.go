@@ -37,9 +37,9 @@ func options() opts {
 
 	var o opts
 	pflag.BoolVarP(&o.live, "live", "l", false, "live mode: show each step of growth")
-	pflag.DurationVarP(&o.time, "time", "t", 33*time.Millisecond, "in live mode, wait TIME between steps of growth")
+	pflag.DurationVarP(&o.time, "time", "t", 33*time.Millisecond, "in live mode, delay between steps of growth")
 	pflag.BoolVarP(&o.infinite, "infinite", "i", false, "infinite mode: keep growing trees")
-	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, wait TIME between each tree generation")
+	pflag.DurationVarP(&o.wait, "wait", "w", 4*time.Second, "in infinite mode, delay between each tree")
 	pflag.BoolVarP(&o.screensaver, "screensaver", "S", false, "screensaver mode: equivalent to -li and quit on any keypress")
 	pot := pflag.IntP("base", "b", 1, "base pot: big=1 small=2")
 	pflag.IntVarP(&o.baseX, "base-x", "", 0, "column position of upper-left corner of plant base pot")
@@ -48,12 +48,12 @@ func options() opts {
 		"center="+strconv.Itoa(int(center))+" "+
 		"left="+strconv.Itoa(int(left))+" "+
 		"right="+strconv.Itoa(int(right)))
-	pflag.StringVarP(&o.msg, "message", "m", "", "attach message next to the tree")
-	pflag.IntVarP(&o.msgX, "message-x", "", 4, "column position of upper-left corner of message text")
-	pflag.IntVarP(&o.msgY, "message-y", "", 2, "row position of upper-left corner of message text")
-	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited strings randomly chosen for leaves")
+	pflag.StringVarP(&o.msg, "msg", "m", "", "attach message next to the tree")
+	pflag.IntVarP(&o.msgX, "msg-x", "", 4, "column position of upper-left corner of message text")
+	pflag.IntVarP(&o.msgY, "msg-y", "", 2, "row position of upper-left corner of message text")
+	leavesRaw := pflag.StringP("leaves", "c", "&", "list of comma-delimited leaves")
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
-	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-200)")
+	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-127)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
 	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
 	seed := pflag.Int64P("seed", "s", 0, "seed random number generator (default random)")
@@ -62,7 +62,13 @@ func options() opts {
 
 	if *help {
 		fmt.Println("A bonsai tree generator")
-		fmt.Println("\nUsage:\n  gobonsai [flags]")
+		fmt.Println("\nUsage:\n" +
+			"  gobonsai [flags]")
+		fmt.Println("\nExamples:\n" +
+			"  gobonsai -S\n" +
+			"  gobonsai -p --seed 42\n" +
+			"  gobonsai --msg \"hi\" --msg-y 20\n" +
+			"  gobonsai -l -w 1s -L 48 -M 3")
 		fmt.Printf("\nFlags:\n%s\n", pflag.CommandLine.FlagUsages())
 		os.Exit(0)
 	}
