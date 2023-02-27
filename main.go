@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"log"
 	random "math/rand"
 	"strings"
 	"time"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 var rand *random.Rand
@@ -108,19 +107,16 @@ func main() {
 				break
 			}
 
-			if !opts.infinite {
-				// not in infinite (regrowing trees) mode
-				// so we just block here until shutdown
-				<-shutdown
-				break
-			}
-
-			switch {
+			select {
 			case <-shutdown:
-				// break loop when supposed to shutdown
+				// break when shutting down
 				break
 			default:
+			}
+
+			if opts.infinite {
 				// chill out a bit
+				// TODO: make delay sleep cancelable
 				time.Sleep(opts.wait)
 			}
 		}
