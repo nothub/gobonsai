@@ -84,20 +84,22 @@ func main() {
 					}
 				}
 
-				// store output for printing later when screen cleanup is done
+				// Store the tree for printing later,
+				// when screen cleanup is finished.
 				out = strings.Join(trimmed, "\n")
 
-				// send quit event
+				// Send the quit event,
 				evQuit(sc)
-				// wait for shutdown signal
+				// then wait for shutdown.
 				<-shutdown
 				break
 			}
 
 			if opts.infinite {
+				// When in infinite mode, we either
+				// await the delay or wait for shutdown.
 				select {
 				case <-shutdown:
-					// break when shutting down
 					break
 				case <-time.After(opts.wait):
 				}
