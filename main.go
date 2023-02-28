@@ -94,17 +94,17 @@ func main() {
 				break
 			}
 
-			select {
-			case <-shutdown:
-				// break when shutting down
-				break
-			default:
-			}
-
 			if opts.infinite {
-				// chill out a bit
-				// TODO: make delay sleep cancelable
-				time.Sleep(opts.wait)
+				select {
+				case <-shutdown:
+					// break when shutting down
+					break
+				case <-time.After(opts.wait):
+				}
+			} else {
+				// When not in infinite mode, we just
+				// draw 1 tree and wait for shutdown.
+				<-shutdown
 			}
 		}
 	}()
