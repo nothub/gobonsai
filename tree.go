@@ -124,7 +124,12 @@ func drawBranch(sc *screen, opts opts, counters counters, life int, kind branch,
 
 		if opts.live && active {
 			evDrawn(sc)
-			time.Sleep(opts.time)
+			// We either await the delay or wait for shutdown.
+			select {
+			case <-shutdown:
+				return nil
+			case <-time.After(opts.time):
+			}
 		}
 	}
 

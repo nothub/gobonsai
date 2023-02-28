@@ -88,11 +88,10 @@ func main() {
 			}
 
 			if opts.infinite {
-				// When in infinite mode, we either
-				// await the delay or wait for shutdown.
+				// We either await the delay or wait for shutdown.
 				select {
 				case <-shutdown:
-					break
+					return
 				case <-time.After(opts.wait):
 				}
 			} else {
