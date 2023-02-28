@@ -68,7 +68,6 @@ func main() {
 				for y := 0; y < h; y++ {
 					var sb strings.Builder
 					for x := 0; x < w; x++ {
-						// TODO: retain colors when printing
 						r, _, _, _ := sc.GetContent(x, y)
 						sb.WriteRune(r)
 					}

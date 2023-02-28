@@ -29,7 +29,6 @@ type opts struct {
 	multiplier  int
 	life        int
 	print       bool
-	noColor     bool
 }
 
 func options() opts {
@@ -55,7 +54,6 @@ func options() opts {
 	pflag.IntVarP(&o.multiplier, "multiplier", "M", 5, "branch multiplier higher -> more branching (0-20)")
 	pflag.IntVarP(&o.life, "life", "L", 32, "life higher -> more growth (0-127)")
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
-	pflag.BoolVarP(&o.noColor, "no-color", "n", false, "disable all colors")
 	seed := pflag.Int64P("seed", "s", 0, "seed random number generator (default random)")
 	help := pflag.BoolP("help", "h", false, "show help")
 	pflag.Parse()
