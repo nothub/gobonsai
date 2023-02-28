@@ -61,32 +61,24 @@ func main() {
 			evDrawn(sc)
 
 			if opts.print {
-				// TODO: retain colors when printing
-
-				// convert screen content to string
-				var sb strings.Builder
+				// Store the tree for printing later,
+				// when screen cleanup is finished.
+				var tree []string
 				w, h := sc.Size()
 				for y := 0; y < h; y++ {
+					var sb strings.Builder
 					for x := 0; x < w; x++ {
+						// TODO: retain colors when printing
 						r, _, _, _ := sc.GetContent(x, y)
 						sb.WriteRune(r)
 					}
-				}
-
-				// trim empty space above tree
-				// TODO: fix tree space trimming on print
-				var trimmed []string
-				split := strings.Split(sb.String(), "\n")
-				for _, s := range split {
-					t := strings.TrimSpace(s)
-					if t != "" {
-						trimmed = append(trimmed, s)
+					s := sb.String()
+					// Ignore empty space above tree.
+					if strings.TrimSpace(s) != "" {
+						tree = append(tree, s)
 					}
 				}
-
-				// Store the tree for printing later,
-				// when screen cleanup is finished.
-				out = strings.Join(trimmed, "\n")
+				out = strings.Join(tree, "\n")
 
 				// Send the quit event,
 				evQuit(sc)
