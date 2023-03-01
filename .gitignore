@@ -7,6 +7,7 @@
 !/.gitignore
 
 !/Makefile
+!/debs.sh
 
 !/go.mod
 !/go.sum
