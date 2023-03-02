@@ -1,5 +1,7 @@
 MOD_NAME = $(shell go list -m)
 BIN_NAME = $(shell basename $(MOD_NAME))
+VERSION  = $(shell tag="$(git describe --tags --abbrev=0 --match v[0-9]* 2> /dev/null || echo "v0.1.0-indev")"; echo "${tag#v}")
+LDFLAGS  = -ldflags="-X '$(MOD_NAME)/version=$(VERSION)'"
 
 out/$(BIN_NAME): $(shell ls go.mod go.sum *.go)
 	go build -race -o out/$(BIN_NAME)
@@ -11,10 +13,15 @@ release: clean
 	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)-darwin
 	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)-darwin-arm64
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)-windows.exe
-	./debs.sh
+	./debs.sh $(VERSION)
 
 .PHONY: clean
 clean:
 	go clean
 	go mod tidy
 	rm -rf out
+
+.PHONY: check
+check:
+	go vet
+	go test -v -parallel $(shell grep -c -E "^processor.*[0-9]+" "/proc/cpuinfo") $(MOD_NAME)/...

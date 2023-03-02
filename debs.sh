@@ -26,12 +26,5 @@ EOF
     dpkg-deb --root-owner-group --verbose --build "${workdir}" "out/gobonsai_${1}_${2}.deb"
 }
 
-version=$(git describe --tags --abbrev=0 --match v[0-9]* 2>/dev/null || true)
-if [[ -z ${version} ]]; then
-    echo >&2 "git version tag missing"
-    exit 1
-fi
-version="${version#v}"
-
-build "${version}" "amd64"
-build "${version}" "arm64"
+build "${1}" "amd64"
+build "${1}" "arm64"
