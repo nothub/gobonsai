@@ -67,7 +67,7 @@ func options() opts {
 			"  gobonsai -l -L 48 -M 3\n" +
 			"  gobonsai --msg \"hi\" --msg-y 20\n" +
 			"  gobonsai -S -c \"&,@,§,$,%,☘️,🌿,🍎,💚,🟢,🟩\"")
-		fmt.Printf("\nFlags:\n%s\n", pflag.CommandLine.FlagUsages())
+		fmt.Printf("\nFlags:\n%s", pflag.CommandLine.FlagUsages())
 		os.Exit(0)
 	}
 
