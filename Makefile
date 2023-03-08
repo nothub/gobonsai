@@ -13,11 +13,11 @@ release: clean
 	$(info release builds of $(VERSION))
 	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_linux-amd64
 	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_linux-arm64
+	./deb.sh $(VERSION) amd64
+	./deb.sh $(VERSION) arm64
 	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_darwin-amd64
 	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_darwin-arm64
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_windows-amd64.exe
-	./build-debs.sh $(VERSION) amd64
-	./build-debs.sh $(VERSION) arm64
 
 .PHONY: clean
 clean:
