@@ -53,11 +53,12 @@ func main() {
 				log.Panicln(err.Error())
 			}
 
+			// draw message box
 			if opts.msg != "" {
 				sc.drawMessage(opts.msg, opts.msgX, opts.msgY)
 			}
 
-			// refresh screen
+			// emit drawn event to trigger screen refresh
 			evDrawn(sc)
 
 			if opts.print {

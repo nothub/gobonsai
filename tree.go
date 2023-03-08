@@ -123,7 +123,14 @@ func drawBranch(sc *screen, opts opts, counters counters, life int, kind branch,
 		sc.draw(leaf, color)
 
 		if opts.live && active {
+			// draw message box in every live iteration
+			if opts.msg != "" {
+				sc.drawMessage(opts.msg, opts.msgX, opts.msgY)
+			}
+
+			// emit drawn event to trigger screen refresh
 			evDrawn(sc)
+
 			// We either await the delay or wait for shutdown.
 			select {
 			case <-shutdown:
