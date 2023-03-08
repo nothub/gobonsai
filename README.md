@@ -2,7 +2,11 @@
 
 A bonsai tree generator ([cbonsai](https://gitlab.com/jallbrit/cbonsai) ported to go)
 
-[![asciinema](https://i.imgur.com/NPYjcwG.png)](https://asciinema.org/a/V6Di0zHxIKxU8T43fFSrMUSBj)
+<p align="center">
+    <a href="https://asciinema.org/a/V6Di0zHxIKxU8T43fFSrMUSBj">
+        <img alt="screenshot" src="https://user-images.githubusercontent.com/48992448/223872544-47b4255c-79d3-4352-9cac-4ac677aed013.png">
+    </a>
+</p>
 
 ---
 
