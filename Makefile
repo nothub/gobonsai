@@ -5,17 +5,19 @@ VERSION  = $(GIT_TAG:v%=%)
 LDFLAGS  = -ldflags="-X '$(MOD_NAME)/version=$(VERSION)'"
 
 out/$(BIN_NAME): $(shell ls go.mod go.sum *.go)
-	$(info dev build $(MOD_NAME) $(BIN_NAME) $(GIT_TAG) $(VERSION))
+	$(info dev build of $(VERSION))
 	go build $(LDFLAGS) -race -o out/$(BIN_NAME)
 
 .PHONY: release
 release: clean
-	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)-linux
-	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)-linux-arm64
-	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)-darwin
-	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)-darwin-arm64
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)-windows.exe
-	./debs.sh $(VERSION)
+	$(info release builds of $(VERSION))
+	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_linux-amd64
+	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_linux-arm64
+	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_darwin-amd64
+	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_darwin-arm64
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o out/$(BIN_NAME)_$(VERSION)_windows-amd64.exe
+	./build-debs.sh $(VERSION) amd64
+	./build-debs.sh $(VERSION) arm64
 
 .PHONY: clean
 clean:
