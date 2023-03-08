@@ -1,10 +1,12 @@
 MOD_NAME = $(shell go list -m)
 BIN_NAME = $(shell basename $(MOD_NAME))
-VERSION  = $(shell tag="$(git describe --tags --abbrev=0 --match v[0-9]* 2> /dev/null || echo "v0.1.0-indev")"; echo "${tag#v}")
+GIT_TAG  = $(shell git describe --tags --abbrev=0 --dirty --match v[0-9]* 2> /dev/null || echo "v0.0.0-indev")
+VERSION  = $(GIT_TAG:v%=%)
 LDFLAGS  = -ldflags="-X '$(MOD_NAME)/version=$(VERSION)'"
 
 out/$(BIN_NAME): $(shell ls go.mod go.sum *.go)
-	go build -race -o out/$(BIN_NAME)
+	$(info dev build $(MOD_NAME) $(BIN_NAME) $(GIT_TAG) $(VERSION))
+	go build $(LDFLAGS) -race -o out/$(BIN_NAME)
 
 .PHONY: release
 release: clean
