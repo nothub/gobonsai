@@ -21,7 +21,6 @@ func (sc *screen) draw(text string, style tcell.Style) {
 
 		// skip oob writes
 		if sc.x+rw >= w || sc.y >= h {
-			// TODO: error handling required?
 			continue
 		}
 
