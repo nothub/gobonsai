@@ -1,6 +1,6 @@
 MOD_NAME = $(shell go list -m)
 BIN_NAME = $(shell basename $(MOD_NAME))
-GIT_TAG  = $(shell git describe --tags --abbrev=0 --dirty --match v[0-9]* 2> /dev/null || echo "v0.0.0-indev")
+GIT_TAG  = $(shell git describe --tags --dirty --match v[0-9]* 2> /dev/null || echo "v0.0.0-indev")
 VERSION  = $(GIT_TAG:v%=%)
 GOFLAGS  = -tags osusergo,netgo
 LDFLAGS  = -ldflags="-w -extldflags=-static -X '$(MOD_NAME)/version=$(VERSION)'"
