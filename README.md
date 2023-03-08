@@ -1,6 +1,8 @@
 # gobonsai
 
-A bonsai tree generator, written in using [tcell](https://github.com/gdamore/tcell).
+A bonsai tree generator ([cbonsai](https://gitlab.com/jallbrit/cbonsai) ported to go)
+
+[![asciinema](https://i.imgur.com/NPYjcwG.png)](https://asciinema.org/a/V6Di0zHxIKxU8T43fFSrMUSBj)
 
 ---
 
@@ -10,7 +12,7 @@ Usage:
 
 Examples:
   gobonsai -p --seed 42
-  gobonsai -l -w 1s -L 48 -M 3
+  gobonsai -l -L 48 -M 3
   gobonsai --msg "hi" --msg-y 20
   gobonsai -S -c "&,@,§,$,%,☘️,🌿,🍎,💚,🟢,🟩"
 
@@ -31,14 +33,13 @@ Flags:
   -M, --multiplier int   branch multiplier higher -> more branching (0-20) (default 5)
   -L, --life int         life higher -> more growth (0-127) (default 32)
   -p, --print            print first tree to stdout and exit immediately
-  -n, --no-color         disable all colors
   -s, --seed int         seed random number generator (default random)
   -h, --help             show help
 ```
 
 ---
 
-[gobonsai](https://github.com/nothub/gobonsai) is a port of [cbonsai](https://gitlab.com/jallbrit/cbonsai)
-(which was written in `C` and was itself a port of [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh)
-(which was written in `bash` and was itself a port of [bonsai](https://avelican.github.io/bonsai/)
-(which was written in `javascript`))).
+[gobonsai](https://github.com/nothub/gobonsai) is a `go` port of  
+[cbonsai](https://gitlab.com/jallbrit/cbonsai) (written in `C` and itself a port of  
+[bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh) (written in `bash` and itself a port of  
+[bonsai](https://avelican.github.io/bonsai/) (written in `javascript`))).
