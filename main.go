@@ -39,8 +39,28 @@ func main() {
 
 			sc.Clear()
 
-			// -a --align=INT  Align tree: center=0 left=1 right=2
+			// default center position
 			px, py := opts.pot.ulPos(sc)
+
+			// align by moving 1/4 screen size
+			switch opts.align {
+			case left:
+				sw, _ := sc.Size()
+				px = px - (sw / 4)
+			case right:
+				sw, _ := sc.Size()
+				px = px + (sw / 4)
+			}
+
+			// user defined position overrides
+			if opts.baseX != 0 {
+				px = opts.baseX
+			}
+			if opts.baseY != 0 {
+				py = opts.baseY
+			}
+
+			// draw pot
 			opts.pot.draw(sc, px, py)
 
 			// draw from pot upwards

@@ -85,7 +85,6 @@ func options() opts {
 		log.Panicln("unknown pot type", strconv.Itoa(*pot))
 	}
 
-	// TODO: use align to set base-x and base-y values relative to window-size
 	o.align = align(*alignRaw)
 
 	o.leaves = strings.Split(*leavesRaw, ",")
