@@ -39,9 +39,9 @@ func main() {
 
 			sc.Clear()
 
-			// TODO: separate base position search and pot drawing
 			// -a --align=INT  Align tree: center=0 left=1 right=2
-			opts.pot.draw(sc)
+			px, py := opts.pot.ulPos(sc)
+			opts.pot.draw(sc, px, py)
 
 			// draw from pot upwards
 			err := drawTree(sc, opts)

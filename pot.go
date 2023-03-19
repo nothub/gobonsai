@@ -10,10 +10,16 @@ type Pot struct {
 	d func(sc *screen, px int, py int)
 }
 
-// draw pot and set cursor to tree start pos
-func (p Pot) draw(sc *screen) {
-	px, py := potPos(sc, p.w, p.h)
+// upper left corner of pot on screen
+func (p Pot) ulPos(sc *screen) (x int, y int) {
+	vw, vh := sc.Size()
+	x = (vw / 2) - (p.w / 2)
+	y = vh - p.h
+	return x, y
+}
 
+// draw pot and set cursor to tree start pos
+func (p Pot) draw(sc *screen, px int, py int) {
 	sc.x = px
 	sc.y = py
 
@@ -61,11 +67,4 @@ var smallPot = Pot{
 		sc.y = py + 2
 		sc.draw("  (_________)  ", tcell.StyleDefault)
 	},
-}
-
-func potPos(sc *screen, pw int, ph int) (x int, y int) {
-	vw, vh := sc.Size()
-	x = (vw / 2) - (pw / 2)
-	y = vh - ph
-	return x, y
 }
