@@ -39,16 +39,12 @@ func main() {
 
 			sc.Clear()
 
-			// draw pot and set cursor to tree start pos
 			// TODO: separate base position search and pot drawing
 			// -a --align=INT  Align tree: center=0 left=1 right=2
-			err := opts.pot(sc)
-			if err != nil {
-				log.Panicln(err.Error())
-			}
+			opts.pot.draw(sc)
 
 			// draw from pot upwards
-			err = drawTree(sc, opts)
+			err := drawTree(sc, opts)
 			if err != nil {
 				log.Panicln(err.Error())
 			}

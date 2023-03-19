@@ -4,62 +4,63 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// TODO: generalize the pot func and use type for sizes struct
-type Pot func(sc *screen) error
-
-var bigPot = func(sc *screen) error {
-	pw, ph := 31, 4
-	px, py := potPos(sc, pw, ph)
-
-	sc.x = px
-	sc.y = py
-
-	sc.draw(":", styleWhiteBold)
-	sc.draw("___________", styleGreenBold)
-	sc.draw("./~~~\\.", styleBrown)
-	sc.draw("___________", styleGreenBold)
-	sc.draw(":", styleWhiteBold)
-	sc.x = px
-	sc.y = py + 1
-	sc.draw(" \\                           / ", styleDefault)
-	sc.x = px
-	sc.y = py + 2
-	sc.draw("  \\_________________________/ ", styleDefault)
-	sc.x = px
-	sc.y = py + 3
-	sc.draw("  (_)                     (_)", styleDefault)
-
-	// tree grows from here upwards
-	sc.x = px + (pw / 2)
-	sc.y = py - 1
-
-	return nil
+type Pot struct {
+	w int
+	h int
+	d func(sc *screen, px int, py int)
 }
 
-var smallPot = func(sc *screen) error {
-	pw, ph := 15, 3
-	px, py := potPos(sc, pw, ph)
+// draw pot and set cursor to tree start pos
+func (p Pot) draw(sc *screen) {
+	px, py := potPos(sc, p.w, p.h)
 
 	sc.x = px
 	sc.y = py
 
-	sc.draw("(", styleWhiteBold)
-	sc.draw("---", styleGreenBold)
-	sc.draw("./~~~\\.", styleBrown)
-	sc.draw("---", styleGreenBold)
-	sc.draw(")", styleWhiteBold)
-	sc.x = px
-	sc.y = py + 1
-	sc.draw(" (           ) ", tcell.StyleDefault)
-	sc.x = px
-	sc.y = py + 2
-	sc.draw("  (_________)  ", tcell.StyleDefault)
+	p.d(sc, px, py)
 
 	// tree grows from here upwards
-	sc.x = px + (pw / 2)
+	sc.x = px + (p.w / 2)
 	sc.y = py - 1
+}
 
-	return nil
+var bigPot = Pot{
+	w: 31,
+	h: 4,
+	d: func(sc *screen, px int, py int) {
+		sc.draw(":", styleWhiteBold)
+		sc.draw("___________", styleGreenBold)
+		sc.draw("./~~~\\.", styleBrown)
+		sc.draw("___________", styleGreenBold)
+		sc.draw(":", styleWhiteBold)
+		sc.x = px
+		sc.y = py + 1
+		sc.draw(" \\                           / ", styleDefault)
+		sc.x = px
+		sc.y = py + 2
+		sc.draw("  \\_________________________/ ", styleDefault)
+		sc.x = px
+		sc.y = py + 3
+		sc.draw("  (_)                     (_)", styleDefault)
+	},
+}
+
+var smallPot = Pot{
+	w: 15,
+	h: 3,
+	d: func(sc *screen, px int, py int) {
+		sc.draw("(", styleWhiteBold)
+		sc.draw("---", styleGreenBold)
+		sc.draw("./~~~\\.", styleBrown)
+		sc.draw("---", styleGreenBold)
+		sc.draw(")", styleWhiteBold)
+		sc.x = px
+		sc.y = py + 1
+		sc.draw(" (           ) ", tcell.StyleDefault)
+		sc.x = px
+		sc.y = py + 2
+		sc.draw("  (_________)  ", tcell.StyleDefault)
+	},
 }
 
 func potPos(sc *screen, pw int, ph int) (x int, y int) {
