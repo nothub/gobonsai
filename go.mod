@@ -3,7 +3,7 @@ module hub.lol/gobonsai
 go 1.20
 
 require (
-	github.com/gdamore/tcell/v2 v2.7.1
+	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/mattn/go-runewidth v0.0.15
 	github.com/spf13/pflag v1.0.5
 )
