@@ -13,7 +13,7 @@ jobs:
           cache: true
       - run: |
           make release
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           body: 'Built at commit: ${{ github.sha }}'
           files: 'out/*'
