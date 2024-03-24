@@ -39,11 +39,12 @@ Flags:
   -p, --print            print first tree to stdout and exit immediately
   -s, --seed int         seed random number generator (default random)
   -h, --help             show help
+  -V, --version          show version
 ```
 
 ---
 
-[gobonsai](https://github.com/nothub/gobonsai) is a `go` port of  
-[cbonsai](https://gitlab.com/jallbrit/cbonsai) (written in `C` and itself a port of  
-[bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh) (written in `bash` and itself a port of  
+[gobonsai](https://github.com/nothub/gobonsai) is a `go` port of
+[cbonsai](https://gitlab.com/jallbrit/cbonsai) (written in `C` and itself a port of
+[bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh) (written in `bash` and itself a port of
 [bonsai](https://avelican.github.io/bonsai/) (written in `javascript`))).

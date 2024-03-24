@@ -16,7 +16,7 @@ builds:
     ldflags:
       - '-s'
       - '-w'
-      - '-X github.com/nothub/gobonsai/buildinfo.Version={{ .Version }}'
+      - '-X main.Version={{ .Version }}'
     goos:
       - linux
       - darwin

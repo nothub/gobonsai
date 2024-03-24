@@ -56,6 +56,7 @@ func options() opts {
 	pflag.BoolVarP(&o.print, "print", "p", false, "print first tree to stdout and exit immediately")
 	seed := pflag.Int64P("seed", "s", 0, "seed random number generator (default random)")
 	help := pflag.BoolP("help", "h", false, "show help")
+	version := pflag.BoolP("version", "V", false, "show version")
 	pflag.Parse()
 
 	if *help {
@@ -68,6 +69,11 @@ func options() opts {
 			"  gobonsai --msg \"hi\" --msg-y 20\n" +
 			"  gobonsai -S -c \"&,@,§,$,%,☘️,🌿,🍎,💚,🟢,🟩\"")
 		fmt.Printf("\nFlags:\n%s", pflag.CommandLine.FlagUsages())
+		os.Exit(0)
+	}
+
+	if *version {
+		fmt.Printf("Version: %s\n", Version)
 		os.Exit(0)
 	}
 
