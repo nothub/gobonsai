@@ -1,0 +1,80 @@
+# This is a goreleaser config file. Check the docs at https://goreleaser.com
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+project_name: gobonsai
+
+builds:
+  - binary: '{{ .ProjectName }}'
+    env:
+      - CGO_ENABLED=0
+    tags:
+      - osusergo
+      - netgo
+    ldflags:
+      - '-s'
+      - '-w'
+      - '-X github.com/nothub/gobonsai/buildinfo.Version={{ .Version }}'
+    goos:
+      - linux
+      - darwin
+      - windows
+    ignore:
+      - goos: linux
+        goarch: 386
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm64
+    #no_unique_dist_dir: true
+
+upx:
+  - enabled: true
+    goos: [ linux, windows ]
+    compress: best
+    lzma: true
+
+archives:
+  - meta: false
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE.txt
+
+nfpms:
+  - file_name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    maintainer: Florian Hübner <code@hub.lol>
+    description: |-
+      A bonsai tree generator
+    homepage: https://github.com/nothub/gobonsai
+    license: MIT
+    section: games
+    dependencies:
+      - libc6 (>= 2.24)
+    formats:
+      - apk
+      - deb
+      - rpm
+      - archlinux
+    bindir: /usr/local/bin
+    meta: false
+
+changelog:
+  sort: asc
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: nothub
+    name: gobonsai
+  name_template: 'v{{ .Version }}'
+  header: 'Release generated at commit: {{ .ShortCommit }}'
+  draft: true
+  replace_existing_draft: true

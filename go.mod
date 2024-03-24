@@ -1,4 +1,4 @@
-module hub.lol/gobonsai
+module github.com/nothub/gobonsai
 
 go 1.20
 
