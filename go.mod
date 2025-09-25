@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/gdamore/tcell/v2 v2.9.0
-	github.com/mattn/go-runewidth v0.0.16
+	github.com/mattn/go-runewidth v0.0.17
 	github.com/spf13/pflag v1.0.10
 )
 
