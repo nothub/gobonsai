@@ -3,7 +3,7 @@ module github.com/nothub/gobonsai
 go 1.25.1
 
 require (
-	github.com/gdamore/tcell/v2 v2.13.0
+	github.com/gdamore/tcell/v2 v2.13.1
 	github.com/mattn/go-runewidth v0.0.19
 	github.com/spf13/pflag v1.0.10
 )
