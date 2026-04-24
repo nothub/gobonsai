@@ -1,6 +1,6 @@
 module github.com/nothub/gobonsai
 
-go 1.25.1
+go 1.26
 
 require (
 	github.com/gdamore/tcell/v2 v2.13.8
