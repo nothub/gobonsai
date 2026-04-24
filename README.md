@@ -3,9 +3,7 @@
 A bonsai tree generator ([cbonsai](https://gitlab.com/jallbrit/cbonsai) ported to go)
 
 <p align="center">
-    <a href="https://asciinema.org/a/V6Di0zHxIKxU8T43fFSrMUSBj">
-        <img alt="screenshot" src="https://user-images.githubusercontent.com/48992448/223872544-47b4255c-79d3-4352-9cac-4ac677aed013.png">
-    </a>
+    <img alt="screenshot" src="https://codeberg.org/fhuebner/gobonsai/raw/commit/99792bab3fb07ce5c353118d6331f909e7a362fd/preview.gif">
 </p>
 
 ---
