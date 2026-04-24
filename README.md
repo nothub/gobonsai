@@ -2,9 +2,9 @@
 
 A bonsai tree generator ([cbonsai](https://gitlab.com/jallbrit/cbonsai) ported to go)
 
-<p align="center">
-    <img alt="screenshot" src="https://codeberg.org/fhuebner/gobonsai/raw/commit/99792bab3fb07ce5c353118d6331f909e7a362fd/preview.gif">
-</p>
+![screenshot](https://codeberg.org/fhuebner/gobonsai/raw/commit/99792bab3fb07ce5c353118d6331f909e7a362fd/preview.gif)
+
+Feel free to grab a release from [here](https://codeberg.org/fhuebner/gobonsai/releases).
 
 ---
 
