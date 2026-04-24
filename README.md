@@ -44,7 +44,7 @@ Flags:
 
 ---
 
-[gobonsai](https://github.com/nothub/gobonsai) is a `go` port of
+[gobonsai](https://codeberg.org/fhuebner/gobonsai) is a `go` port of
 [cbonsai](https://gitlab.com/jallbrit/cbonsai) (written in `C` and itself a port of
 [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh) (written in `bash` and itself a port of
 [bonsai](https://avelican.github.io/bonsai/) (written in `javascript`))).
