@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: https://github.com/goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
