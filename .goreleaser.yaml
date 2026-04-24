@@ -46,7 +46,7 @@ nfpms:
     maintainer: Florian Hübner <code@hub.lol>
     description: |-
       A bonsai tree generator
-    homepage: https://github.com/nothub/gobonsai
+    homepage: https://codeberg.org/fhuebner/gobonsai
     license: MIT
     section: games
     dependencies:
@@ -67,10 +67,13 @@ checksum:
   algorithm: sha256
 
 release:
-  github:
-    owner: nothub
-    name: gobonsai
   name_template: 'v{{ .Version }}'
   header: 'Release generated at commit: {{ .ShortCommit }}'
   draft: true
-  replace_existing_draft: true
+  gitea:
+    owner: fhuebner
+    name: gobonsai
+
+gitea_urls:
+  api: https://codeberg.org/api/v1
+  download: https://codeberg.org
