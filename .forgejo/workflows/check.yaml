@@ -7,7 +7,7 @@ on:
 
 jobs:
   check:
-    runs-on: codeberg-tiny
+    runs-on: codeberg-small
     steps:
 
       - uses: actions/checkout@v6
