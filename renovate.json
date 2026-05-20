@@ -3,9 +3,6 @@
   "baseBranchPatterns": [
     "main"
   ],
-  "ignorePaths": [
-    "build/**"
-  ],
   "configMigration": true,
   "minimumReleaseAge": "7 days",
   "timezone": "Europe/Berlin",
