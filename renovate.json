@@ -1,6 +1,41 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "minimumReleaseAge": "3 days",
-  "separateMajorMinor": true,
-  "separateMinorPatch": false
+  "baseBranchPatterns": [
+    "main"
+  ],
+  "ignorePaths": [
+    "build/**"
+  ],
+  "configMigration": true,
+  "minimumReleaseAge": "7 days",
+  "timezone": "Europe/Berlin",
+  "extends": [
+    "customManagers:dockerfileVersions",
+    "customManagers:makefileVersions"
+  ],
+  "packageRules": [
+    {
+      "description": "No minimumReleaseAge delay",
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchDepNames": [
+        "nothub/**"
+      ],
+      "minimumReleaseAge": "0 days"
+    },
+    {
+      "description": "No minimumReleaseAge delay",
+      "matchDatasources": [
+        "forgejo-tags"
+      ],
+      "registryUrls": [
+        "https://codeberg.org"
+      ],
+      "matchDepNames": [
+        "fhuebner/**"
+      ],
+      "minimumReleaseAge": "0 days"
+    }
+  ]
 }
