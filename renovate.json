@@ -6,10 +6,6 @@
   "configMigration": true,
   "minimumReleaseAge": "7 days",
   "timezone": "Europe/Berlin",
-  "extends": [
-    "customManagers:dockerfileVersions",
-    "customManagers:makefileVersions"
-  ],
   "packageRules": [
     {
       "description": "No minimumReleaseAge delay",
