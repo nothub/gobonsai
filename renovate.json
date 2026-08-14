@@ -16,19 +16,6 @@
         "nothub/**"
       ],
       "minimumReleaseAge": "0 days"
-    },
-    {
-      "description": "No minimumReleaseAge delay",
-      "matchDatasources": [
-        "forgejo-tags"
-      ],
-      "registryUrls": [
-        "https://codeberg.org"
-      ],
-      "matchDepNames": [
-        "fhuebner/**"
-      ],
-      "minimumReleaseAge": "0 days"
     }
   ]
 }
