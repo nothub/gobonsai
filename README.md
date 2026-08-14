@@ -2,9 +2,9 @@
 
 A bonsai tree generator ([cbonsai](https://gitlab.com/jallbrit/cbonsai) ported to go)
 
-![screenshot](https://codeberg.org/fhuebner/gobonsai/raw/commit/99792bab3fb07ce5c353118d6331f909e7a362fd/preview.gif)
+![screenshot](https://github.com/nothub/gobonsai/raw/99792bab3fb07ce5c353118d6331f909e7a362fd/preview.gif)
 
-Feel free to grab a release from [here](https://codeberg.org/fhuebner/gobonsai/releases).
+Feel free to grab a release from [here](https://github.com/nothub/gobonsai/releases).
 
 ---
 
@@ -42,7 +42,7 @@ Flags:
 
 ---
 
-[gobonsai](https://codeberg.org/fhuebner/gobonsai) is a `go` port of
+[gobonsai](https://github.com/nothub/gobonsai) is a `go` port of
 [cbonsai](https://gitlab.com/jallbrit/cbonsai) (written in `C` and itself a port of
 [bonsai.sh](https://gitlab.com/jallbrit/bonsai.sh) (written in `bash` and itself a port of
 [bonsai](https://avelican.github.io/bonsai/) (written in `javascript`))).

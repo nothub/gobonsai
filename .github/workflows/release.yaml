@@ -8,7 +8,9 @@ on:
 
 jobs:
   release:
-    runs-on: codeberg-small
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
 
       - uses: actions/checkout@v6
@@ -21,10 +23,10 @@ jobs:
           check-latest: true
           cache: true
 
-      - uses: https://github.com/goreleaser/goreleaser-action@v7
+      - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
           args: release --clean
         env:
-          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
